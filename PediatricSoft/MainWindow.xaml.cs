@@ -2,34 +2,54 @@
 using System.Windows;
 using System.IO.Ports;
 using System.Threading;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 namespace PediatricSoft
 {
 
-    public static class PediatricSensorDefaults
+    public static class PediatricSoftConstants
     {
-        public static int DefaultSerialPortBaudRate { get; } = 115200;
-        public static int DefaultSerialPortWriteTimeout { get; } = 100;
-        public static int DefaultSerialPortReadTimeout { get; } = 100;
-        public static int DefaultSerialPortSleepTime { get; } = 100;
-        public static string ValidIDN { get; } = "PediatricSensor";
+        public static readonly int DefaultSerialPortBaudRate = 115200;
+        public static readonly int DefaultSerialPortWriteTimeout = 100;
+        public static readonly int DefaultSerialPortReadTimeout = 100;
+        public static readonly int DefaultSerialPortSleepTime = 100;
+        public static readonly int DefaultSerialPortShutDownLoopDelay = 1;
+        public static readonly string ValidIDN = "PediatricSensor";
+
+        public static readonly int MaxQueueLength = 1000;
+        public static readonly bool IsDebugEnabled = true;
     }
 
     struct SensorScanItem
     {
+        public bool isValid;
         public string port;
         public string idn;
         public string sn;
     }
 
+    struct DataPoint
+    {
+        public double x;
+        public double y;
+
+        public DataPoint(double _x, double _y)
+        {
+            x = _x;
+            y = _y;
+        }
+    }
+
     public partial class MainWindow : Window
     {
-        private PediatricSensorScan _PediatricSensorScan = new PediatricSensorScan();
+
         private ObservableCollection<PediatricSensor> _PediatricSensorList = new ObservableCollection<PediatricSensor>();
+        private bool pediatricSensorsRunning = false;
 
         public MainWindow()
         {
@@ -39,129 +59,173 @@ namespace PediatricSoft
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
         {
-            if (!_PediatricSensorScan.Scanning)
+            buttonRunSensors.IsEnabled = false;
+            if (!PediatricSensorScan.IsScanning)
             {
                 logTextBox.AppendText("Clearing sensor list\n");
+                foreach (PediatricSensor _PediatricSensor in _PediatricSensorList)
+                {
+                    _PediatricSensor.PediatricSensorStop();
+                }
                 _PediatricSensorList.Clear();
                 logTextBox.AppendText("Scanning COM ports...\n");
-                await _PediatricSensorScan.StartScanAsync();
-                foreach (string _string in _PediatricSensorScan.DebugLogList.ToArray())
+                await PediatricSensorScan.StartScanAsync();
+                foreach (string _string in PediatricSensorScan.DebugLogList.ToArray())
                 {
                     logTextBox.AppendText(_string + "\n");
                 }
-                logTextBox.AppendText($"Found {_PediatricSensorScan.SensorList.Count} sensors\n");
+                logTextBox.AppendText($"Found {PediatricSensorScan.SensorList.Count} sensors\n");
                 logTextBox.ScrollToEnd();
-                foreach (SensorScanItem _SensorScanItem in _PediatricSensorScan.SensorList)
+                foreach (SensorScanItem _SensorScanItem in PediatricSensorScan.SensorList)
                 {
                     _PediatricSensorList.Add(new PediatricSensor(_SensorScanItem));
                 }
                 logTextBox.AppendText($"Current sensor list is {_PediatricSensorList.Count} sensors\n");
                 logTextBox.ScrollToEnd();
+                if (_PediatricSensorList.Count > 0) buttonRunSensors.IsEnabled = true;
             }
-            //sensorListView.UpdateLayout();
-            //UpdateSensorList();
         }
 
-        private void UpdateSensorList()
+        private void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
         {
-            int i = 0;
-            //sensorListView.ClearValue;
+            if (!pediatricSensorsRunning)
+            {
+                buttonRunSensors.IsEnabled = false;
+                buttonScanPorts.IsEnabled = false;
+                pediatricSensorsRunning = true;
+                foreach (PediatricSensor _PediatricSensor in _PediatricSensorList)
+                {
+
+                    _PediatricSensor.PediatricSensorStart();
+                }
+                buttonRunSensors.IsEnabled = true;
+            }
+            else
+            {
+                buttonRunSensors.IsEnabled = false;
+                foreach (PediatricSensor _PediatricSensor in _PediatricSensorList)
+                {
+                    _PediatricSensor.PediatricSensorStop();
+                }
+                pediatricSensorsRunning = false;
+                buttonScanPorts.IsEnabled = true;
+                buttonRunSensors.IsEnabled = true;
+            }
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
             foreach (PediatricSensor _PediatricSensor in _PediatricSensorList)
             {
-                logTextBox.AppendText($"Updating sensor {i}\n");
-                logTextBox.AppendText($"{_PediatricSensor.SN}\n");
-                logTextBox.ScrollToEnd();
-                i++;
-
+                _PediatricSensor.PediatricSensorStop();
             }
         }
 
     }
 
-    class PediatricSensorScan
+    static class PediatricSensorScan
     {
 
-        public List<string> DebugLogList { get; } = new List<string>();
-        public List<SensorScanItem> SensorList { get; } = new List<SensorScanItem>();
-        public bool Scanning { get; set; } = false;
+        public static List<string> DebugLogList { get; } = new List<string>();
+        public static List<SensorScanItem> SensorList { get; } = new List<SensorScanItem>();
+        public static bool IsScanning { get; private set; } = false;
 
-        public async Task StartScanAsync()
+        public static async Task StartScanAsync()
         {
-            if (!Scanning)
+            if (!IsScanning)
             {
-                Scanning = true;
+                IsScanning = true;
                 DebugLogList.Clear();
                 SensorList.Clear();
                 await Task.Run(() => ScanForSensors());
-                Scanning = false;
+                IsScanning = false;
             }
         }
 
-        private void ScanForSensors()
+        private static void ScanForSensors()
         {
             DebugLogList.Add("The following serial ports were found:");
-            // Get a list of serial port names.
-            string[] portNames = SerialPort.GetPortNames();
 
             // Display each port name to the console.
-            foreach (string port in portNames)
+            foreach (string port in SerialPort.GetPortNames())
             {
                 SensorScanItem _SensorScanItem = ProbeComPort(port);
-                if (_SensorScanItem.idn.Contains(PediatricSensorDefaults.ValidIDN))
+                if (_SensorScanItem.isValid)
                 {
-                    DebugLogList.Add(String.Concat("Probing port ", _SensorScanItem.port, " -> ",
-                        "Found sensor ", _SensorScanItem.idn, " with S/N ", _SensorScanItem.sn));
+                    DebugLogList.Add(String.Concat(_SensorScanItem.port, " -> Found sensor ",
+                        _SensorScanItem.idn, " with S/N ", _SensorScanItem.sn));
                     SensorList.Add(_SensorScanItem);
                 }
                 else
-                    DebugLogList.Add(String.Concat("Probing port ", port));
+                    DebugLogList.Add(port);
             }
         }
 
-        private SensorScanItem ProbeComPort(string port)
+        private static SensorScanItem ProbeComPort(string port)
         {
             SensorScanItem _SensorScanItem;
+            _SensorScanItem.isValid = false;
             _SensorScanItem.port = port;
             _SensorScanItem.idn = "";
             _SensorScanItem.sn = "";
 
-            // Create a new SerialPort object with default settings.
-            SerialPort _SerialPort = new SerialPort(port, PediatricSensorDefaults.DefaultSerialPortBaudRate)
+            SerialPort _SerialPort = new SerialPort()
             {
-                WriteTimeout = PediatricSensorDefaults.DefaultSerialPortWriteTimeout,
-                ReadTimeout = PediatricSensorDefaults.DefaultSerialPortReadTimeout
+                PortName = port,
+                WriteTimeout = PediatricSoftConstants.DefaultSerialPortWriteTimeout,
+                ReadTimeout = PediatricSoftConstants.DefaultSerialPortReadTimeout,
+                BaudRate = PediatricSoftConstants.DefaultSerialPortBaudRate
             };
+
+            if (!_SerialPort.IsOpen) _SerialPort.Open();
+            _SerialPort.DiscardOutBuffer();
+            _SerialPort.WriteLine("*STOP?");
+            Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+            _SerialPort.DiscardInBuffer();
+
             try
             {
-                _SerialPort.Open();
-                _SerialPort.WriteLine("*STOP?");
-                Thread.Sleep(PediatricSensorDefaults.DefaultSerialPortSleepTime);
-                _SerialPort.DiscardInBuffer();
                 _SerialPort.WriteLine("*IDN?");
                 _SensorScanItem.idn = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
                 _SerialPort.WriteLine("*SN?");
                 _SensorScanItem.sn = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
-                _SerialPort.Close();
             }
             catch (TimeoutException) { }
-            _SerialPort.Close();
+
+            if (_SerialPort.IsOpen) _SerialPort.Close();
+            _SerialPort.Dispose();
+
+            if (_SensorScanItem.idn.Contains(PediatricSoftConstants.ValidIDN)) _SensorScanItem.isValid = true;
             return _SensorScanItem;
         }
     }
 
-    class PediatricSensor
+    class PediatricSensor : INotifyPropertyChanged
     {
-        public string Port { get; } = "";
-        public string IDN { get; } = "";
-        public string SN { get; } = "";
-        public bool IsRunning { get; } = false;
 
         private SerialPort _SerialPort = new SerialPort()
         {
-            WriteTimeout = PediatricSensorDefaults.DefaultSerialPortWriteTimeout,
-            ReadTimeout = PediatricSensorDefaults.DefaultSerialPortReadTimeout,
-            BaudRate = PediatricSensorDefaults.DefaultSerialPortBaudRate
+            WriteTimeout = PediatricSoftConstants.DefaultSerialPortWriteTimeout,
+            ReadTimeout = PediatricSoftConstants.DefaultSerialPortReadTimeout,
+            BaudRate = PediatricSoftConstants.DefaultSerialPortBaudRate
         };
+
+        private ConcurrentQueue<DataPoint> data = new ConcurrentQueue<DataPoint>();
+        private bool shouldBeRunning = false;
+        private Task processingTask;
+
+        public string Port { get; }
+        public string IDN { get; }
+        public string SN { get; }
+        public bool IsRunning { get; private set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged(string prop)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        }
+
+        public double DataPoint0y { get; private set; }
 
         public PediatricSensor(SensorScanItem _SensorScanItem)
         {
@@ -169,32 +233,67 @@ namespace PediatricSoft
             Port = _SensorScanItem.port;
             IDN = _SensorScanItem.idn;
             SN = _SensorScanItem.sn;
+            data.Enqueue(new DataPoint());
         }
 
         public void PediatricSensorStart()
         {
-            
-            try
+            IsRunning = true;
+            if (!_SerialPort.IsOpen) _SerialPort.Open();
+            _SerialPort.DiscardOutBuffer();
+            Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+            _SerialPort.DiscardInBuffer();
+            _SerialPort.WriteLine("*START?");
+            shouldBeRunning = true;
+            processingTask = Task.Run(() => PediatricSensorProcessData());
+        }
+        private void PediatricSensorProcessData()
+        {
+            DataPoint dummyDataPoint = new DataPoint();
+            string dataReadString;
+            string dataXString;
+            string dataYString;
+            while (shouldBeRunning)
             {
-                _SerialPort.Open();
-                _SerialPort.WriteLine("*START?");
+                dataReadString = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
+                dataXString = dataReadString.Split('@')[0];
+                dataYString = dataReadString.Split('@')[1];
+                data.Enqueue(new DataPoint(Convert.ToDouble(dataXString), Convert.ToDouble(dataYString)));
+                if (data.Count > PediatricSoftConstants.MaxQueueLength) while (!data.TryDequeue(out dummyDataPoint)) { };
+                DataPoint0y = Convert.ToDouble(dataYString);
+                OnPropertyChanged("DataPoint0y");
             }
-            catch (TimeoutException) { }
         }
 
         public void PediatricSensorStop()
         {
-            try
+            shouldBeRunning = false;
+            if (processingTask != null)
             {
+                while (!processingTask.IsCompleted)
+                {
+                    if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine($"Waiting for sensor {SN} to stop");
+                };
+                processingTask.Dispose();
+            };
+            if (_SerialPort.IsOpen)
+            {
+                _SerialPort.DiscardOutBuffer();
                 _SerialPort.WriteLine("*STOP?");
+                Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+                _SerialPort.DiscardInBuffer();
+                Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+                _SerialPort.DiscardInBuffer();
+                _SerialPort.Close();
             }
-            catch (TimeoutException) { }
-            _SerialPort.Close();
+            _SerialPort.Dispose();
+            IsRunning = false;
+            if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine($"Sensor {SN} is stopped");
         }
 
         ~PediatricSensor()
         {
-            //PediatricSensorStop();
+            PediatricSensorStop();
         }
 
     }
