@@ -123,6 +123,11 @@ namespace PediatricSoft
 
     }
 
+    static class PediatricSensorData
+    {
+
+    }
+
     static class PediatricSensorScan
     {
 
