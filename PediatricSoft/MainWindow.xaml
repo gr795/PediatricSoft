@@ -22,7 +22,7 @@
 
                 <Button Name="buttonRunSensors" Margin="10,40" Width="100" Height="20" IsEnabled="False"
                 HorizontalAlignment="Right" VerticalAlignment="Top" Click="ButtonRunSensors_Click">
-                    Run Sensors
+                    Start Sensors
                 </Button>
 
                 <TextBox Name="logTextBox" Margin="10" Height="96" VerticalAlignment="Bottom"  IsReadOnly="True"/>
