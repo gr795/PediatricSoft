@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.ComponentModel;
 using LiveCharts;
 using LiveCharts.Wpf;
+
 
 namespace PediatricSoft
 {
@@ -10,10 +13,13 @@ namespace PediatricSoft
     public partial class MainWindow : Window
     {
 
+        PlotWindow plotWindow = new PlotWindow();
+
         public MainWindow()
         {
             InitializeComponent();
-            sensorListView.ItemsSource = PediatricSensorData.Data;
+            sensorListView.ItemsSource = PediatricSensorData.Sensors;
+            plotWindow.Show();
         }
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
@@ -30,7 +36,19 @@ namespace PediatricSoft
                 if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
 
                 PediatricSensorData.AddAll();
-                if (PediatricSensorData.Data.Count > 0) buttonRunSensors.IsEnabled = true;
+                //if (PediatricSensorData.Sensors.Count > 0) buttonRunSensors.IsEnabled = true;
+                if (PediatricSensorData.Sensors.Count > 0)
+                {
+                    PediatricSensorData._SeriesCollection.Clear();
+                    PediatricSensorData._SeriesCollection.Add(new LineSeries
+                    {
+                        Values = PediatricSensorData.Sensors[0]._ChartValues,
+                        Fill = Brushes.Transparent,
+                        PointGeometry = DefaultGeometries.None
+                    } );
+                    buttonRunSensors.IsEnabled = true;
+                }
+
             }
             buttonScanPorts.IsEnabled = true;
         }
@@ -58,6 +76,7 @@ namespace PediatricSoft
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             PediatricSensorData.StopAll();
+            plotWindow.Close();
         }
 
     }

@@ -5,22 +5,27 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using LiveCharts;
+using LiveCharts.Wpf;
 
 namespace PediatricSoft
 {
     public static class PediatricSensorData
     {
-        public static ObservableCollection<PediatricSensor> Data  = new ObservableCollection<PediatricSensor>();
+
+        public static ObservableCollection<PediatricSensor> Sensors  = new ObservableCollection<PediatricSensor>();
         public static bool IsRunning { get; private set; } = false;
         public static List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public static bool IsScanning { get; private set; } = false;
+
+        public static SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
 
         public static void AddAll()
         {
             ClearAll();
             foreach (SensorScanItem _SensorScanItem in PediatricSensorData.SensorScanList)
             {
-                Data.Add(new PediatricSensor(_SensorScanItem));
+                Sensors.Add(new PediatricSensor(_SensorScanItem));
             }
         }
 
@@ -29,7 +34,7 @@ namespace PediatricSoft
             if (!IsRunning)
             {
                 IsRunning = true;
-                foreach (PediatricSensor _PediatricSensor in Data)
+                foreach (PediatricSensor _PediatricSensor in Sensors)
                 {
 
                     _PediatricSensor.PediatricSensorStart();
@@ -41,7 +46,7 @@ namespace PediatricSoft
         {
             if (IsRunning)
             {
-                foreach (PediatricSensor _PediatricSensor in Data)
+                foreach (PediatricSensor _PediatricSensor in Sensors)
                 {
                     _PediatricSensor.PediatricSensorStop();
                 }
@@ -52,7 +57,7 @@ namespace PediatricSoft
         public static void ClearAll()
         {
             StopAll();
-            Data.Clear();
+            Sensors.Clear();
         }
 
         public static async Task StartScanAsync()

@@ -8,15 +8,15 @@
         public string sn;
     }
 
-    struct DataPoint
+    public struct DataPoint
     {
-        public double x;
-        public double y;
+        public double X;
+        public double Y;
 
         public DataPoint(double _x, double _y)
         {
-            x = _x;
-            y = _y;
+            X = _x;
+            Y = _y;
         }
     }
 

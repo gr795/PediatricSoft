@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
+using LiveCharts;
+using LiveCharts.Configurations;
+using LiveCharts.Wpf;
+using LiveCharts.Defaults;
 
 namespace PediatricSoft
 {
@@ -22,28 +26,29 @@ namespace PediatricSoft
         private bool shouldBeRunning = false;
         private Task processingTask;
 
+        public bool Plot { get; set; } = true;
+        public ChartValues<ObservableValue> _ChartValues = new ChartValues<ObservableValue>();
+        public double LastValue { get; private set; } = 0;
+
         public string Port { get; }
         public string IDN { get; }
         public string SN { get; }
-        public bool IsRunning { get; private set; }
+        public bool IsRunning { get; private set; } = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
+
         private void OnPropertyChanged(string prop)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
 
-        public double DataPoint0y { get; private set; }
-
         private PediatricSensor() { }
-
         public PediatricSensor(SensorScanItem _SensorScanItem)
         {
             _SerialPort.PortName = _SensorScanItem.port;
             Port = _SensorScanItem.port;
             IDN = _SensorScanItem.idn;
             SN = _SensorScanItem.sn;
-            data.Enqueue(new DataPoint());
         }
 
         public void PediatricSensorStart()
@@ -64,15 +69,24 @@ namespace PediatricSoft
             string dataReadString;
             string dataXString;
             string dataYString;
+            double dataX;
+            double dataY;
             while (shouldBeRunning)
             {
                 dataReadString = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
                 dataXString = dataReadString.Split('@')[0];
                 dataYString = dataReadString.Split('@')[1];
-                data.Enqueue(new DataPoint(Convert.ToDouble(dataXString), Convert.ToDouble(dataYString)));
-                if (data.Count > PediatricSoftConstants.MaxQueueLength) while (!data.TryDequeue(out dummyDataPoint)) { };
-                DataPoint0y = Convert.ToDouble(dataYString);
-                OnPropertyChanged("DataPoint0y");
+                dataX = Convert.ToDouble(dataXString);
+                dataY = Convert.ToDouble(dataYString);
+                data.Enqueue(new DataPoint(dataX, dataY));
+                _ChartValues.Add(new ObservableValue(dataY));
+                if (data.Count > PediatricSoftConstants.MaxQueueLength)
+                {
+                    while (!data.TryDequeue(out dummyDataPoint)) { };
+                    _ChartValues.RemoveAt(0);
+                }
+                LastValue = dataY;
+                OnPropertyChanged("LastValue");
             }
         }
 
