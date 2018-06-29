@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:PediatricSoft"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
-        Title="PlotWindow" Height="450" Width="800">
+        Title="PlotWindow" Height="450" Width="800"
+        Closing="Window_Closing">
 
     <lvc:CartesianChart Name="plotBox" DisableAnimations="True" DataTooltip="{x:Null}" Hoverable="False">
 
@@ -14,7 +15,7 @@
             <lvc:Axis ShowLabels="False"></lvc:Axis>
         </lvc:CartesianChart.AxisX>
         <lvc:CartesianChart.AxisY>
-            <lvc:Axis MinValue="0" MaxValue="5">
+            <lvc:Axis>
                 <lvc:Axis.Sections>
                     <lvc:AxisSection Value="0" StrokeThickness="3" Stroke="#303030"></lvc:AxisSection>
                 </lvc:Axis.Sections>

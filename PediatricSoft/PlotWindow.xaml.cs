@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +25,11 @@ namespace PediatricSoft
         {
             InitializeComponent();
             plotBox.Series = PediatricSensorData._SeriesCollection;
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            PediatricSoftConstants.PlotWindowClosed = true;
         }
     }
 }

@@ -26,7 +26,7 @@ namespace PediatricSoft
         private bool shouldBeRunning = false;
         private Task processingTask;
 
-        public bool Plot { get; set; } = true;
+        public bool ShouldBePlotted { get; set; } = false;
         public ChartValues<ObservableValue> _ChartValues = new ChartValues<ObservableValue>();
         public double LastValue { get; private set; } = 0;
 
@@ -79,11 +79,12 @@ namespace PediatricSoft
                 dataX = Convert.ToDouble(dataXString);
                 dataY = Convert.ToDouble(dataYString);
                 data.Enqueue(new DataPoint(dataX, dataY));
-                _ChartValues.Add(new ObservableValue(dataY));
                 if (data.Count > PediatricSoftConstants.MaxQueueLength)
-                {
                     while (!data.TryDequeue(out dummyDataPoint)) { };
-                    _ChartValues.RemoveAt(0);
+                if (ShouldBePlotted)
+                {
+                    _ChartValues.Add(new ObservableValue(dataY));
+                    if (_ChartValues.Count > PediatricSoftConstants.MaxQueueLength) _ChartValues.RemoveAt(0);
                 }
                 LastValue = dataY;
                 OnPropertyChanged("LastValue");

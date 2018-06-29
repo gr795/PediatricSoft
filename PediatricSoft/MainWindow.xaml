@@ -25,6 +25,11 @@
                     Start Sensors
                 </Button>
 
+                <Button Name="buttonPlot" Margin="10,70" Width="100" Height="20" IsEnabled="False"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Click="ButtonPlot_Click">
+                    Show Plot
+                </Button>
+
                 <TextBox Name="logTextBox" Margin="10" Height="96" VerticalAlignment="Bottom"  IsReadOnly="True"/>
 
                 <ListView Name="sensorListView" Margin="10,10,120,120">
@@ -34,7 +39,16 @@
                             <GridViewColumn Header="IDN" DisplayMemberBinding="{Binding IDN}"/>
                             <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
                             <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
-                            <GridViewColumn Header="Plot" DisplayMemberBinding="{Binding Plot}"/>
+                            <GridViewColumn Header="Plot">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding ShouldBePlotted}"
+                                                  ToggleButton.Checked="PlotToggle"
+                                                  ToggleButton.Unchecked="PlotToggle">
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>

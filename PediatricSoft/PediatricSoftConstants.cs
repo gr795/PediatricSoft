@@ -11,5 +11,7 @@
 
         public static readonly int MaxQueueLength = 1000;
         public static bool IsDebugEnabled = true;
+        public static bool IsPlotting = false;
+        public static bool PlotWindowClosed = false;
     }
 }
