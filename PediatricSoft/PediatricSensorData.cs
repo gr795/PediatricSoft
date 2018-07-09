@@ -20,6 +20,17 @@ namespace PediatricSoft
 
         public static SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
 
+        public static string dataFolder = String.Empty;
+
+        static PediatricSensorData()
+        {
+            dataFolder = System.IO.Path.Combine(
+                System.IO.Directory.GetCurrentDirectory(),
+                PediatricSoftConstants.DefaultFolder,
+                DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
+            System.IO.Directory.CreateDirectory(dataFolder);
+        }
+
         public static void AddAll()
         {
             ClearAll();
@@ -36,7 +47,6 @@ namespace PediatricSoft
                 IsRunning = true;
                 foreach (PediatricSensor _PediatricSensor in Sensors)
                 {
-
                     _PediatricSensor.PediatricSensorStart();
                 }
             }
@@ -73,7 +83,7 @@ namespace PediatricSoft
 
         private static void ScanForSensors()
         {
-            if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine("The following serial ports were found:");
+            if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine("The following serial ports were found:");
 
             // Display each port name to the console.
             foreach (string port in SerialPort.GetPortNames())
@@ -81,7 +91,7 @@ namespace PediatricSoft
                 SensorScanItem _SensorScanItem = ProbeComPort(port);
                 if (_SensorScanItem.isValid)
                 {
-                    if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine
+                    if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine
                             (String.Concat(_SensorScanItem.port, " -> Found sensor ",
                         _SensorScanItem.idn, " with S/N ", _SensorScanItem.sn));
                     SensorScanList.Add(_SensorScanItem);
@@ -120,7 +130,7 @@ namespace PediatricSoft
             }
             catch (TimeoutException)
             {
-                if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine($"Timeout on port {port}");
+                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine($"Timeout on port {port}");
             }
 
             if (_SerialPort.IsOpen) _SerialPort.Close();

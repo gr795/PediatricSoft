@@ -31,12 +31,12 @@ namespace PediatricSoft
 
             if (!PediatricSensorData.IsScanning)
             {
-                if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine("Clearing sensor list\n");
+                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine("Clearing sensor list\n");
                 PediatricSensorData.ClearAll();
 
-                if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine("Scanning COM ports...\n");
+                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine("Scanning COM ports...\n");
                 await PediatricSensorData.StartScanAsync();
-                if (PediatricSoftConstants.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
+                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
 
                 PediatricSensorData.AddAll();
                 if (PediatricSensorData.Sensors.Count > 0)
@@ -77,7 +77,7 @@ namespace PediatricSoft
         {
 
             buttonPlot.IsEnabled = false;
-            if (PediatricSoftConstants.IsPlotting)
+            if (PediatricSoftGlobals.IsPlotting)
             {
                 HidePlot();
             }
@@ -109,20 +109,20 @@ namespace PediatricSoft
 
         private void ShowPlot()
         {
-            if (PediatricSoftConstants.PlotWindowClosed)
+            if (PediatricSoftGlobals.PlotWindowClosed)
             {
                 plotWindow = new PlotWindow();
-                PediatricSoftConstants.PlotWindowClosed = false;
+                PediatricSoftGlobals.PlotWindowClosed = false;
             }
             plotWindow.Show();
-            PediatricSoftConstants.IsPlotting = true;
+            PediatricSoftGlobals.IsPlotting = true;
             buttonPlot.Content = "Hide Plot";
         }
 
         public void HidePlot()
         {
             plotWindow.Hide();
-            PediatricSoftConstants.IsPlotting = false;
+            PediatricSoftGlobals.IsPlotting = false;
             buttonPlot.Content = "Show Plot";
         }
 
