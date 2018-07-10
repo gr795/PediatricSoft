@@ -13,7 +13,7 @@ namespace PediatricSoft
     public static class PediatricSensorData
     {
 
-        public static ObservableCollection<PediatricSensor> Sensors  = new ObservableCollection<PediatricSensor>();
+        public static ObservableCollection<PediatricSensor> Sensors = new ObservableCollection<PediatricSensor>();
         public static bool IsRunning { get; private set; } = false;
         public static List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public static bool IsScanning { get; private set; } = false;
@@ -24,11 +24,7 @@ namespace PediatricSoft
 
         static PediatricSensorData()
         {
-            dataFolder = System.IO.Path.Combine(
-                System.IO.Directory.GetCurrentDirectory(),
-                PediatricSoftConstants.DefaultFolder,
-                DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
-            System.IO.Directory.CreateDirectory(dataFolder);
+
         }
 
         public static void AddAll()
@@ -45,6 +41,7 @@ namespace PediatricSoft
             if (!IsRunning)
             {
                 IsRunning = true;
+                if (PediatricSoftGlobals.SaveData) CreateDataFolder();
                 foreach (PediatricSensor _PediatricSensor in Sensors)
                 {
                     _PediatricSensor.PediatricSensorStart();
@@ -79,6 +76,15 @@ namespace PediatricSoft
                 await Task.Run(() => ScanForSensors());
                 IsScanning = false;
             }
+        }
+
+        private static void CreateDataFolder()
+        {
+            dataFolder = System.IO.Path.Combine(
+                System.IO.Directory.GetCurrentDirectory(),
+                PediatricSoftConstants.DefaultFolder,
+                DateTime.Now.ToString("yyyy-MM-dd_HHmmss") );
+            System.IO.Directory.CreateDirectory(dataFolder);
         }
 
         private static void ScanForSensors()

@@ -28,6 +28,7 @@ namespace PediatricSoft
         private bool shouldBeRunning = false;
         private Task processingTask;
         private string filePath = String.Empty;
+        private StreamWriter file;
 
         public bool ShouldBePlotted { get; set; } = false;
         public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>().WithQuality(Quality.Low);
@@ -52,13 +53,14 @@ namespace PediatricSoft
             Port = _SensorScanItem.port;
             IDN = _SensorScanItem.idn;
             SN = _SensorScanItem.sn;
-            filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
-            filePath += ".txt";
         }
 
         public void PediatricSensorStart()
         {
             IsRunning = true;
+            filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
+            filePath += ".txt";
+            if (PediatricSoftGlobals.SaveData) file = File.AppendText(filePath);
             if (!_SerialPort.IsOpen) _SerialPort.Open();
             _SerialPort.DiscardOutBuffer();
             Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
@@ -77,32 +79,31 @@ namespace PediatricSoft
             string dataYString;
             double dataX;
             double dataY;
-            using (StreamWriter file = File.AppendText(filePath) )
+
+            while (shouldBeRunning)
             {
-                while (shouldBeRunning)
+                dataReadString = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
+                dataXString = dataReadString.Split('@')[0];
+                dataYString = dataReadString.Split('@')[1];
+                dataWriteString = String.Concat(dataXString, "\t", dataYString);
+                dataX = Convert.ToDouble(dataXString);
+                dataY = Convert.ToDouble(dataYString);
+                data.Enqueue(new DataPoint(dataX, dataY));
+                if (data.Count > PediatricSoftConstants.MaxQueueLength)
+                    while (!data.TryDequeue(out dummyDataPoint)) { };
+                if (ShouldBePlotted)
                 {
-                    dataReadString = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
-                    dataXString = dataReadString.Split('@')[0];
-                    dataYString = dataReadString.Split('@')[1];
-                    dataWriteString = String.Concat(dataXString, "\t", dataYString);
-                    dataX = Convert.ToDouble(dataXString);
-                    dataY = Convert.ToDouble(dataYString);
-                    data.Enqueue(new DataPoint(dataX, dataY));
-                    if (data.Count > PediatricSoftConstants.MaxQueueLength)
-                        while (!data.TryDequeue(out dummyDataPoint)) { };
-                    if (ShouldBePlotted)
-                    {
-                        _ChartValues.Add(new ObservableValue(dataY));
-                        if (_ChartValues.Count > PediatricSoftConstants.MaxQueueLength) _ChartValues.RemoveAt(0);
-                    }
-                    LastValue = dataY;
-                    OnPropertyChanged("LastValue");
-
-                    file.WriteLine(dataWriteString);
-
+                    _ChartValues.Add(new ObservableValue(dataY));
+                    if (_ChartValues.Count > PediatricSoftConstants.MaxQueueLength) _ChartValues.RemoveAt(0);
                 }
+                LastValue = dataY;
+                OnPropertyChanged("LastValue");
+
+                if (PediatricSoftGlobals.SaveData) file.WriteLine(dataWriteString);
+
             }
-            
+
+
         }
 
         public void PediatricSensorStop()
@@ -127,8 +128,8 @@ namespace PediatricSoft
                 _SerialPort.Close();
             }
             _SerialPort.Dispose();
+            if (PediatricSoftGlobals.SaveData && (file != null) ) file.Dispose();
             IsRunning = false;
-
             if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine($"Sensor {SN} is stopped");
         }
 
