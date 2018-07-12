@@ -8,60 +8,76 @@
         Title="MainWindow" Height="500" Width="800" MinHeight="300" MinWidth="400"
         Closing="Window_Closing">
 
+    <Grid>
 
-    <TabControl>
+        <DockPanel Width="120" HorizontalAlignment="Right" LastChildFill="False">
 
-        <TabItem Header="Tab 1">
+            <Button Name="buttonScanPorts" Margin="10,10,10,5" Width="100" Height="20"
+                            IsEnabled="True" DockPanel.Dock="Top" Click="ButtonScanPorts_Click">
+                Scan Ports
+            </Button>
 
-            <Grid>
+            <Button Name="buttonRunSensors" Margin="10,5" Width="100" Height="20"
+                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonRunSensors_Click">
+                Start Sensors
+            </Button>
 
-                <Button Name="buttonScanPorts" Margin="10" Width="100" Height="20"
-                HorizontalAlignment="Right" VerticalAlignment="Top" Click="ButtonScanPorts_Click">
-                    Scan Ports
-                </Button>
+            <Button Name="buttonPlot" Margin="10,5" Width="100" Height="20"
+                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonPlot_Click">
+                Show Plot
+            </Button>
 
-                <Button Name="buttonRunSensors" Margin="10,40" Width="100" Height="20" IsEnabled="False"
-                HorizontalAlignment="Right" VerticalAlignment="Top" Click="ButtonRunSensors_Click">
-                    Start Sensors
-                </Button>
+            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal"
+                                DataContext="{Binding Source={StaticResource resource}}">
 
-                <Button Name="buttonPlot" Margin="10,70" Width="100" Height="20" IsEnabled="False"
-                HorizontalAlignment="Right" VerticalAlignment="Top" Click="ButtonPlot_Click">
-                    Show Plot
-                </Button>
+                <CheckBox Name="saveDataCheckbox" VerticalAlignment="Center"
+                                  IsChecked="{Binding Path=SaveData}">
 
-                <TextBox Name="logTextBox" Margin="10" Height="96" VerticalAlignment="Bottom"  IsReadOnly="True"/>
+                </CheckBox>
 
-                <ListView Name="sensorListView" Margin="10,10,120,120">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
-                            <GridViewColumn Header="IDN" DisplayMemberBinding="{Binding IDN}"/>
-                            <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
-                            <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
-                            <GridViewColumn Header="Plot">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <CheckBox IsChecked="{Binding ShouldBePlotted}"
+                <TextBlock Margin="5,0,0,0" VerticalAlignment="Center">
+                            Save Data
+                </TextBlock>
+
+            </StackPanel>
+
+            <TextBox Margin="10,5" DockPanel.Dock="Top"
+                             DataContext="{Binding Source={StaticResource resource}}"
+                             Text="{Binding Path=SavePrefix}">
+            </TextBox>
+
+        </DockPanel>
+
+        <TextBox Name="logTextBox" Margin="10" Height="96"
+                         VerticalAlignment="Bottom" IsReadOnly="True"/>
+
+        <ListView Name="sensorListView" Margin="10,10,120,120"
+                          ItemsSource="{Binding Source={x:Static local:PediatricSensorData.Sensors}}">
+
+            <ListView.View>
+
+                <GridView>
+
+                    <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
+                    <GridViewColumn Header="IDN" DisplayMemberBinding="{Binding IDN}"/>
+                    <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
+                    <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
+                    <GridViewColumn Header="Plot">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding ShouldBePlotted}"
                                                   ToggleButton.Checked="PlotToggle"
                                                   ToggleButton.Unchecked="PlotToggle">
-                                        </CheckBox>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </Grid>
+                                </CheckBox>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
 
-        </TabItem>
+            </ListView.View>
 
-        <TabItem Header="Tab 2">
+        </ListView>
 
-            
-
-        </TabItem>
-
-    </TabControl>
+    </Grid>
 
 </Window>

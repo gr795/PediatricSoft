@@ -29,7 +29,7 @@ namespace PediatricSoft
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            PediatricSoftGlobals.PlotWindowClosed = true;
+            PediatricSensorData.PlotWindowClosed = true;
         }
     }
 }

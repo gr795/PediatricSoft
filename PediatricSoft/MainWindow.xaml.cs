@@ -18,9 +18,6 @@ namespace PediatricSoft
         public MainWindow()
         {
             InitializeComponent();
-            MainWindow mainWindow = this;
-            sensorListView.ItemsSource = PediatricSensorData.Sensors;
-            
         }
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
@@ -31,12 +28,12 @@ namespace PediatricSoft
 
             if (!PediatricSensorData.IsScanning)
             {
-                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine("Clearing sensor list\n");
+                if (PediatricSensorData.IsDebugEnabled) Console.WriteLine("Clearing sensor list\n");
                 PediatricSensorData.ClearAll();
 
-                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine("Scanning COM ports...\n");
+                if (PediatricSensorData.IsDebugEnabled) Console.WriteLine("Scanning COM ports...\n");
                 await PediatricSensorData.StartScanAsync();
-                if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
+                if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
 
                 PediatricSensorData.AddAll();
                 if (PediatricSensorData.Sensors.Count > 0)
@@ -71,13 +68,14 @@ namespace PediatricSoft
                 buttonRunSensors.IsEnabled = true;
                 buttonRunSensors.Content = "Start Sensors";
             }
+            Console.WriteLine(PediatricSensorData.SaveData);
         }
 
         private void ButtonPlot_Click(object sender, RoutedEventArgs e)
         {
 
             buttonPlot.IsEnabled = false;
-            if (PediatricSoftGlobals.IsPlotting)
+            if (PediatricSensorData.IsPlotting)
             {
                 HidePlot();
             }
@@ -109,20 +107,20 @@ namespace PediatricSoft
 
         private void ShowPlot()
         {
-            if (PediatricSoftGlobals.PlotWindowClosed)
+            if (PediatricSensorData.PlotWindowClosed)
             {
                 plotWindow = new PlotWindow();
-                PediatricSoftGlobals.PlotWindowClosed = false;
+                PediatricSensorData.PlotWindowClosed = false;
             }
             plotWindow.Show();
-            PediatricSoftGlobals.IsPlotting = true;
+            PediatricSensorData.IsPlotting = true;
             buttonPlot.Content = "Hide Plot";
         }
 
         public void HidePlot()
         {
             plotWindow.Hide();
-            PediatricSoftGlobals.IsPlotting = false;
+            PediatricSensorData.IsPlotting = false;
             buttonPlot.Content = "Show Plot";
         }
 

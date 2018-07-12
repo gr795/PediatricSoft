@@ -19,9 +19,9 @@ namespace PediatricSoft
 
         private SerialPort _SerialPort = new SerialPort()
         {
-            WriteTimeout = PediatricSoftConstants.DefaultSerialPortWriteTimeout,
-            ReadTimeout = PediatricSoftConstants.DefaultSerialPortReadTimeout,
-            BaudRate = PediatricSoftConstants.DefaultSerialPortBaudRate
+            WriteTimeout = PediatricSensorData.DefaultSerialPortWriteTimeout,
+            ReadTimeout = PediatricSensorData.DefaultSerialPortReadTimeout,
+            BaudRate = PediatricSensorData.DefaultSerialPortBaudRate
         };
 
         private ConcurrentQueue<DataPoint> data = new ConcurrentQueue<DataPoint>();
@@ -60,10 +60,10 @@ namespace PediatricSoft
             IsRunning = true;
             filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
             filePath += ".txt";
-            if (PediatricSoftGlobals.SaveData) file = File.AppendText(filePath);
+            if (PediatricSensorData.SaveData) file = File.AppendText(filePath);
             if (!_SerialPort.IsOpen) _SerialPort.Open();
             _SerialPort.DiscardOutBuffer();
-            Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+            Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
             _SerialPort.DiscardInBuffer();
             _SerialPort.WriteLine("*START?");
             shouldBeRunning = true;
@@ -89,17 +89,17 @@ namespace PediatricSoft
                 dataX = Convert.ToDouble(dataXString);
                 dataY = Convert.ToDouble(dataYString);
                 data.Enqueue(new DataPoint(dataX, dataY));
-                if (data.Count > PediatricSoftConstants.MaxQueueLength)
+                if (data.Count > PediatricSensorData.MaxQueueLength)
                     while (!data.TryDequeue(out dummyDataPoint)) { };
                 if (ShouldBePlotted)
                 {
                     _ChartValues.Add(new ObservableValue(dataY));
-                    if (_ChartValues.Count > PediatricSoftConstants.MaxQueueLength) _ChartValues.RemoveAt(0);
+                    if (_ChartValues.Count > PediatricSensorData.MaxQueueLength) _ChartValues.RemoveAt(0);
                 }
                 LastValue = dataY;
                 OnPropertyChanged("LastValue");
 
-                if (PediatricSoftGlobals.SaveData) file.WriteLine(dataWriteString);
+                if (PediatricSensorData.SaveData) file.WriteLine(dataWriteString);
 
             }
 
@@ -113,7 +113,7 @@ namespace PediatricSoft
             {
                 while (!processingTask.IsCompleted)
                 {
-                    if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine($"Waiting for sensor {SN} to stop");
+                    if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Waiting for sensor {SN} to stop");
                 };
                 processingTask.Dispose();
             };
@@ -121,16 +121,16 @@ namespace PediatricSoft
             {
                 _SerialPort.DiscardOutBuffer();
                 _SerialPort.WriteLine("*STOP?");
-                Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+                Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
                 _SerialPort.DiscardInBuffer();
-                Thread.Sleep(PediatricSoftConstants.DefaultSerialPortSleepTime);
+                Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
                 _SerialPort.DiscardInBuffer();
                 _SerialPort.Close();
             }
             _SerialPort.Dispose();
-            if (PediatricSoftGlobals.SaveData && (file != null) ) file.Dispose();
+            if (PediatricSensorData.SaveData && (file != null) ) file.Dispose();
             IsRunning = false;
-            if (PediatricSoftGlobals.IsDebugEnabled) Console.WriteLine($"Sensor {SN} is stopped");
+            if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Sensor {SN} is stopped");
         }
 
         ~PediatricSensor()
