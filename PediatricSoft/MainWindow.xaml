@@ -6,44 +6,43 @@
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
         Title="MainWindow" Height="500" Width="800" MinHeight="300" MinWidth="400"
-        Closing="Window_Closing">
+        Closing="Window_Closing"
+        DataContext="{Binding Source={StaticResource resource}}">
 
     <Grid>
 
-        <DockPanel Width="120" HorizontalAlignment="Right" LastChildFill="False">
+        <DockPanel Width="200" HorizontalAlignment="Right" LastChildFill="False">
 
-            <Button Name="buttonScanPorts" Margin="10,10,10,5" Width="100" Height="20"
+            <Button Name="buttonScanPorts" Margin="10,10,10,5" Height="20"
                             IsEnabled="True" DockPanel.Dock="Top" Click="ButtonScanPorts_Click">
                 Scan Ports
             </Button>
 
-            <Button Name="buttonRunSensors" Margin="10,5" Width="100" Height="20"
+            <Button Name="buttonRunSensors" Margin="10,5" Height="20"
                             IsEnabled="False" DockPanel.Dock="Top" Click="ButtonRunSensors_Click">
                 Start Sensors
             </Button>
 
-            <Button Name="buttonPlot" Margin="10,5" Width="100" Height="20"
+            <Button Name="buttonPlot" Margin="10,5" Height="20"
                             IsEnabled="False" DockPanel.Dock="Top" Click="ButtonPlot_Click">
                 Show Plot
             </Button>
 
-            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal"
-                                DataContext="{Binding Source={StaticResource resource}}">
+            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
-                <CheckBox Name="saveDataCheckbox" VerticalAlignment="Center"
-                                  IsChecked="{Binding Path=SaveData}">
+                <CheckBox Name="saveDataCheckbox" VerticalAlignment="Center" 
+                          IsChecked="{Binding Path=SaveData}">
 
                 </CheckBox>
 
                 <TextBlock Margin="5,0,0,0" VerticalAlignment="Center">
-                            Save Data
+                            Save Data with suffix:
                 </TextBlock>
 
             </StackPanel>
 
-            <TextBox Margin="10,5" DockPanel.Dock="Top"
-                             DataContext="{Binding Source={StaticResource resource}}"
-                             Text="{Binding Path=SavePrefix}">
+            <TextBox Name="saveSuffixTextBox" Margin="10,5" DockPanel.Dock="Top" 
+                     Text="{Binding Path=SaveSuffix}">
             </TextBox>
 
         </DockPanel>
@@ -51,17 +50,21 @@
         <TextBox Name="logTextBox" Margin="10" Height="96"
                          VerticalAlignment="Bottom" IsReadOnly="True"/>
 
-        <ListView Name="sensorListView" Margin="10,10,120,120"
-                          ItemsSource="{Binding Source={x:Static local:PediatricSensorData.Sensors}}">
+        <ListView Name="sensorListView" Margin="10,10,200,120"
+                  ItemsSource="{Binding Path=Sensors}">
 
             <ListView.View>
 
                 <GridView>
 
                     <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
+                    
                     <GridViewColumn Header="IDN" DisplayMemberBinding="{Binding IDN}"/>
+                    
                     <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
+                    
                     <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
+                    
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
@@ -72,8 +75,9 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
+                    
                 </GridView>
-
+                
             </ListView.View>
 
         </ListView>

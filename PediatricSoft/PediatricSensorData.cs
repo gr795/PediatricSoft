@@ -28,7 +28,7 @@ namespace PediatricSoft
         public static bool IsPlotting = false;
         public static bool PlotWindowClosed = false;
         public static bool SaveData { get; set; } = false;
-        public static string SavePrefix { get; set; } = String.Empty;
+        public static string SaveSuffix { get; set; } = String.Empty;
 
         public static ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
         public static bool IsRunning { get; private set; } = false;
@@ -95,12 +95,34 @@ namespace PediatricSoft
             }
         }
 
+        public static void ValidatePrefixString()
+        {
+            // Replace invalid characters with empty strings.
+            try
+            {
+                SaveSuffix = Regex.Replace(SaveSuffix, @"[^\w]", "",
+                                     RegexOptions.None, TimeSpan.FromSeconds(1.5));
+            }
+            // If we timeout when replacing invalid characters, 
+            // we should return Empty.
+            catch (RegexMatchTimeoutException)
+            {
+                SaveSuffix = String.Empty;
+            }
+        }
+
         private static void CreateDataFolder()
         {
-            dataFolder = System.IO.Path.Combine(
+            if (String.IsNullOrEmpty(SaveSuffix))
+                dataFolder = System.IO.Path.Combine(
                 System.IO.Directory.GetCurrentDirectory(),
                 PediatricSensorData.DefaultFolder,
                 DateTime.Now.ToString("yyyy-MM-dd_HHmmss") );
+            else
+                dataFolder = System.IO.Path.Combine(
+                    System.IO.Directory.GetCurrentDirectory(),
+                    PediatricSensorData.DefaultFolder,
+                    String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix) );
             System.IO.Directory.CreateDirectory(dataFolder);
         }
 

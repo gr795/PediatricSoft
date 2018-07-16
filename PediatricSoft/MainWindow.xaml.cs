@@ -52,10 +52,14 @@ namespace PediatricSoft
 
         private void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
         {
+            PediatricSensorData.ValidatePrefixString();
+            saveSuffixTextBox.Text = PediatricSensorData.SaveSuffix;
             if (!PediatricSensorData.IsRunning)
             {
                 buttonRunSensors.IsEnabled = false;
                 buttonScanPorts.IsEnabled = false;
+                saveSuffixTextBox.IsEnabled = false;
+                saveDataCheckbox.IsEnabled = false;
                 PediatricSensorData.StartAll();
                 buttonRunSensors.IsEnabled = true;
                 buttonRunSensors.Content = "Stop Sensors";
@@ -66,9 +70,10 @@ namespace PediatricSoft
                 PediatricSensorData.StopAll();
                 buttonScanPorts.IsEnabled = true;
                 buttonRunSensors.IsEnabled = true;
+                saveSuffixTextBox.IsEnabled = true;
+                saveDataCheckbox.IsEnabled = true;
                 buttonRunSensors.Content = "Start Sensors";
             }
-            Console.WriteLine(PediatricSensorData.SaveData);
         }
 
         private void ButtonPlot_Click(object sender, RoutedEventArgs e)
