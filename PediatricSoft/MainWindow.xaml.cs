@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -18,6 +20,7 @@ namespace PediatricSoft
         public MainWindow()
         {
             InitializeComponent();
+            ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
         }
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
@@ -32,7 +35,7 @@ namespace PediatricSoft
                 PediatricSensorData.ClearAll();
 
                 if (PediatricSensorData.IsDebugEnabled) Console.WriteLine("Scanning COM ports...\n");
-                await PediatricSensorData.StartScanAsync();
+                await Task.Run(() => PediatricSensorData.StartScan());
                 if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
 
                 PediatricSensorData.AddAll();
@@ -50,7 +53,7 @@ namespace PediatricSoft
 
         }
 
-        private void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
+        private async void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
         {
             PediatricSensorData.ValidatePrefixString();
             saveSuffixTextBox.Text = PediatricSensorData.SaveSuffix;
@@ -60,14 +63,14 @@ namespace PediatricSoft
                 buttonScanPorts.IsEnabled = false;
                 saveSuffixTextBox.IsEnabled = false;
                 saveDataCheckbox.IsEnabled = false;
-                PediatricSensorData.StartAll();
+                await Task.Run(() => PediatricSensorData.StartAll());
                 buttonRunSensors.IsEnabled = true;
                 buttonRunSensors.Content = "Stop Sensors";
             }
             else
             {
                 buttonRunSensors.IsEnabled = false;
-                PediatricSensorData.StopAll();
+                await Task.Run(() => PediatricSensorData.StopAll());
                 buttonScanPorts.IsEnabled = true;
                 buttonRunSensors.IsEnabled = true;
                 saveSuffixTextBox.IsEnabled = true;
