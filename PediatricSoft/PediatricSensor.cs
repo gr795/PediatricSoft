@@ -11,6 +11,7 @@ using LiveCharts.Wpf;
 using LiveCharts.Defaults;
 using LiveCharts.Geared;
 using System.IO;
+using System.Diagnostics;
 
 namespace PediatricSoft
 {
@@ -31,16 +32,17 @@ namespace PediatricSoft
         private Task processingTask;
         private string filePath = String.Empty;
         private StreamWriter file;
+        private bool isPortOpen = false;
 
         public bool ShouldBePlotted { get; set; } = false;
         public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>().WithQuality(Quality.Low);
         public double LastValue { get; private set; } = 0;
 
-        public string Port { get; }
-        public string IDN { get; }
-        public string SN { get; }
+        public string Port { get; private set; } = String.Empty;
+        public string IDN { get; private set; } = String.Empty;
+        public string SN { get; private set; } = String.Empty;
         public bool IsRunning { get; private set; } = false;
-
+        public bool IsValid { get; private set; } = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string prop)
@@ -49,28 +51,88 @@ namespace PediatricSoft
         }
 
         private PediatricSensor() { }
-        public PediatricSensor(SensorScanItem _SensorScanItem)
+        public PediatricSensor(string port)
         {
-            _SerialPort.PortName = _SensorScanItem.port;
-            Port = _SensorScanItem.port;
-            IDN = _SensorScanItem.idn;
-            SN = _SensorScanItem.sn;
+            _SerialPort.PortName = port;
+            Port = port;
+        }
+
+        private void PortOpen()
+        {
+            if (!_SerialPort.IsOpen)
+            {
+                try
+                {
+                    _SerialPort.Open();
+                    _SerialPort.DiscardOutBuffer();
+                    _SerialPort.WriteLine(PediatricSensorData.CommandStringStop);
+                    Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
+                    _SerialPort.DiscardInBuffer();
+                    isPortOpen = true;
+                }
+                catch (Exception e) { if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message); }
+            }
+        }
+
+        private void PortClose()
+        {
+            if (_SerialPort.IsOpen)
+            {
+                try
+                {
+                    _SerialPort.DiscardOutBuffer();
+                    _SerialPort.WriteLine(PediatricSensorData.CommandStringStop);
+                    Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
+                    _SerialPort.DiscardInBuffer();
+                    Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
+                    _SerialPort.DiscardInBuffer();
+                    _SerialPort.Close();
+                    isPortOpen = false;
+                }
+                catch (Exception e) { if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message); }
+                
+            }
+        }
+
+        public void PediatricSensorValidate()
+        {
+            PortOpen();
+            if (isPortOpen)
+            {
+                try
+                {
+                    _SerialPort.WriteLine(PediatricSensorData.CommandStringIDN);
+                    IDN = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
+                    _SerialPort.WriteLine(PediatricSensorData.CommandStringSN);
+                    SN = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
+                }
+                catch (TimeoutException e)
+                {
+                    if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Timeout on port {Port}");
+                    if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message);
+                }
+                if (IDN.Contains(PediatricSensorData.ValidIDN)) IsValid = true;
+                OnPropertyChanged("IDN");
+                OnPropertyChanged("SN");
+                PortClose();
+            }
         }
 
         public void PediatricSensorStart()
         {
-            IsRunning = true;
-            filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
-            filePath += ".txt";
-            if (PediatricSensorData.SaveDataEnabled) file = File.AppendText(filePath);
-            if (!_SerialPort.IsOpen) _SerialPort.Open();
-            _SerialPort.DiscardOutBuffer();
-            Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
-            _SerialPort.DiscardInBuffer();
-            _SerialPort.WriteLine(PediatricSensorData.CommandStringStart);
-            shouldBeRunning = true;
-            processingTask = Task.Run(() => PediatricSensorProcessData());
-            if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Started sensor {SN}");
+            if (IsValid)
+            {
+                PortOpen();
+                IsRunning = true;
+                filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
+                filePath += ".txt";
+                if (PediatricSensorData.SaveDataEnabled) file = File.AppendText(filePath);
+
+                _SerialPort.WriteLine(PediatricSensorData.CommandStringStart);
+                shouldBeRunning = true;
+                processingTask = Task.Run(() => PediatricSensorProcessData());
+                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Started sensor {SN}");
+            }
         }
 
         private void PediatricSensorProcessData()
@@ -92,9 +154,10 @@ namespace PediatricSoft
                 {
                     dataReadString = _SerialPort.ReadLine();
                 }
-                catch (TimeoutException)
+                catch (TimeoutException e)
                 {
                     dataReadString = String.Empty;
+                    if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message);
                 }
 
                 if (dataReadString.Length > 0)
@@ -125,6 +188,8 @@ namespace PediatricSoft
                     OnPropertyChanged("LastValue");
 
                     if (PediatricSensorData.SaveDataEnabled) file.WriteLine(dataWriteString);
+
+                    //Thread.Sleep(10);
                 }
                 
 
@@ -136,34 +201,29 @@ namespace PediatricSoft
 
         public void PediatricSensorStop()
         {
-            shouldBeRunning = false;
-            if (processingTask != null)
+            if (IsValid)
             {
-                while (!processingTask.IsCompleted)
+                shouldBeRunning = false;
+                if (processingTask != null)
                 {
-                    if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Waiting for sensor {SN} to stop");
+                    while (!processingTask.IsCompleted)
+                    {
+                        if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Waiting for sensor {SN} to stop");
+                    };
+                    processingTask.Dispose();
                 };
-                processingTask.Dispose();
-            };
-            if (_SerialPort.IsOpen)
-            {
-                _SerialPort.DiscardOutBuffer();
-                _SerialPort.WriteLine(PediatricSensorData.CommandStringStop);
-                Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
-                _SerialPort.DiscardInBuffer();
-                Thread.Sleep(PediatricSensorData.DefaultSerialPortSleepTime);
-                _SerialPort.DiscardInBuffer();
-                _SerialPort.Close();
+                PortClose();
+                
+                if (PediatricSensorData.SaveDataEnabled && (file != null)) file.Dispose();
+                IsRunning = false;
+                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Sensor {SN} is stopped");
             }
-            _SerialPort.Dispose();
-            if (PediatricSensorData.SaveDataEnabled && (file != null)) file.Dispose();
-            IsRunning = false;
-            if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Sensor {SN} is stopped");
         }
 
         ~PediatricSensor()
         {
             PediatricSensorStop();
+            _SerialPort.Dispose();
         }
 
     }

@@ -31,7 +31,7 @@
             <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
                 <CheckBox Name="saveDataCheckbox" VerticalAlignment="Center" 
-                          IsChecked="{Binding Path=SaveData}">
+                          IsChecked="{Binding Path=SaveDataEnabled}">
 
                 </CheckBox>
 

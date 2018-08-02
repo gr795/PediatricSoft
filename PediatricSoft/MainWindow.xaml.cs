@@ -4,10 +4,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Data;
 using System.ComponentModel;
 using LiveCharts;
 using LiveCharts.Wpf;
-
+using System.Diagnostics;
 
 namespace PediatricSoft
 {
@@ -16,6 +17,7 @@ namespace PediatricSoft
     {
 
         PlotWindow plotWindow = new PlotWindow();
+        object sensorsLock = new object();
 
         public MainWindow()
         {
@@ -31,14 +33,13 @@ namespace PediatricSoft
 
             if (!PediatricSensorData.IsScanning)
             {
-                if (PediatricSensorData.IsDebugEnabled) Console.WriteLine("Clearing sensor list\n");
+                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine("Clearing sensor list\n");
                 PediatricSensorData.ClearAll();
 
-                if (PediatricSensorData.IsDebugEnabled) Console.WriteLine("Scanning COM ports...\n");
-                await Task.Run(() => PediatricSensorData.StartScan());
-                if (PediatricSensorData.IsDebugEnabled) Console.WriteLine($"Found {PediatricSensorData.SensorScanList.Count} sensors\n");
+                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine("Scanning COM ports...\n");
+                await Task.Run(() => PediatricSensorData.AddAll());
+                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Found {PediatricSensorData.Sensors.Count} sensors\n");
 
-                PediatricSensorData.AddAll();
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
                     buttonRunSensors.IsEnabled = true;
@@ -55,7 +56,7 @@ namespace PediatricSoft
 
         private async void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
         {
-            PediatricSensorData.ValidatePrefixString();
+            PediatricSensorData.ValidateSuffixString();
             saveSuffixTextBox.Text = PediatricSensorData.SaveSuffix;
             if (!PediatricSensorData.IsRunning)
             {
