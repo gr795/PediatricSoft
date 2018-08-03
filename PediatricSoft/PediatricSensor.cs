@@ -33,6 +33,7 @@ namespace PediatricSoft
         private string filePath = String.Empty;
         private StreamWriter file;
         private bool isPortOpen = false;
+        private int guiCounter = 0;
 
         public bool ShouldBePlotted { get; set; } = false;
         public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>().WithQuality(Quality.Low);
@@ -94,7 +95,7 @@ namespace PediatricSoft
             }
         }
 
-        public void PediatricSensorValidate()
+        public void Validate()
         {
             PortOpen();
             if (isPortOpen)
@@ -106,7 +107,7 @@ namespace PediatricSoft
                     _SerialPort.WriteLine(PediatricSensorData.CommandStringSN);
                     SN = Regex.Replace(_SerialPort.ReadLine(), @"\t|\n|\r", "");
                 }
-                catch (TimeoutException e)
+                catch (Exception e)
                 {
                     if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Timeout on port {Port}");
                     if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message);
@@ -118,7 +119,7 @@ namespace PediatricSoft
             }
         }
 
-        public void PediatricSensorStart()
+        public void Start()
         {
             if (IsValid)
             {
@@ -130,12 +131,12 @@ namespace PediatricSoft
 
                 _SerialPort.WriteLine(PediatricSensorData.CommandStringStart);
                 shouldBeRunning = true;
-                processingTask = Task.Run(() => PediatricSensorProcessData());
+                processingTask = Task.Run(() => ProcessData());
                 if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Started sensor {SN}");
             }
         }
 
-        private void PediatricSensorProcessData()
+        private void ProcessData()
         {
             DataPoint dummyDataPoint = new DataPoint();
             string dataReadString = String.Empty;
@@ -154,7 +155,7 @@ namespace PediatricSoft
                 {
                     dataReadString = _SerialPort.ReadLine();
                 }
-                catch (TimeoutException e)
+                catch (Exception e)
                 {
                     dataReadString = String.Empty;
                     if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message);
@@ -184,8 +185,14 @@ namespace PediatricSoft
                         _ChartValues.Add(new ObservableValue(dataY));
                         if (_ChartValues.Count > PediatricSensorData.MaxQueueLength) _ChartValues.RemoveAt(0);
                     }
-                    LastValue = dataY;
-                    OnPropertyChanged("LastValue");
+
+                    guiCounter++;
+                    if (guiCounter > PediatricSensorData.GUICounter)
+                    {
+                        LastValue = dataY;
+                        OnPropertyChanged("LastValue");
+                        guiCounter = 0;
+                    }
 
                     if (PediatricSensorData.SaveDataEnabled) file.WriteLine(dataWriteString);
 
@@ -199,7 +206,7 @@ namespace PediatricSoft
 
         }
 
-        public void PediatricSensorStop()
+        public void Stop()
         {
             if (IsValid)
             {
@@ -222,7 +229,7 @@ namespace PediatricSoft
 
         ~PediatricSensor()
         {
-            PediatricSensorStop();
+            Stop();
             _SerialPort.Dispose();
         }
 

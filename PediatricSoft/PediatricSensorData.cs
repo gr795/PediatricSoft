@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace PediatricSoft
 {
@@ -25,6 +26,7 @@ namespace PediatricSoft
 
         public static readonly int NumberOfThreads = 32;
         public static readonly int MaxQueueLength = 1000;
+        public static readonly int GUICounter = 100;
         public static readonly string DefaultFolder = "Data";
 
         public static readonly string ValidIDN = "12";
@@ -40,6 +42,7 @@ namespace PediatricSoft
         public static string SaveSuffix { get; set; } = String.Empty;
 
         public static ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
+        public static string SensorCount { get { return Sensors.Count.ToString(); } }
         public static bool IsRunning { get; private set; } = false;
         public static List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public static bool IsScanning { get; private set; } = false;
@@ -56,30 +59,17 @@ namespace PediatricSoft
         public static void AddAll()
         {
 
-            foreach (string port in SerialPort.GetPortNames())
+            Parallel.ForEach(SerialPort.GetPortNames(),port =>
             {
-                App.Current.Dispatcher.Invoke((Action)delegate
-                {
-                    Sensors.Add(new PediatricSensor(port));
-                });
-            }
-
-            Parallel.ForEach(Sensors, _PediatricSensor =>
-            {
-                _PediatricSensor.PediatricSensorValidate();
+                PediatricSensor sensor = new PediatricSensor(port);
+                sensor.Validate();
+                if (sensor.IsValid)
+                    App.Current.Dispatcher.Invoke((Action)delegate
+                    {
+                        Sensors.Add(sensor);
+                    });
+                //OnPropertyChanged("SensorCount");
             });
-
-            if (Sensors.Count > 0)
-            {
-                for (int i = Sensors.Count; i > 0; i--)
-                {
-                    if (!Sensors[i - 1].IsValid)
-                        App.Current.Dispatcher.Invoke((Action)delegate
-                            {
-                                Sensors.RemoveAt(i - 1);
-                            });
-                }
-            }
 
         }
 
@@ -91,7 +81,7 @@ namespace PediatricSoft
                 if (PediatricSensorData.SaveDataEnabled) CreateDataFolder();
                 Parallel.ForEach(Sensors, _PediatricSensor =>
                 {
-                    _PediatricSensor.PediatricSensorStart();
+                    _PediatricSensor.Start();
                 });
             }
         }
@@ -102,7 +92,7 @@ namespace PediatricSoft
             {
                 Parallel.ForEach(Sensors, _PediatricSensor =>
                 {
-                    _PediatricSensor.PediatricSensorStop();
+                    _PediatricSensor.Stop();
                 });
                 IsRunning = false;
             }

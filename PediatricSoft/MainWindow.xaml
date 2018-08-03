@@ -18,6 +18,11 @@
                 Scan Ports
             </Button>
 
+            <TextBlock Margin="10,5" Height="20"
+                       DockPanel.Dock="Top"
+                       Text="{Binding Path=SensorCount}">
+            </TextBlock>
+
             <Button Name="buttonRunSensors" Margin="10,5" Height="20"
                             IsEnabled="False" DockPanel.Dock="Top" Click="ButtonRunSensors_Click">
                 Start Sensors
