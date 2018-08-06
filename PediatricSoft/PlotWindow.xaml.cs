@@ -21,6 +21,9 @@ namespace PediatricSoft
 
     public partial class PlotWindow : Window
     {
+
+        PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
+
         public PlotWindow()
         {
             InitializeComponent();

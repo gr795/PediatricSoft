@@ -17,7 +17,7 @@ namespace PediatricSoft
     {
 
         PlotWindow plotWindow = new PlotWindow();
-        object sensorsLock = new object();
+        PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
         public MainWindow()
         {

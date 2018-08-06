@@ -18,15 +18,9 @@ namespace PediatricSoft
     public class PediatricSensor : INotifyPropertyChanged
     {
 
-        private SerialPort _SerialPort = new SerialPort()
-        {
-            WriteTimeout = PediatricSensorData.DefaultSerialPortWriteTimeout,
-            ReadTimeout = PediatricSensorData.DefaultSerialPortReadTimeout,
-            BaudRate = PediatricSensorData.DefaultSerialPortBaudRate,
-            DtrEnable = false,
-            RtsEnable = false
-        };
+        PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
+        private SerialPort _SerialPort;
         private ConcurrentQueue<DataPoint> data = new ConcurrentQueue<DataPoint>();
         private bool shouldBeRunning = false;
         private Task processingTask;
@@ -54,8 +48,18 @@ namespace PediatricSoft
         private PediatricSensor() { }
         public PediatricSensor(string port)
         {
-            _SerialPort.PortName = port;
             Port = port;
+
+            _SerialPort = new SerialPort()
+            {
+                PortName = port,
+                WriteTimeout = PediatricSensorData.DefaultSerialPortWriteTimeout,
+                ReadTimeout = PediatricSensorData.DefaultSerialPortReadTimeout,
+                BaudRate = PediatricSensorData.DefaultSerialPortBaudRate,
+                DtrEnable = false,
+                RtsEnable = false
+            };
+
         }
 
         private void PortOpen()

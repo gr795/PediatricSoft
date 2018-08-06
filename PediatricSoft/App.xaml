@@ -4,6 +4,8 @@
              xmlns:local="clr-namespace:PediatricSoft"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <local:PediatricSensorData x:Key="resource"/>
+        <ObjectDataProvider x:Key="resource"
+                            ObjectType="{x:Type local:PediatricSensorData}"
+                            MethodName="GetInstance"/>
     </Application.Resources>
 </Application>

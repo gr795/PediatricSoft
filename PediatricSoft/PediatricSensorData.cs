@@ -12,53 +12,75 @@ using System.ComponentModel;
 
 namespace PediatricSoft
 {
-    public class PediatricSensorData
+    public sealed class PediatricSensorData : INotifyPropertyChanged
     {
+
+        private static readonly PediatricSensorData instance = new PediatricSensorData();
+
+        static PediatricSensorData()
+        {
+        }
+
+        private PediatricSensorData()
+        {
+        }
+
+        public static PediatricSensorData Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
+
+        public static PediatricSensorData GetInstance() { return instance; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged(string prop)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+        }
 
         // Constants
         public const bool IsDebugEnabled = true;
 
-        public static readonly int DefaultSerialPortBaudRate = 115200;
-        public static readonly int DefaultSerialPortWriteTimeout = 1000;
-        public static readonly int DefaultSerialPortReadTimeout = 1000;
-        public static readonly int DefaultSerialPortSleepTime = 1000;
-        public static readonly int DefaultSerialPortShutDownLoopDelay = 1;
+        public readonly int DefaultSerialPortBaudRate = 115200;
+        public readonly int DefaultSerialPortWriteTimeout = 1000;
+        public readonly int DefaultSerialPortReadTimeout = 1000;
+        public readonly int DefaultSerialPortSleepTime = 1000;
+        public readonly int DefaultSerialPortShutDownLoopDelay = 1;
 
-        public static readonly int NumberOfThreads = 32;
-        public static readonly int MaxQueueLength = 1000;
-        public static readonly int GUICounter = 100;
-        public static readonly string DefaultFolder = "Data";
+        public readonly int NumberOfThreads = 32;
+        public readonly int MaxQueueLength = 1000;
+        public readonly int GUICounter = 100;
+        public readonly string DefaultFolder = "Data";
 
-        public static readonly string ValidIDN = "12";
-        public static readonly string CommandStringIDN = "Q0";
-        public static readonly string CommandStringSN = "Q1";
-        public static readonly string CommandStringStart = "Q2";
-        public static readonly string CommandStringStop = "Q3";
+        public readonly string ValidIDN = "12";
+        public readonly string CommandStringIDN = "Q0";
+        public readonly string CommandStringSN = "Q1";
+        public readonly string CommandStringStart = "Q2";
+        public readonly string CommandStringStop = "Q3";
 
         // Globals
-        public static bool IsPlotting = false;
-        public static bool PlotWindowClosed = false;
-        public static bool SaveDataEnabled { get; set; } = false;
-        public static string SaveSuffix { get; set; } = String.Empty;
+        public bool IsPlotting = false;
+        public bool PlotWindowClosed = false;
+        public bool SaveDataEnabled { get; set; } = false;
+        public string SaveSuffix { get; set; } = String.Empty;
 
-        public static ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
-        public static string SensorCount { get { return Sensors.Count.ToString(); } }
-        public static bool IsRunning { get; private set; } = false;
-        public static List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
-        public static bool IsScanning { get; private set; } = false;
+        public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
+        public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString() ); } }
+        public bool IsRunning { get; private set; } = false;
+        public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
+        public bool IsScanning { get; private set; } = false;
 
-        public static SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
+        public SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
 
-        public static string dataFolder = String.Empty;
+        public string dataFolder = String.Empty;
 
-        static PediatricSensorData()
+
+        public void AddAll()
         {
-
-        }
-
-        public static void AddAll()
-        {
-
+            OnPropertyChanged("SensorCount");
             Parallel.ForEach(SerialPort.GetPortNames(),port =>
             {
                 PediatricSensor sensor = new PediatricSensor(port);
@@ -68,17 +90,17 @@ namespace PediatricSoft
                     {
                         Sensors.Add(sensor);
                     });
-                //OnPropertyChanged("SensorCount");
+                OnPropertyChanged("SensorCount");
             });
 
         }
 
-        public static void StartAll()
+        public void StartAll()
         {
             if (!IsRunning)
             {
                 IsRunning = true;
-                if (PediatricSensorData.SaveDataEnabled) CreateDataFolder();
+                if (SaveDataEnabled) CreateDataFolder();
                 Parallel.ForEach(Sensors, _PediatricSensor =>
                 {
                     _PediatricSensor.Start();
@@ -86,7 +108,7 @@ namespace PediatricSoft
             }
         }
 
-        public static void StopAll()
+        public void StopAll()
         {
             if (IsRunning)
             {
@@ -98,13 +120,13 @@ namespace PediatricSoft
             }
         }
 
-        public static void ClearAll()
+        public void ClearAll()
         {
             StopAll();
             Sensors.Clear();
         }
 
-        public static void ValidateSuffixString()
+        public void ValidateSuffixString()
         {
             // Replace invalid characters with empty strings.
             try
@@ -120,17 +142,17 @@ namespace PediatricSoft
             }
         }
 
-        private static void CreateDataFolder()
+        private void CreateDataFolder()
         {
             if (String.IsNullOrEmpty(SaveSuffix))
                 dataFolder = System.IO.Path.Combine(
                 System.IO.Directory.GetCurrentDirectory(),
-                PediatricSensorData.DefaultFolder,
+                DefaultFolder,
                 DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
             else
                 dataFolder = System.IO.Path.Combine(
                     System.IO.Directory.GetCurrentDirectory(),
-                    PediatricSensorData.DefaultFolder,
+                    DefaultFolder,
                     String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
             System.IO.Directory.CreateDirectory(dataFolder);
         }
