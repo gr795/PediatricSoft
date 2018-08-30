@@ -83,7 +83,7 @@ namespace PediatricSoft
                     _SerialPort.DiscardOutBuffer();
                     _SerialPort.DiscardInBuffer();
                 }
-                catch (Exception e) { if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message); }
+                catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,e.Message); }
             }
         }
 
@@ -97,7 +97,7 @@ namespace PediatricSoft
                     _SerialPort.DiscardInBuffer();
                     _SerialPort.Close();
                 }
-                catch (Exception e) { if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message); }
+                catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,e.Message); }
 
             }
         }
@@ -133,7 +133,7 @@ namespace PediatricSoft
                 uiUpdateTimer = new System.Timers.Timer(PediatricSensorData.UIUpdateInterval);
                 uiUpdateTimer.Elapsed += OnUIUpdateTimerEvent;
                 uiUpdateTimer.Enabled = true;
-                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Started sensor {SN}");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,$"Started sensor {SN}");
             }
         }
 
@@ -150,7 +150,7 @@ namespace PediatricSoft
                 {
                     bytesRead = stream.Read(byteArrayIn, 0, PediatricSensorData.SerialPortStreamBlockSize);
                 }
-                catch (Exception e) { if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine(e.Message); }
+                catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,e.Message); }
 
                 if (bytesRead > 0)
                 {
@@ -252,7 +252,7 @@ namespace PediatricSoft
                 {
                     while (!streamingTask.IsCompleted)
                     {
-                        if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Waiting for sensor {SN} to stop");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,$"Waiting for sensor {SN} to stop");
                     };
                     streamingTask.Dispose();
                 };
@@ -261,7 +261,7 @@ namespace PediatricSoft
                 if (uiUpdateTimer != null) uiUpdateTimer.Dispose();
                 if (PediatricSensorData.SaveDataEnabled && (file != null)) file.Dispose();
                 IsRunning = false;
-                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Sensor {SN} is stopped");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,$"Sensor {SN} is stopped");
             }
         }
 

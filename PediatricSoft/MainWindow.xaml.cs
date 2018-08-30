@@ -33,12 +33,12 @@ namespace PediatricSoft
             
             if (!PediatricSensorData.IsScanning)
             {
-                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine("Clearing sensor list\n");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,"Clearing sensor list\n");
                 PediatricSensorData.ClearAll();
 
-                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine("Scanning COM ports...\n");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,"Scanning COM ports...\n");
                 await Task.Run(() => PediatricSensorData.AddAll());
-                if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine($"Found {PediatricSensorData.Sensors.Count} sensors\n");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,$"Found {PediatricSensorData.Sensors.Count} sensors\n");
 
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
