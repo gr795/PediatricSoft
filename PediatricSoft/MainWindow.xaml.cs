@@ -30,7 +30,7 @@ namespace PediatricSoft
             buttonScanPorts.IsEnabled = false;
             buttonRunSensors.IsEnabled = false;
             buttonPlot.IsEnabled = false;
-
+            
             if (!PediatricSensorData.IsScanning)
             {
                 if (PediatricSensorData.IsDebugEnabled) Debug.WriteLine("Clearing sensor list\n");
