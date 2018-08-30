@@ -169,7 +169,7 @@ namespace PediatricSoft
 
         private void ProcessData()
         {
-            byte[] data = new byte[PediatricSensorData.DataBlockSize];
+            byte[] data = new byte[PediatricSensorData.DataPaddedBlockSize];
             int dataIndex = 0;
 
             byte[] dataLastValue = new byte[4];
@@ -198,6 +198,12 @@ namespace PediatricSoft
                             case PediatricSensorData.FrameEscapeByte:
                                 if (inEscape)
                                 {
+                                    if ((dataIndex % 4) == 0) // We pad our 24 bit values with 0x00 on the left.
+                                                              // We do this to use BitConverter.ToInt32() which requires 4 bytes.
+                                    {
+                                        data[dataIndex] = 0x00;
+                                        dataIndex++;
+                                    }
                                     data[dataIndex] = localBuffer[i];
                                     dataIndex++;
                                     inEscape = false;
@@ -208,6 +214,11 @@ namespace PediatricSoft
                             case PediatricSensorData.StartDataFrameByte:
                                 if (inEscape)
                                 {
+                                    if ((dataIndex % 4) == 0)
+                                    {
+                                        data[dataIndex] = 0x00;
+                                        dataIndex++;
+                                    }
                                     data[dataIndex] = localBuffer[i];
                                     dataIndex++;
                                     inEscape = false;
@@ -216,17 +227,20 @@ namespace PediatricSoft
                                 break;
 
                             default:
+                                if ((dataIndex % 4) == 0)
+                                {
+                                    data[dataIndex] = 0x00;
+                                    dataIndex++;
+                                }
                                 data[dataIndex] = localBuffer[i];
                                 dataIndex++;
                                 break;
                         }
 
-                        if (dataIndex == PediatricSensorData.DataBlockSize)
+                        if (dataIndex == PediatricSensorData.DataPaddedBlockSize)
                         {
-                            Array.Copy(data, 3, dataLastValue, 1, 3); // copy 24 bits of data
-                            dataLastValue[0] = 0; // pad the data with 0x00 to get 32 bits
-                            Array.Reverse(dataLastValue); // switch from MSB to LSB
-                            LastValue = BitConverter.ToInt32(dataLastValue,0);
+                            Array.Reverse(data); // switch from MSB to LSB
+                            LastValue = BitConverter.ToInt32(data, 0);
 
                             if (PediatricSensorData.SaveDataEnabled) file.WriteLine(Convert.ToString(LastValue));
 
@@ -245,7 +259,7 @@ namespace PediatricSoft
 
         public void Stop()
         {
-            if (IsValid)
+            if (IsValid && IsRunning)
             {
                 shouldBeRunning = false;
                 if (streamingTask != null)
