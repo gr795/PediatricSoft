@@ -193,17 +193,19 @@ namespace PediatricSoft
                     
                     for (int i = 0; i < localBufferIndex; i++)
                     {
+                        if ((dataIndex % 4) == 0) // We pad our 24 bit values with 0x00 on the left.
+                                                  // We do this to use BitConverter.ToInt32() which requires 4 bytes.
+                        {
+                            data[dataIndex] = 0x00;
+                            dataIndex++;
+                        }
+
                         switch (localBuffer[i])
                         {
+
                             case PediatricSensorData.FrameEscapeByte:
                                 if (inEscape)
                                 {
-                                    if ((dataIndex % 4) == 0) // We pad our 24 bit values with 0x00 on the left.
-                                                              // We do this to use BitConverter.ToInt32() which requires 4 bytes.
-                                    {
-                                        data[dataIndex] = 0x00;
-                                        dataIndex++;
-                                    }
                                     data[dataIndex] = localBuffer[i];
                                     dataIndex++;
                                     inEscape = false;
@@ -214,11 +216,6 @@ namespace PediatricSoft
                             case PediatricSensorData.StartDataFrameByte:
                                 if (inEscape)
                                 {
-                                    if ((dataIndex % 4) == 0)
-                                    {
-                                        data[dataIndex] = 0x00;
-                                        dataIndex++;
-                                    }
                                     data[dataIndex] = localBuffer[i];
                                     dataIndex++;
                                     inEscape = false;
@@ -227,11 +224,6 @@ namespace PediatricSoft
                                 break;
 
                             default:
-                                if ((dataIndex % 4) == 0)
-                                {
-                                    data[dataIndex] = 0x00;
-                                    dataIndex++;
-                                }
                                 data[dataIndex] = localBuffer[i];
                                 dataIndex++;
                                 break;
