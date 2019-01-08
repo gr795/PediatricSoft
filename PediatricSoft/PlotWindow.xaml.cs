@@ -29,10 +29,5 @@ namespace PediatricSoft
             InitializeComponent();
             plotBox.Series = PediatricSensorData._SeriesCollection;
         }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            PediatricSensorData.PlotWindowClosed = true;
-        }
     }
 }

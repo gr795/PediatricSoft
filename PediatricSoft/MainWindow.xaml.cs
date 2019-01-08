@@ -23,6 +23,8 @@ namespace PediatricSoft
         {
             InitializeComponent();
             ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
+
+            plotWindow.Closed += OnPlotWindowClosing;
         }
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
@@ -30,15 +32,15 @@ namespace PediatricSoft
             buttonScanPorts.IsEnabled = false;
             buttonRunSensors.IsEnabled = false;
             buttonPlot.IsEnabled = false;
-            
+
             if (!PediatricSensorData.IsScanning)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,"Clearing sensor list\n");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Clearing sensor list\n");
                 PediatricSensorData.ClearAll();
 
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,"Scanning COM ports...\n");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Scanning COM ports...\n");
                 await Task.Run(() => PediatricSensorData.AddAll());
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,$"Found {PediatricSensorData.Sensors.Count} sensors\n");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Found {PediatricSensorData.Sensors.Count} sensors\n");
 
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
@@ -84,7 +86,7 @@ namespace PediatricSoft
         {
 
             buttonPlot.IsEnabled = false;
-            if (PediatricSensorData.IsPlotting)
+            if (plotWindow.IsVisible)
             {
                 HidePlot();
             }
@@ -114,30 +116,42 @@ namespace PediatricSoft
 
         }
 
+        private void OnPlotWindowClosing(object sender, EventArgs e)
+        {
+            buttonPlot.Content = "Show Plot";
+        }
+
         private void ShowPlot()
         {
-            if (PediatricSensorData.PlotWindowClosed)
+            try
             {
-                plotWindow = new PlotWindow();
-                PediatricSensorData.PlotWindowClosed = false;
+                plotWindow.Show();
             }
-            plotWindow.Show();
-            PediatricSensorData.IsPlotting = true;
+            catch (Exception)
+            {
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Plot window appears to be closed. Creating a new one.");
+                plotWindow = new PlotWindow();
+                plotWindow.Closed += OnPlotWindowClosing;
+                plotWindow.Show();
+            }
             buttonPlot.Content = "Hide Plot";
         }
 
-        public void HidePlot()
+        private void HidePlot()
         {
             plotWindow.Hide();
-            PediatricSensorData.IsPlotting = false;
             buttonPlot.Content = "Show Plot";
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             PediatricSensorData.StopAll();
-            plotWindow.Close();
-        }
+            try
+            {
+                plotWindow.Close();
+            }
+            catch (Exception) { }
 
+        }
     }
 }

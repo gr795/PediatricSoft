@@ -38,6 +38,7 @@ namespace PediatricSoft
         public bool ShouldBePlotted { get; set; } = false;
         public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>().WithQuality(Quality.Low);
         public int LastValue { get; private set; } = 0;
+        public int LastTime { get; private set; } = 0;
 
         public string Port { get; private set; } = String.Empty;
         public string IDN { get; private set; } = String.Empty;
@@ -107,6 +108,7 @@ namespace PediatricSoft
             PortOpen();
             if (_SerialPort.IsOpen)
             {
+                // _SerialPort.Write("?\n");
                 Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
                 int bytesToRead = _SerialPort.BytesToRead;
                 if (bytesToRead > 0) IsValid = true;
@@ -172,8 +174,6 @@ namespace PediatricSoft
             byte[] data = new byte[PediatricSensorData.DataPaddedBlockSize];
             int dataIndex = 0;
 
-            byte[] dataLastValue = new byte[4];
-
             byte[] localBuffer = new byte[PediatricSensorData.ProcessingBufferSize];
             int localBufferIndex = 0;
 
@@ -232,13 +232,19 @@ namespace PediatricSoft
                         if (dataIndex == PediatricSensorData.DataPaddedBlockSize)
                         {
                             Array.Reverse(data); // switch from MSB to LSB
+                            LastTime = BitConverter.ToInt32(data, 4);
                             LastValue = BitConverter.ToInt32(data, 0);
 
-                            if (PediatricSensorData.SaveDataEnabled) file.WriteLine(Convert.ToString(LastValue));
+                            if (ShouldBePlotted)
+                            {
+                                _ChartValues.Add(new ObservableValue(LastValue));
+                                if (_ChartValues.Count > PediatricSensorData.MaxQueueLength) _ChartValues.RemoveAt(0);
+                            }
+
+                            if (PediatricSensorData.SaveDataEnabled) file.WriteLine( String.Concat( Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
 
                             dataIndex = 0;
                         }
-                            
 
                     }
 
@@ -246,8 +252,6 @@ namespace PediatricSoft
                 };
             };
         }
-
-
 
         public void Stop()
         {
