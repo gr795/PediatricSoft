@@ -55,6 +55,7 @@ namespace PediatricSoft
         public const int SerialPortStreamSleepMax = 250;
 
         public const int UIUpdateInterval = 500; // Update UI every X ms
+        public const int StateHandlerSleepTime = 10; // in ms
 
         public const int ProcessingBufferSize = 1048576; // 1 MiB
         public const int DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
@@ -82,7 +83,8 @@ namespace PediatricSoft
         public const byte SensorStateValid = 1;
         public const byte SensorStateIdle = 2;
         public const byte SensorStateLaserLock = 3;
-        public const byte SensorStateShutDown = 4;
+        public const byte SensorStateRun = 4;
+        public const byte SensorStateShutDown = 5;
 
         public const byte SensorStateLast = 255;
 
