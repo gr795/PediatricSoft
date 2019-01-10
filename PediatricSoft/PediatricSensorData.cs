@@ -74,6 +74,8 @@ namespace PediatricSoft
         public const string CommandStringStart = "Q2";
         public const string CommandStringStop = "Q3";
 
+        public const ushort SensorDefaultCurrent = 0xC000;
+
         // Globals
         public bool IsPlotting = false;
         public bool PlotWindowClosed = false;
@@ -87,6 +89,8 @@ namespace PediatricSoft
         public bool IsRunning { get; private set; } = false;
         public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public bool IsScanning { get; private set; } = false;
+
+        public string CommandBoxText { get; set; }
 
         public SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
 
@@ -171,9 +175,5 @@ namespace PediatricSoft
                     String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
             System.IO.Directory.CreateDirectory(dataFolder);
         }
-
-
-
-
     }
 }

@@ -22,8 +22,8 @@ namespace PediatricSoft
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
         private SerialPort _SerialPort;
-        private ConcurrentQueue<DataPoint> data = new ConcurrentQueue<DataPoint>();
-        private ConcurrentQueue<byte[]> byteStreamQueue = new ConcurrentQueue<byte[]>();
+        //private ConcurrentQueue<DataPoint> data = new ConcurrentQueue<DataPoint>();
+        //private ConcurrentQueue<byte[]> byteStreamQueue = new ConcurrentQueue<byte[]>();
         private bool shouldBeRunning = false;
         private Task streamingTask;
         private Task processingTask;
@@ -43,6 +43,7 @@ namespace PediatricSoft
         public string Port { get; private set; } = String.Empty;
         public string IDN { get; private set; } = String.Empty;
         public string SN { get; private set; } = String.Empty;
+        public string PortSN { get { return String.Concat(Port, " - ", SN); } }
         public bool IsRunning { get; private set; } = false;
         public bool IsValid { get; private set; } = false;
 
@@ -108,7 +109,8 @@ namespace PediatricSoft
             PortOpen();
             if (_SerialPort.IsOpen)
             {
-                // _SerialPort.Write("?\n");
+                _SerialPort.WriteLine("@20");
+                _SerialPort.WriteLine("#2");
                 Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
                 int bytesToRead = _SerialPort.BytesToRead;
                 if (bytesToRead > 0) IsValid = true;
@@ -273,6 +275,30 @@ namespace PediatricSoft
                 IsRunning = false;
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled,$"Sensor {SN} is stopped");
             }
+        }
+
+        public void SendCommand(string command)
+        {
+            try
+            {
+                command = Regex.Replace(command, @"[^\w@#]", "", RegexOptions.None, TimeSpan.FromSeconds(1.5));
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                command = String.Empty;
+            }
+
+            if (IsRunning)
+            {
+                if (!String.IsNullOrEmpty(command))
+                {
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: sending command \"{command}\"");
+                    _SerialPort.WriteLine(command);
+                    //command = String.Concat(command, "\n");
+                }
+            }
+            else
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Can't send commands - sensor isn't running");
         }
 
         ~PediatricSensor()

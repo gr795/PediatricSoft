@@ -17,6 +17,7 @@ namespace PediatricSoft
     {
 
         PlotWindow plotWindow = new PlotWindow();
+        SendCommandsWindow sendCommandsWindow = new SendCommandsWindow();
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
         public MainWindow()
@@ -31,7 +32,14 @@ namespace PediatricSoft
         {
             buttonScanPorts.IsEnabled = false;
             buttonRunSensors.IsEnabled = false;
+            buttonSendCommands.IsEnabled = false;
             buttonPlot.IsEnabled = false;
+            try
+            {
+                plotWindow.Close();
+                sendCommandsWindow.Close();
+            }
+            catch (Exception) { }
 
             if (!PediatricSensorData.IsScanning)
             {
@@ -45,6 +53,7 @@ namespace PediatricSoft
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
                     buttonRunSensors.IsEnabled = true;
+                    buttonSendCommands.IsEnabled = true;
                     buttonPlot.IsEnabled = true;
                 }
 
@@ -126,6 +135,7 @@ namespace PediatricSoft
             try
             {
                 plotWindow.Show();
+                plotWindow.WindowState = WindowState.Normal;
             }
             catch (Exception)
             {
@@ -143,12 +153,29 @@ namespace PediatricSoft
             buttonPlot.Content = "Show Plot";
         }
 
+        private void ButtonSendCommands_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                sendCommandsWindow.Show();
+                sendCommandsWindow.WindowState = WindowState.Normal;
+                sendCommandsWindow.Focus();
+            }
+            catch (Exception)
+            {
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Send commands window appears to be closed. Creating a new one.");
+                sendCommandsWindow = new SendCommandsWindow();
+                sendCommandsWindow.Show();
+            }
+        }
+
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             PediatricSensorData.StopAll();
             try
             {
                 plotWindow.Close();
+                sendCommandsWindow.Close();
             }
             catch (Exception) { }
 

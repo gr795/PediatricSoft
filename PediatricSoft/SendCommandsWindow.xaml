@@ -1,0 +1,38 @@
+﻿<Window x:Class="PediatricSoft.SendCommandsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PediatricSoft"
+        mc:Ignorable="d"
+        Title="SendCommandsWindow" Height="500" Width="300"
+        ResizeMode="CanMinimize">
+    <Grid>
+
+        <DockPanel LastChildFill="False">
+
+            <StackPanel Margin="10,10,10,5" DockPanel.Dock="Top" Orientation="Horizontal">
+
+                <TextBlock VerticalAlignment="Center">
+                    Sensor:
+                </TextBlock>
+
+                <ComboBox Margin="10,0,0,0" VerticalAlignment="Center"
+                          ItemsSource="{Binding Path=Sensors}"
+                          DisplayMemberPath="PortSN"
+                          SelectedItem="{Binding Path=CurrentSensor}"
+                          >
+                </ComboBox>
+                            
+            </StackPanel>
+
+            <TextBox Margin="10,5" DockPanel.Dock="Top"
+                     Text="{Binding Path=CommandBoxText}"
+                     KeyUp="TextBox_KeyUp">
+
+            </TextBox>
+
+        </DockPanel>
+
+    </Grid>
+</Window>

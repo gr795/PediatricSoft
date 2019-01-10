@@ -28,6 +28,11 @@
                 Start Sensors
             </Button>
 
+            <Button Name="buttonSendCommands" Margin="10,5" Height="20"
+                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonSendCommands_Click">
+                Send Commands
+            </Button>
+
             <Button Name="buttonPlot" Margin="10,5" Height="20"
                             IsEnabled="False" DockPanel.Dock="Top" Click="ButtonPlot_Click">
                 Show Plot
@@ -49,6 +54,8 @@
             <TextBox Name="saveSuffixTextBox" Margin="10,5" DockPanel.Dock="Top" 
                      Text="{Binding Path=SaveSuffix}">
             </TextBox>
+
+            
 
         </DockPanel>
 
