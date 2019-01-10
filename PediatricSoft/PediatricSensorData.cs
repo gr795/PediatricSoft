@@ -57,15 +57,14 @@ namespace PediatricSoft
         public const int UIUpdateInterval = 500; // Update UI every X ms
 
         public const int ProcessingBufferSize = 1048576; // 1 MiB
-        public const int DataBlockSize = 6; // Size of the data block in bytes. 6 bytes = 2 x 24 bit
-        public const int DataPaddedBlockSize = 8; // This is the size of the padded data block. We pad each 24 bits with 0x00.  8 = 6 * ( 4 / 3 )
+        public const int DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
 
         public const byte StartDataFrameByte = 0x02;
         public const byte StopDataFrameByte = 0x03;
         public const byte FrameEscapeByte = 0x10;
 
         public const int NumberOfThreads = 32;
-        public const int MaxQueueLength = 1000;
+        public const int MaxQueueLength = 10000;
 
         public const string DefaultFolder = "Data";
                
