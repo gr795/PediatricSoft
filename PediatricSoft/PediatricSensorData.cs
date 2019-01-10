@@ -23,6 +23,7 @@ namespace PediatricSoft
 
         private PediatricSensorData()
         {
+            UInt16ToStringBE(SensorDefaultCurrent);
         }
 
         public static PediatricSensorData Instance
@@ -74,7 +75,18 @@ namespace PediatricSoft
         public const string CommandStringStart = "Q2";
         public const string CommandStringStop = "Q3";
 
+        public const string SensorCommandCurrent = "@3";
+        public const ushort SensorIdleCurrent = 0x0000;
         public const ushort SensorDefaultCurrent = 0xC000;
+
+        public const byte SensorStateInit = 0;
+        public const byte SensorStateValid = 1;
+        public const byte SensorStateIdle = 2;
+        public const byte SensorStateLaserLock = 3;
+        public const byte SensorStateShutDown = 4;
+
+        public const byte SensorStateLast = 255;
+
 
         // Globals
         public bool IsPlotting = false;
@@ -174,6 +186,15 @@ namespace PediatricSoft
                     DefaultFolder,
                     String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
             System.IO.Directory.CreateDirectory(dataFolder);
+        }
+
+        public string UInt16ToStringBE(ushort value)
+        {
+            byte[] t = BitConverter.GetBytes(value);
+            Array.Reverse(t);
+            string s = BitConverter.ToString(t);
+            s = Regex.Replace(s, @"[^\w]", "");
+            return s;
         }
     }
 }
