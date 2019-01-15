@@ -74,7 +74,9 @@
                     <GridViewColumn Header="IDN" DisplayMemberBinding="{Binding IDN}"/>
                     
                     <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
-                    
+
+                    <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
+
                     <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
                     
                     <GridViewColumn Header="Plot">

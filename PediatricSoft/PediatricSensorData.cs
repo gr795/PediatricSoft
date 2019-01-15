@@ -23,7 +23,6 @@ namespace PediatricSoft
 
         private PediatricSensorData()
         {
-            UInt16ToStringBE(SensorDefaultCurrent);
         }
 
         public static PediatricSensorData Instance
@@ -44,49 +43,63 @@ namespace PediatricSoft
 
         // Constants
         public const bool IsDebugEnabled = true;
+        public const int NumberOfThreads = 32;
+        public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
+        public const int UIUpdateInterval = 500; // Update UI every X ms
+        public const string DefaultFolder = "Data";
+        public const string ValidIDN = "12";
 
         public const int SerialPortBaudRate = 115200;
         public const int SerialPortWriteTimeout = 1000;
         public const int SerialPortReadTimeout = 1000;
         public const int SerialPortSleepTime = 1000;
-        public const int SerialPortShutDownLoopDelay = 1;
+        public const int SerialPortShutDownLoopDelay = 100;
         public const int SerialPortStreamBlockSize = 4096; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
         public const int SerialPortStreamSleepMin = 150;
         public const int SerialPortStreamSleepMax = 250;
-
-        public const int UIUpdateInterval = 500; // Update UI every X ms
-        public const int StateHandlerSleepTime = 10; // in ms
-
-        public const int ProcessingBufferSize = 1048576; // 1 MiB
-        public const int DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
 
         public const byte StartDataFrameByte = 0x02;
         public const byte StopDataFrameByte = 0x03;
         public const byte FrameEscapeByte = 0x10;
 
-        public const int NumberOfThreads = 32;
-        public const int MaxQueueLength = 10000;
+        public const int ProcessingBufferSize = 1048576; // 1 MiB
+        public const int DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
 
-        public const string DefaultFolder = "Data";
-               
-        public const string ValidIDN = "12";
-        public const string CommandStringIDN = "Q0";
-        public const string CommandStringSN = "Q1";
-        public const string CommandStringStart = "Q2";
-        public const string CommandStringStop = "Q3";
+        public const int StateHandlerSleepTime = 10; // in ms
+        public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
+        public const int StateHandlerLaserHeatSweepTime = 2000; // 2 seconds
+        public const int StateHandlerADCColdDelay = 1000; // 1 second
 
-        public const string SensorCommandCurrent = "@3";
-        public const ushort SensorIdleCurrent = 0x0000;
-        public const ushort SensorDefaultCurrent = 0xC000;
+        public const double SensorTargetLaserTransmission = 0.2;
+        public const int MaxNumberOfLaserLockSweepCycles = 5;
+        public const int MaxNumberOfLaserLockStepCycles = 3;
+
+        public const string SensorCommandLaserCurrent = "@3";
+        public const ushort SensorIdleLaserCurrent = 0x0000;
+        public const ushort SensorDefaultLaserCurrent = 0xC000;
+
+        public const string SensorCommandLaserHeat = "@5";
+        public const ushort SensorIdleLaserHeat = 0x0000;
+        public const ushort SensorMinLaserHeat = 0x0000;
+        public const ushort SensorMaxLaserHeat = 0x2000;
+        public const ushort SensorLaserHeatStep = 10;
+
+        public const string SensorCommandCellHeat = "@21";
+        public const ushort SensorIdleCellHeat = 0x0000;
+        public const ushort SensorMinCellHeat = 0x0000;
+        public const ushort SensorMaxCellHeat = 0x9000;
+        public const ushort SensorCellHeatStep = 10;
 
         public const byte SensorStateInit = 0;
         public const byte SensorStateValid = 1;
         public const byte SensorStateIdle = 2;
-        public const byte SensorStateLaserLock = 3;
-        public const byte SensorStateRun = 4;
-        public const byte SensorStateShutDown = 5;
-
-        public const byte SensorStateLast = 255;
+        public const byte SensorStateStart = 3;
+        public const byte SensorStateLaserLock = 4;
+        public const byte SensorStateRun = 5;
+        public const byte SensorStateStop = 6;
+        public const byte SensorStateFailed = 254;
+        public const byte SensorStateShutDown = 255;
+        
 
 
         // Globals
@@ -95,15 +108,11 @@ namespace PediatricSoft
         public bool SaveDataEnabled { get; set; } = false;
         public string SaveSuffix { get; set; } = String.Empty;
 
-        public Random rnd = new Random();
-
         public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
         public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString() ); } }
         public bool IsRunning { get; private set; } = false;
         public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public bool IsScanning { get; private set; } = false;
-
-        public string CommandBoxText { get; set; }
 
         public SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
 
@@ -121,6 +130,7 @@ namespace PediatricSoft
                     {
                         Sensors.Add(sensor);
                     });
+                else while (!sensor.Disposed) Thread.Sleep(SerialPortShutDownLoopDelay);
                 OnPropertyChanged("SensorCount");
             });
 
@@ -154,6 +164,11 @@ namespace PediatricSoft
         public void ClearAll()
         {
             StopAll();
+            Parallel.ForEach(Sensors, _PediatricSensor =>
+            {
+                _PediatricSensor.Dispose();
+                while (!_PediatricSensor.Disposed) Thread.Sleep(SerialPortShutDownLoopDelay);
+            });
             Sensors.Clear();
             OnPropertyChanged("SensorCount");
         }
