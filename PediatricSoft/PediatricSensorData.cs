@@ -43,6 +43,7 @@ namespace PediatricSoft
 
         // Constants
         public const bool IsDebugEnabled = true;
+        public const bool IsLaserLockDebugEnabled = false;
         public const int NumberOfThreads = 32;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
         public const int UIUpdateInterval = 500; // Update UI every X ms
@@ -70,19 +71,36 @@ namespace PediatricSoft
         public const int StateHandlerLaserHeatSweepTime = 2000; // 2 seconds
         public const int StateHandlerADCColdDelay = 1000; // 1 second
 
-        public const double SensorTargetLaserTransmission = 0.2;
+        public const double SensorTargetLaserTransmissionSweep = 0.2;
+        public const double SensorTargetLaserTransmissionStep = 0.5;
+        public const double SensorTargetLaserTransmissionWiggle = 0.3;
+
         public const int MaxNumberOfLaserLockSweepCycles = 5;
         public const int MaxNumberOfLaserLockStepCycles = 3;
+
+        public const int SensorLaserHeatStepCycleDelay = 2000;
+        public const int SensorLaserHeatStepSleepTime = 100;
+        public const int SensorLaserHeatWiggleCycleDelay = 1000;
+        public const int SensorLaserHeatWiggleSleepTime = 10;
+        public const int SensorLaserHeatWiggleCycleLength = 10000; // in ms
+
+        public const string SensorCommandLaserlock = "@0";
+        public const ushort SensorLaserlockDisable = 0x0000;
+        public const ushort SensorLaserlockEnable = 0x0001;
 
         public const string SensorCommandLaserCurrent = "@3";
         public const ushort SensorIdleLaserCurrent = 0x0000;
         public const ushort SensorDefaultLaserCurrent = 0xC000;
+
+        public const string SensorCommandLaserCurrentMod = "@4";
+        public const ushort SensorLaserCurrentModValue = 0x0100;
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorIdleLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 10;
+        public const ushort SensorLaserHeatWiggleStep = 20;
 
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorIdleCellHeat = 0x0000;
@@ -94,9 +112,11 @@ namespace PediatricSoft
         public const byte SensorStateValid = 1;
         public const byte SensorStateIdle = 2;
         public const byte SensorStateStart = 3;
-        public const byte SensorStateLaserLock = 4;
-        public const byte SensorStateRun = 5;
-        public const byte SensorStateStop = 6;
+        public const byte SensorStateLaserLockSweep = 4;
+        public const byte SensorStateLaserLockStep = 5;
+        public const byte SensorStateLaserLockWiggle = 6;
+        public const byte SensorStateRun = 7;
+        public const byte SensorStateStop = 8;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
         
