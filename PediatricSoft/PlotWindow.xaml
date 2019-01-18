@@ -14,7 +14,7 @@
             <lvc:Axis ShowLabels="False"></lvc:Axis>
         </lvc:CartesianChart.AxisX>
         <lvc:CartesianChart.AxisY>
-            <lvc:Axis MinValue="0" MaxValue="2097151875">
+            <lvc:Axis>
                 <lvc:Axis.Sections>
                     <lvc:AxisSection Value="0" StrokeThickness="3" Stroke="#303030"></lvc:AxisSection>
                 </lvc:Axis.Sections>

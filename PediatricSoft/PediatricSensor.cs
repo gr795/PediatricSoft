@@ -44,7 +44,7 @@ namespace PediatricSoft
         private Queue<int> dataTimeRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
         private Queue<int> dataValueRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
 
-        public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>().WithQuality(Quality.Low);
+        public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>();
         public bool ShouldBePlotted { get; set; } = false;
         public int LastValue { get; private set; } = 0;
         public int LastTime { get; private set; } = 0;
@@ -258,6 +258,9 @@ namespace PediatricSoft
 
             bool inEscape = false;
 
+            int plotCounter = 0;
+            const int plotCounterMax = PediatricSensorData.DataQueueLength / PediatricSensorData.PlotQueueLength;
+
             if (streamingTask != null)
             {
                 while (!streamingTask.IsCompleted)
@@ -317,8 +320,13 @@ namespace PediatricSoft
 
                             if (ShouldBePlotted)
                             {
-                                _ChartValues.Add(new ObservableValue(LastValue));
-                                if (_ChartValues.Count > PediatricSensorData.DataQueueLength) _ChartValues.RemoveAt(0);
+                                plotCounter++;
+                                if (plotCounter == plotCounterMax)
+                                {
+                                    _ChartValues.Add(new ObservableValue(LastValue));
+                                    if (_ChartValues.Count > PediatricSensorData.PlotQueueLength) _ChartValues.RemoveAt(0);
+                                    plotCounter = 0;
+                                }
                             }
 
                             if (PediatricSensorData.SaveDataEnabled) file.WriteLine(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));

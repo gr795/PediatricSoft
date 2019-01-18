@@ -46,6 +46,7 @@ namespace PediatricSoft
         public const bool IsLaserLockDebugEnabled = false;
         public const int NumberOfThreads = 32;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
+        public const int PlotQueueLength = 500;
         public const int UIUpdateInterval = 500; // Update UI every X ms
         public const string DefaultFolder = "Data";
         public const string ValidIDN = "12";
