@@ -78,7 +78,9 @@
                     <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
 
                     <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
-                    
+
+                    <GridViewColumn Header="Voltage" DisplayMemberBinding="{Binding Voltage}"/>
+
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>

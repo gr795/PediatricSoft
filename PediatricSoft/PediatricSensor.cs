@@ -48,6 +48,7 @@ namespace PediatricSoft
         public bool ShouldBePlotted { get; set; } = false;
         public int LastValue { get; private set; } = 0;
         public int LastTime { get; private set; } = 0;
+        public double Voltage { get { return (double)LastValue * 5 / 125 / 16777215; } }
 
         public string Port { get; private set; } = String.Empty;
         public string IDN { get; private set; } = String.Empty;
@@ -73,6 +74,23 @@ namespace PediatricSoft
         private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
         {
             OnPropertyChanged("LastValue");
+            OnPropertyChanged("Voltage");
+        }
+
+        private ushort UShortSafeInc(ushort value, ushort step, ushort max)
+        {
+            int newValue = value + step;
+            if (newValue < max)
+                return (ushort)newValue;
+            else return max;
+        }
+
+        private ushort UShortSafeDec(ushort value, ushort step, ushort min)
+        {
+            int newValue = value - step;
+            if (newValue > min)
+                return (ushort)newValue;
+            else return min;
         }
 
         private PediatricSensor() { }
@@ -202,13 +220,25 @@ namespace PediatricSoft
             byte[] byteArrayIn = new byte[PediatricSensorData.SerialPortStreamBlockSize];
             int bytesRead = 0;
 
+            int serialPortErrorCount = 0;
+
             while (state >= PediatricSensorData.SensorStateValid && state < PediatricSensorData.SensorStateFailed)
             {
                 try
                 {
                     bytesRead = stream.Read(byteArrayIn, 0, PediatricSensorData.SerialPortStreamBlockSize);
                 }
-                catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, e.Message); }
+                catch (Exception e)
+                {
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}");
+                    serialPortErrorCount++;
+                    if (serialPortErrorCount >= PediatricSensorData.SerialPortErrorCountMax)
+                    {
+                        state = PediatricSensorData.SensorStateFailed;
+                        OnPropertyChanged("State");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                    }
+                }
 
                 if (bytesRead > 0)
                 {
@@ -225,28 +255,7 @@ namespace PediatricSoft
 
         }
 
-        private void StreamClose()
-        {
-
-            if (streamingTask != null)
-            {
-                while (!streamingTask.IsCompleted)
-                {
-                    Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
-                };
-                streamingTask.Dispose();
-            };
-
-            if (processingTask != null)
-            {
-                while (!processingTask.IsCompleted)
-                {
-                    Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
-                };
-                processingTask.Dispose();
-            };
-
-        }
+        
 
         private void ProcessData()
         {
@@ -341,21 +350,7 @@ namespace PediatricSoft
             };
         }
 
-        private ushort UShortSafeInc(ushort value, ushort step, ushort max)
-        {
-            int newValue = value + step;
-            if (newValue < max)
-                return (ushort)newValue;
-            else return max;
-        }
-
-        private ushort UShortSafeDec(ushort value, ushort step, ushort min)
-        {
-            int newValue = value - step;
-            if (newValue > min)
-                return (ushort)newValue;
-            else return min;
-        }
+        
 
 
 
@@ -633,6 +628,13 @@ namespace PediatricSoft
                         }
                         break;
 
+                    case PediatricSensorData.SensorStateLaserLockPID:
+                        SendCommandsLaserLockPID();
+                        state++;
+                        OnPropertyChanged("State");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        break;
+
                     case PediatricSensorData.SensorStateRun:
                         break;
 
@@ -660,7 +662,7 @@ namespace PediatricSoft
                 Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
             }
 
-            StreamClose();
+            DisposeStreamingTasks();
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: State Handler exiting.");
         }
@@ -699,6 +701,29 @@ namespace PediatricSoft
             }
             else
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Can't send commands - sensor not running");
+
+        }
+
+        private void DisposeStreamingTasks()
+        {
+
+            if (streamingTask != null)
+            {
+                while (!streamingTask.IsCompleted)
+                {
+                    Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                };
+                streamingTask.Dispose();
+            };
+
+            if (processingTask != null)
+            {
+                while (!processingTask.IsCompleted)
+                {
+                    Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                };
+                processingTask.Dispose();
+            };
 
         }
 

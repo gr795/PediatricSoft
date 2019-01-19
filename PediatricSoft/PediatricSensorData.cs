@@ -59,6 +59,7 @@ namespace PediatricSoft
         public const int SerialPortStreamBlockSize = 4096; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
         public const int SerialPortStreamSleepMin = 150;
         public const int SerialPortStreamSleepMax = 250;
+        public const int SerialPortErrorCountMax = 10;
 
         public const byte StartDataFrameByte = 0x02;
         public const byte StopDataFrameByte = 0x03;
@@ -116,8 +117,9 @@ namespace PediatricSoft
         public const byte SensorStateLaserLockSweep = 4;
         public const byte SensorStateLaserLockStep = 5;
         public const byte SensorStateLaserLockWiggle = 6;
-        public const byte SensorStateRun = 7;
-        public const byte SensorStateStop = 8;
+        public const byte SensorStateLaserLockPID = 7;
+        public const byte SensorStateRun = 8;
+        public const byte SensorStateStop = 9;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
         
