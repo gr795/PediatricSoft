@@ -188,7 +188,8 @@ namespace PediatricSoft
                 filePath += ".txt";
                 if (PediatricSensorData.SaveDataEnabled) file = File.AppendText(filePath);
 
-                state++;
+                state = PediatricSensorData.SensorStateRun;
+                //state++;
                 OnPropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
@@ -255,7 +256,7 @@ namespace PediatricSoft
 
         }
 
-        
+
 
         private void ProcessData()
         {
@@ -350,7 +351,7 @@ namespace PediatricSoft
             };
         }
 
-        
+
 
 
 
@@ -378,7 +379,7 @@ namespace PediatricSoft
             bool foundResonanceSweep = false;
             int numberOfLaserLockSweepCycles = 0;
             int[] data = new int[PediatricSensorData.DataQueueLength];
-            double transmission = 0; 
+            double transmission = 0;
 
             // Turn on the laser
             SendCommand(PediatricSensorData.SensorCommandLaserCurrent);
@@ -389,9 +390,21 @@ namespace PediatricSoft
             Thread.Sleep(PediatricSensorData.StateHandlerADCColdDelay);
             sensorADCColdValueRaw = LastValue;
 
-            // Set the cell heater to the max value, wait for the cell to warm up
-            SendCommand(PediatricSensorData.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorMaxCellHeat)));
+            // Here we check if we received non-zero value.
+            // If it is zero (default) - something is wrong and we fail.
+            if (sensorADCColdValueRaw == 0)
+            {
+                SendCommandsIdle();
+                state = PediatricSensorData.SensorStateFailed;
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            }
+            else
+            {
+                // Set the cell heater to the max value, wait for the cell to warm up
+                SendCommand(PediatricSensorData.SensorCommandCellHeat);
+                SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorMaxCellHeat)));
+            }
 
             // Laser heat sweep cycle. Here we look for the Rb resonance.
             while (!foundResonanceSweep && state == PediatricSensorData.SensorStateLaserLockSweep && numberOfLaserLockSweepCycles < PediatricSensorData.MaxNumberOfLaserLockSweepCycles)
@@ -407,41 +420,30 @@ namespace PediatricSoft
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Waiting for {PediatricSensorData.StateHandlerLaserHeatSweepTime} ms");
                 Thread.Sleep(PediatricSensorData.StateHandlerLaserHeatSweepTime);
 
-                if (dataValueRaw.Count >= PediatricSensorData.DataQueueLength)
+                // See if the threshold was reached
+                data = dataValueRaw.ToArray();
+                transmission = (double)data.Min() / sensorADCColdValueRaw;
+                if (transmission < PediatricSensorData.SensorTargetLaserTransmissionSweep)
                 {
-
-                    // See if the threshold was reached
-                    data = dataValueRaw.ToArray();
-                    transmission = (double)data.Min() / sensorADCColdValueRaw;
-                    if (transmission < PediatricSensorData.SensorTargetLaserTransmissionSweep)
-                    {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sweep cycle - found Rb resonance");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Transmission on resonance: {transmission}");
-                        foundResonanceSweep = true;
-                        SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-                        SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorMinLaserHeat)));
-
-                    }
-                    else if (numberOfLaserLockSweepCycles < PediatricSensorData.MaxNumberOfLaserLockSweepCycles)
-                    {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, going to wait more");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Minimal transmission {transmission} is higher than the target {PediatricSensorData.SensorTargetLaserTransmissionSweep}");
-                        SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-                        SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorMinLaserHeat)));
-                        numberOfLaserLockSweepCycles++;
-                    }
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sweep cycle - found Rb resonance");
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Transmission on resonance: {transmission}");
+                    foundResonanceSweep = true;
+                    SendCommand(PediatricSensorData.SensorCommandLaserHeat);
+                    SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorMinLaserHeat)));
 
                 }
-                else // !(dataValueRaw.Count >= PediatricSensorData.DataQueueLength)
+                else if (numberOfLaserLockSweepCycles < PediatricSensorData.MaxNumberOfLaserLockSweepCycles)
                 {
-                    SendCommandsIdle();
-                    state = PediatricSensorData.SensorStateFailed;
-                    OnPropertyChanged("State");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, going to wait more");
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Minimal transmission {transmission} is higher than the target {PediatricSensorData.SensorTargetLaserTransmissionSweep}");
+                    SendCommand(PediatricSensorData.SensorCommandLaserHeat);
+                    SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorMinLaserHeat)));
+                    numberOfLaserLockSweepCycles++;
                 }
+
             }
 
-            if (!foundResonanceSweep)
+            if (!foundResonanceSweep && state == PediatricSensorData.SensorStateLaserLockSweep)
             {
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, giving up");
                 SendCommandsIdle();
@@ -510,7 +512,7 @@ namespace PediatricSoft
 
             int wiggleIterationMax = PediatricSensorData.SensorLaserHeatWiggleCycleLength / 2 / PediatricSensorData.SensorLaserHeatWiggleSleepTime;
             int sensorADCPlus = 0;
-            int sensorADCMinus = 0;;
+            int sensorADCMinus = 0; ;
             ushort laserHeatPlus = 0;
             ushort laserHeatMinus = 0;
 
@@ -663,6 +665,7 @@ namespace PediatricSoft
             }
 
             DisposeStreamingTasks();
+            SendCommandsIdle();
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: State Handler exiting.");
         }

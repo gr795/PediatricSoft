@@ -77,7 +77,7 @@ namespace PediatricSoft
         public const double SensorTargetLaserTransmissionStep = 0.5;
         public const double SensorTargetLaserTransmissionWiggle = 0.3;
 
-        public const int MaxNumberOfLaserLockSweepCycles = 5;
+        public const int MaxNumberOfLaserLockSweepCycles = 10;
         public const int MaxNumberOfLaserLockStepCycles = 3;
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
