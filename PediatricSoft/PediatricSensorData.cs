@@ -63,10 +63,12 @@ namespace PediatricSoft
 
         public const byte StartDataFrameByte = 0x02;
         public const byte StopDataFrameByte = 0x03;
+        public const byte StartInfoFrameByte = 0x3F;
         public const byte FrameEscapeByte = 0x10;
 
         public const int ProcessingBufferSize = 1048576; // 1 MiB
         public const int DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
+        public const int InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
         public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds

@@ -263,10 +263,14 @@ namespace PediatricSoft
             byte[] data = new byte[PediatricSensorData.DataBlockSize];
             int dataIndex = 0;
 
+            byte [] info = new byte[PediatricSensorData.InfoBlockSize];
+            int infoIndex = 0;
+             
             byte[] localBuffer = new byte[PediatricSensorData.ProcessingBufferSize];
             int localBufferIndex = 0;
 
             bool inEscape = false;
+            bool inInfoFrame = false;
 
             int plotCounter = 0;
             const int plotCounterMax = PediatricSensorData.DataQueueLength / PediatricSensorData.PlotQueueLength;
@@ -306,13 +310,48 @@ namespace PediatricSoft
                                     dataIndex++;
                                     inEscape = false;
                                 }
-                                else dataIndex = 0;
+                                else
+                                {
+                                    inInfoFrame = false;
+                                    infoIndex = 0;
+                                    dataIndex = 0;
+                                }
+                                break;
+
+                            case PediatricSensorData.StartInfoFrameByte:
+                                if (inEscape)
+                                {
+                                    data[dataIndex] = localBuffer[i];
+                                    dataIndex++;
+                                    inEscape = false;
+                                }
+                                else
+                                {
+                                    inInfoFrame = true;
+                                    infoIndex = 0;
+                                    dataIndex = 0;
+                                }
                                 break;
 
                             default:
-                                data[dataIndex] = localBuffer[i];
-                                dataIndex++;
+                                if (inInfoFrame)
+                                {
+                                    info[infoIndex] = localBuffer[i];
+                                    infoIndex++;
+                                }
+                                else
+                                {
+                                    data[dataIndex] = localBuffer[i];
+                                    dataIndex++;
+                                }
                                 break;
+                        }
+
+                        if (infoIndex == PediatricSensorData.InfoBlockSize)
+                        {
+                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Info message: {System.Text.Encoding.ASCII.GetString(info)}");
+                            inInfoFrame = false;
+                            infoIndex = 0;
                         }
 
                         if (dataIndex == PediatricSensorData.DataBlockSize)
@@ -683,7 +722,7 @@ namespace PediatricSoft
         private void SendCommandMain(string command, bool debug)
         {
 
-            command = Regex.Replace(command, @"[^\w@#]", "");
+            command = Regex.Replace(command, @"[^\w@#?]", "");
 
             if (state > PediatricSensorData.SensorStateInit && state < PediatricSensorData.SensorStateShutDown)
             {
