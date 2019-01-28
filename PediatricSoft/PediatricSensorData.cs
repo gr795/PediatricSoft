@@ -90,14 +90,14 @@ namespace PediatricSoft
 
         public const string SensorCommandLaserlock = "@0";
         public const ushort SensorLaserlockDisable = 0x0000;
-        public const ushort SensorLaserlockEnable = 0x0001;
+        public const ushort SensorLaserlockEnable = 0x0005;
 
         public const string SensorCommandLaserCurrent = "@3";
         public const ushort SensorIdleLaserCurrent = 0x0000;
-        public const ushort SensorDefaultLaserCurrent = 0xC000;
+        public const ushort SensorDefaultLaserCurrent = 0x9000;
 
         public const string SensorCommandLaserCurrentMod = "@4";
-        public const ushort SensorLaserCurrentModValue = 0x0100;
+        public const ushort SensorLaserCurrentModValue = 0x0500;
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorIdleLaserHeat = 0x0000;
@@ -108,6 +108,7 @@ namespace PediatricSoft
 
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorIdleCellHeat = 0x0000;
+        public const ushort SensorRunCellHeat = 0x6000;
         public const ushort SensorMinCellHeat = 0x0000;
         public const ushort SensorMaxCellHeat = 0x9000;
         public const ushort SensorCellHeatStep = 10;
@@ -120,8 +121,10 @@ namespace PediatricSoft
         public const byte SensorStateLaserLockStep = 5;
         public const byte SensorStateLaserLockWiggle = 6;
         public const byte SensorStateLaserLockPID = 7;
-        public const byte SensorStateRun = 8;
-        public const byte SensorStateStop = 9;
+        public const byte SensorStateStabilizeCellHeat = 8;
+        public const byte SensorStateZeroFields = 9;
+        public const byte SensorStateRun = 10;
+        public const byte SensorStateStop = 11;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
         

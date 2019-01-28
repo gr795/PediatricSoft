@@ -188,8 +188,8 @@ namespace PediatricSoft
                 filePath += ".txt";
                 if (PediatricSensorData.SaveDataEnabled) file = File.AppendText(filePath);
 
-                state = PediatricSensorData.SensorStateRun;
-                //state++;
+                //state = PediatricSensorData.SensorStateRun;
+                state++;
                 OnPropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
@@ -378,7 +378,7 @@ namespace PediatricSoft
                                 }
                             }
 
-                            if (PediatricSensorData.SaveDataEnabled) file.WriteLine(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
+                            // if (PediatricSensorData.SaveDataEnabled) file.WriteLine(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
 
                             dataIndex = 0;
                         }
@@ -594,6 +594,17 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorLaserlockEnable)));
         }
 
+        private void SendCommandsStabilizeCellHeat()
+        {
+            SendCommand(PediatricSensorData.SensorCommandCellHeat);
+            SendCommand(String.Concat("#", PediatricSensorData.UInt16ToStringBE(PediatricSensorData.SensorRunCellHeat)));
+        }
+
+        private void SendCommandsZeroFields()
+        {
+
+        }
+
         private void StateHandler()
         {
 
@@ -671,6 +682,19 @@ namespace PediatricSoft
 
                     case PediatricSensorData.SensorStateLaserLockPID:
                         SendCommandsLaserLockPID();
+                        state++;
+                        OnPropertyChanged("State");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        break;
+
+                    case PediatricSensorData.SensorStateStabilizeCellHeat:
+                        SendCommandsStabilizeCellHeat();
+                        state++;
+                        OnPropertyChanged("State");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        break;
+
+                    case PediatricSensorData.SensorStateZeroFields:
                         state++;
                         OnPropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
