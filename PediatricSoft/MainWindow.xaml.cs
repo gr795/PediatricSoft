@@ -180,5 +180,10 @@ namespace PediatricSoft
             catch (Exception) { }
 
         }
+
+        private async void ButtonFieldZero_Click(object sender, RoutedEventArgs e)
+        {
+            await Task.Run(() => PediatricSensorData.FieldZeroAll());
+        }
     }
 }

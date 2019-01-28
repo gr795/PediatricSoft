@@ -57,8 +57,8 @@ namespace PediatricSoft
         public const int SerialPortSleepTime = 1000;
         public const int SerialPortShutDownLoopDelay = 100;
         public const int SerialPortStreamBlockSize = 4096; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
-        public const int SerialPortStreamSleepMin = 150;
-        public const int SerialPortStreamSleepMax = 250;
+        public const int SerialPortStreamSleepMin = 15;
+        public const int SerialPortStreamSleepMax = 30;
         public const int SerialPortErrorCountMax = 10;
 
         public const byte StartDataFrameByte = 0x02;
@@ -88,6 +88,8 @@ namespace PediatricSoft
         public const int SensorLaserHeatWiggleSleepTime = 10;
         public const int SensorLaserHeatWiggleCycleLength = 10000; // in ms
 
+        public const int SensorFieldStepDelay = 10;
+
         public const string SensorCommandLaserlock = "@0";
         public const ushort SensorLaserlockDisable = 0x0000;
         public const ushort SensorLaserlockEnable = 0x0005;
@@ -105,6 +107,26 @@ namespace PediatricSoft
         public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 10;
         public const ushort SensorLaserHeatWiggleStep = 20;
+
+        public const string SensorCommandFieldXOffset = "@7";
+        public const ushort SensorIdleFieldXOffset = 0x8000;
+
+        public const string SensorCommandFieldXAmplitude = "@8";
+        public const ushort SensorIdleFieldXAmplitude = 0x0000;
+
+        public const string SensorCommandFieldYOffset = "@9";
+        public const ushort SensorIdleFieldYOffset = 0x8000;
+
+        public const string SensorCommandFieldYAmplitude = "@a";
+        public const ushort SensorIdleFieldYAmplitude = 0x0000;
+
+        public const string SensorCommandFieldZOffset = "@b";
+        public const ushort SensorIdleFieldZOffset = 0x8000;
+
+        public const string SensorCommandFieldZAmplitude = "@c";
+        public const ushort SensorIdleFieldZAmplitude = 0x0000;
+
+        public const ushort SensorFieldStep = 0x0001;
 
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorIdleCellHeat = 0x0000;
@@ -201,6 +223,14 @@ namespace PediatricSoft
             OnPropertyChanged("SensorCount");
         }
 
+        public void FieldZeroAll()
+        {
+            Parallel.ForEach(Sensors, _PediatricSensor =>
+            {
+                _PediatricSensor.SendCommandsZeroFields();
+            });
+        }
+
         public void ValidateSuffixString()
         {
             // Replace invalid characters with empty strings.
@@ -231,14 +261,6 @@ namespace PediatricSoft
                     String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
             System.IO.Directory.CreateDirectory(dataFolder);
         }
-
-        public string UInt16ToStringBE(ushort value)
-        {
-            byte[] t = BitConverter.GetBytes(value);
-            Array.Reverse(t);
-            string s = BitConverter.ToString(t);
-            s = Regex.Replace(s, @"[^\w]", "");
-            return s;
-        }
+        
     }
 }
