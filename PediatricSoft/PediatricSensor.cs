@@ -631,39 +631,45 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorRunCellHeat)));
         }
 
-        public void SendCommandsZeroFields()
+        private void SendCommandsZeroOneAxis()
         {
-
             int sensorADCCurrent = 0;
             int sensorADCMax = 0;
 
-            ushort currentXField = PediatricSensorData.SensorIdleFieldXOffset;
-            ushort zeroXField = PediatricSensorData.SensorIdleFieldXOffset;
+            ushort currentField = ushort.MinValue;
+            ushort zeroField = ushort.MinValue;
 
-            ushort currentYField = PediatricSensorData.SensorIdleFieldXOffset;
-            ushort zeroYField = PediatricSensorData.SensorIdleFieldXOffset;
-
-            ushort currentZField = PediatricSensorData.SensorIdleFieldXOffset;
-            ushort zeroZField = PediatricSensorData.SensorIdleFieldXOffset;
-
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
-
-            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            currentZField = ushort.MinValue;
-            while (currentZField < ushort.MaxValue)
+            while (currentField < ushort.MaxValue)
             {
                 sensorADCCurrent = LastValue;
                 if (sensorADCCurrent > sensorADCMax)
                 {
                     sensorADCMax = sensorADCCurrent;
-                    zeroZField = currentZField;
+                    zeroField = currentField;
                 }
 
-                SendCommand(String.Concat("#", UInt16ToStringBE(currentZField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                SendCommand(String.Concat("#", UInt16ToStringBE(currentField)), PediatricSensorData.IsLaserLockDebugEnabled);
                 //Thread.Sleep(PediatricSensorData.SensorFieldStepDelay);
-                currentZField = UShortSafeInc(currentZField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+                currentField = UShortSafeInc(currentField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
             }
-            SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)), PediatricSensorData.IsLaserLockDebugEnabled);
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroField)), PediatricSensorData.IsLaserLockDebugEnabled);
+
+        }
+
+        public void SendCommandsZeroFields()
+        {
+
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
+
+            // Z-field
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
+            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            SendCommandsZeroOneAxis();
+
+            // Y-field
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Y-field");
+            SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            SendCommandsZeroOneAxis();
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
 
