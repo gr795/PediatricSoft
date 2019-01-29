@@ -9,7 +9,6 @@ using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Wpf;
 using LiveCharts.Defaults;
-using LiveCharts.Geared;
 using System.IO;
 using System.Diagnostics;
 using System.Timers;
@@ -46,7 +45,7 @@ namespace PediatricSoft
         private Queue<int> dataTimeRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
         private Queue<int> dataValueRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
 
-        public GearedValues<ObservableValue> _ChartValues = new GearedValues<ObservableValue>();
+        public ChartValues<ObservableValue> _ChartValues = new ChartValues<ObservableValue>();
         public bool ShouldBePlotted { get; set; } = false;
         public int LastValue { get; private set; } = 0;
         public int LastTime { get; private set; } = 0;
