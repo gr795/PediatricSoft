@@ -31,6 +31,7 @@ namespace PediatricSoft
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
         {
             buttonScanPorts.IsEnabled = false;
+            buttonLockSensors.IsEnabled = false;
             buttonRunSensors.IsEnabled = false;
             buttonSendCommands.IsEnabled = false;
             buttonPlot.IsEnabled = false;
@@ -52,7 +53,11 @@ namespace PediatricSoft
 
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
-                    buttonRunSensors.IsEnabled = true;
+                    if (PediatricSensorData.AllowStartWithoutLock)
+                        buttonRunSensors.IsEnabled = true;
+                    else
+                        buttonLockSensors.IsEnabled = true;
+
                     buttonSendCommands.IsEnabled = true;
                     buttonPlot.IsEnabled = true;
                 }
@@ -63,6 +68,11 @@ namespace PediatricSoft
             HidePlot();
             PlotToggle(sender, e);
 
+        }
+
+        private async void ButtonLockSensors_Click(object sender, RoutedEventArgs e)
+        {
+            await Task.Run(() => PediatricSensorData.LockAll());
         }
 
         private async void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
@@ -125,6 +135,11 @@ namespace PediatricSoft
 
         }
 
+        private async void ButtonFieldZero_Click(object sender, RoutedEventArgs e)
+        {
+            await Task.Run(() => PediatricSensorData.FieldZeroAll());
+        }
+
         private void OnPlotWindowClosing(object sender, EventArgs e)
         {
             buttonPlot.Content = "Show Plot";
@@ -181,9 +196,6 @@ namespace PediatricSoft
 
         }
 
-        private async void ButtonFieldZero_Click(object sender, RoutedEventArgs e)
-        {
-            await Task.Run(() => PediatricSensorData.FieldZeroAll());
-        }
+
     }
 }

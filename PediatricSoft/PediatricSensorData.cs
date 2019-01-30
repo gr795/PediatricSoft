@@ -137,24 +137,25 @@ namespace PediatricSoft
 
         public const byte SensorStateInit = 0;
         public const byte SensorStateValid = 1;
-        public const byte SensorStateIdle = 2;
-        public const byte SensorStateStart = 3;
+        public const byte SensorStateCold = 2;
+        public const byte SensorStateColdStart = 3;
         public const byte SensorStateLaserLockSweep = 4;
         public const byte SensorStateLaserLockStep = 5;
         public const byte SensorStateLaserLockWiggle = 6;
         public const byte SensorStateLaserLockPID = 7;
         public const byte SensorStateStabilizeCellHeat = 8;
         public const byte SensorStateZeroFields = 9;
-        public const byte SensorStateRun = 10;
-        public const byte SensorStateStop = 11;
+        public const byte SensorStateIdle = 10;
+        public const byte SensorStateStart = 11;
+        public const byte SensorStateRun = 12;
+        public const byte SensorStateStop = 13;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
-        
-
 
         // Globals
         public bool IsPlotting = false;
         public bool PlotWindowClosed = false;
+        public bool AllowStartWithoutLock { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
         public string SaveSuffix { get; set; } = String.Empty;
 
@@ -176,13 +177,17 @@ namespace PediatricSoft
                 PediatricSensor sensor = new PediatricSensor(port);
                 sensor.Validate();
                 if (sensor.IsValid)
-                    App.Current.Dispatcher.Invoke((Action)delegate
-                    {
-                        Sensors.Add(sensor);
-                    });
-                else while (!sensor.Disposed) Thread.Sleep(SerialPortShutDownLoopDelay);
+                    App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                else
+                    while (!sensor.IsDisposed)
+                        Thread.Sleep(SerialPortShutDownLoopDelay);
                 OnPropertyChanged("SensorCount");
             });
+
+        }
+
+        public void LockAll()
+        {
 
         }
 
@@ -217,7 +222,7 @@ namespace PediatricSoft
             Parallel.ForEach(Sensors, _PediatricSensor =>
             {
                 _PediatricSensor.Dispose();
-                while (!_PediatricSensor.Disposed) Thread.Sleep(SerialPortShutDownLoopDelay);
+                while (!_PediatricSensor.IsDisposed) Thread.Sleep(SerialPortShutDownLoopDelay);
             });
             Sensors.Clear();
             OnPropertyChanged("SensorCount");
@@ -233,18 +238,7 @@ namespace PediatricSoft
 
         public void ValidateSuffixString()
         {
-            // Replace invalid characters with empty strings.
-            try
-            {
-                SaveSuffix = Regex.Replace(SaveSuffix, @"[^\w]", "",
-                                     RegexOptions.None, TimeSpan.FromSeconds(1.5));
-            }
-            // If we timeout when replacing invalid characters, 
-            // we should return Empty.
-            catch (RegexMatchTimeoutException)
-            {
-                SaveSuffix = String.Empty;
-            }
+                SaveSuffix = Regex.Replace(SaveSuffix, @"[^\w]", "");
         }
 
         private void CreateDataFolder()
