@@ -53,7 +53,7 @@ namespace PediatricSoft
 
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
-                    if (PediatricSensorData.AllowStartWithoutLock)
+                    if (PediatricSensorData.DebugMode)
                         buttonRunSensors.IsEnabled = true;
                     else
                         buttonLockSensors.IsEnabled = true;

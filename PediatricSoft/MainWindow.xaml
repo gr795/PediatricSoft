@@ -21,12 +21,12 @@
             <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
                 <TextBlock VerticalAlignment="Center">
-                            Allow Start without Lock
+                            Debug Mode
                 </TextBlock>
 
-                <CheckBox Name="allowStartWithoutLock" Margin="5,0,0,0" VerticalAlignment="Center" 
-                          IsChecked="{Binding Path=AllowStartWithoutLock}">
-
+                <CheckBox Margin="5,0,0,0" VerticalAlignment="Center" 
+                          IsChecked="{Binding Path=DebugMode}">
+                    
                 </CheckBox>
 
             </StackPanel>

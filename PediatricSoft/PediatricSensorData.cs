@@ -137,11 +137,11 @@ namespace PediatricSoft
 
         public const byte SensorStateInit = 0;
         public const byte SensorStateValid = 1;
-        public const byte SensorStateCold = 2;
-        public const byte SensorStateColdStart = 3;
-        public const byte SensorStateLaserLockSweep = 4;
-        public const byte SensorStateLaserLockStep = 5;
-        public const byte SensorStateLaserLockWiggle = 6;
+        public const byte SensorStateMakeCold = 2;
+        public const byte SensorStateCold = 3;
+        public const byte SensorStateLockStart = 4;
+        public const byte SensorStateLaserLockSweep = 5;
+        public const byte SensorStateLaserLockStep = 6;
         public const byte SensorStateLaserLockPID = 7;
         public const byte SensorStateStabilizeCellHeat = 8;
         public const byte SensorStateZeroFields = 9;
@@ -149,15 +149,17 @@ namespace PediatricSoft
         public const byte SensorStateStart = 11;
         public const byte SensorStateRun = 12;
         public const byte SensorStateStop = 13;
+        public const byte SensorStateLaserLockWiggle = 200;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
 
         // Globals
         public bool IsPlotting = false;
         public bool PlotWindowClosed = false;
-        public bool AllowStartWithoutLock { get; set; } = false;
+        public bool DebugMode { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
         public string SaveSuffix { get; set; } = String.Empty;
+        public string CommandHistory { get; set; } = String.Empty;
 
         public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
         public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString() ); } }
@@ -168,6 +170,8 @@ namespace PediatricSoft
         public SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
 
         public string dataFolder = String.Empty;
+
+
 
 
         public void AddAll()

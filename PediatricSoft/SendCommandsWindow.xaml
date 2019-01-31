@@ -28,9 +28,14 @@
 
             <TextBox Margin="10,5" DockPanel.Dock="Top"
                      Text="{Binding Path=CommandBoxText}"
+                     KeyDown="TextBox_KeyDown"
                      KeyUp="TextBox_KeyUp">
 
             </TextBox>
+
+            <TextBlock Margin="10,5" DockPanel.Dock="Top"
+                       Text="{Binding Path=CommandHistory}">
+            </TextBlock>
 
         </DockPanel>
 

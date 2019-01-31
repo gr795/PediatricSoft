@@ -19,7 +19,11 @@ namespace PediatricSoft
 
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
-        public string CommandBoxText { get; set; }
+        public string CommandBoxText { get; set; } = String.Empty;
+        public string CommandHistory
+        {
+            get { return PediatricSensorData.CommandHistory; }
+        }
         public ObservableCollection<PediatricSensor> Sensors { get { return PediatricSensorData.Sensors; } }
         public PediatricSensor CurrentSensor { get; set; }
 
@@ -35,25 +39,101 @@ namespace PediatricSoft
             DataContext = this;
         }
 
-        private void TextBox_KeyUp(object sender, KeyEventArgs e)
+        private void TextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
+
+            TextBox tBox = (TextBox)sender;
+            DependencyProperty prop = TextBox.TextProperty;
+
+            BindingExpression binding = BindingOperations.GetBindingExpression(tBox, prop);
+            if (binding != null) { binding.UpdateSource(); }
+
+            switch (e.Key)
             {
-                TextBox tBox = (TextBox)sender;
-                DependencyProperty prop = TextBox.TextProperty;
+                case Key.Add:
+                    if (CurrentSensor != null)
+                        CurrentSensor.SendCommand("+", false);
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
 
-                BindingExpression binding = BindingOperations.GetBindingExpression(tBox, prop);
-                if (binding != null) { binding.UpdateSource(); }
-                
-                if (CurrentSensor != null)
-                    CurrentSensor.SendCommand(CommandBoxText);
-                else
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
+                case Key.Subtract:
+                    if (CurrentSensor != null)
+                        CurrentSensor.SendCommand("-", false);
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
 
-                CommandBoxText = String.Empty;
-                OnPropertyChanged("CommandBoxText");
+                case Key.OemPlus:
+                    if (CurrentSensor != null)
+                        CurrentSensor.SendCommand("+", false);
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
+
+                case Key.OemMinus:
+                    if (CurrentSensor != null)
+                        CurrentSensor.SendCommand("-", false);
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
+
+                case Key.Enter:
+                    if (CurrentSensor != null)
+                        CurrentSensor.SendCommand(CommandBoxText);
+                    else
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
+
+                    PediatricSensorData.CommandHistory = String.Concat(CommandBoxText, "\n", PediatricSensorData.CommandHistory);
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    OnPropertyChanged("CommandHistory");
+                    break;
+
+                default:
+                    break;
             }
+
+            
         }
 
+        private void TextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+
+            TextBox tBox = (TextBox)sender;
+            DependencyProperty prop = TextBox.TextProperty;
+
+            BindingExpression binding = BindingOperations.GetBindingExpression(tBox, prop);
+            if (binding != null) { binding.UpdateSource(); }
+
+            switch (e.Key)
+            {
+                case Key.Add:
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
+
+                case Key.Subtract:
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
+
+                case Key.OemPlus:
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
+
+                case Key.OemMinus:
+                    CommandBoxText = String.Empty;
+                    OnPropertyChanged("CommandBoxText");
+                    break;
+
+                default:
+                    OnPropertyChanged("CommandHistory");
+                    break;
+            }
+
+            
+        }
     }
 }
