@@ -46,17 +46,18 @@ namespace PediatricSoft
         private List<string> dataSaveBuffer = new List<string>();
         private readonly Object dataSaveLock = new Object();
 
-        private readonly Object lastValueLock = new Object();
-
-
         private Queue<int> dataTimeRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
         private Queue<int> dataValueRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
+        private Queue<int> dataValueRawRunningAvg = new Queue<int>(PediatricSensorData.DataQueueRunningAvgLength);
+        private readonly Object dataLock = new Object();
 
         public ChartValues<ObservableValue> _ChartValues = new ChartValues<ObservableValue>();
         public bool ShouldBePlotted { get; set; } = false;
         public int LastValue { get; private set; } = 0;
         public int LastTime { get; private set; } = 0;
-        public double Voltage { get { return (double)LastValue * 5 / 125 / 16777215; } }
+        public double RunningAvg { get; private set; } = 0;
+        private bool wasRunningAvgUpdated = false;
+        public double Voltage { get { return RunningAvg * 5 / 125 / 16777215; } }
 
         public string Port { get; private set; } = String.Empty;
         public string IDN { get; private set; } = String.Empty;
@@ -173,7 +174,7 @@ namespace PediatricSoft
                     try
                     {
                         _SerialPort.WriteLine("?");
-                        Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        Thread.Sleep(10*PediatricSensorData.SerialPortStreamSleepMin);
                         int bytesToRead = _SerialPort.BytesToRead;
                         if (bytesToRead > 0)
                         {
@@ -220,6 +221,10 @@ namespace PediatricSoft
                         {
                             _SerialPort.WriteLine("@20");
                             _SerialPort.WriteLine("#2");
+
+                            state++;
+                            OnPropertyChanged("State");
+                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}"); }
 
@@ -254,9 +259,7 @@ namespace PediatricSoft
                 state++;
                 OnPropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-
-
-                // if (PediatricSensorData.SaveDataEnabled && (file != null)) file.Dispose();
+                
 
             }
         }
@@ -402,31 +405,41 @@ namespace PediatricSoft
 
                         if (dataIndex == PediatricSensorData.DataBlockSize)
                         {
-                            Array.Reverse(data); // switch from MSB to LSB
-                            LastTime = BitConverter.ToInt32(data, 4);
-                            LastValue = BitConverter.ToInt32(data, 0);
+                            lock (dataLock)
+                            {
+                                Array.Reverse(data); // switch from MSB to LSB
+                                LastTime = BitConverter.ToInt32(data, 4);
+                                LastValue = BitConverter.ToInt32(data, 0);
 
-                            dataTimeRaw.Enqueue(LastTime);
-                            if (dataTimeRaw.Count > PediatricSensorData.DataQueueLength) dataTimeRaw.Dequeue();
+                                dataTimeRaw.Enqueue(LastTime);
+                                if (dataTimeRaw.Count > PediatricSensorData.DataQueueLength) dataTimeRaw.Dequeue();
 
-                            dataValueRaw.Enqueue(LastValue);
-                            if (dataValueRaw.Count > PediatricSensorData.DataQueueLength) dataValueRaw.Dequeue();
+                                dataValueRaw.Enqueue(LastValue);
+                                if (dataValueRaw.Count > PediatricSensorData.DataQueueLength) dataValueRaw.Dequeue();
+
+                                dataValueRawRunningAvg.Enqueue(LastValue);
+                                if (dataValueRawRunningAvg.Count > PediatricSensorData.DataQueueRunningAvgLength) dataValueRawRunningAvg.Dequeue();
+
+                                RunningAvg = dataValueRawRunningAvg.Average();
+
+                                lock (dataSaveLock)
+                                {
+                                    if (dataSaveEnable)
+                                        dataSaveBuffer.Add(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
+                                }
+
+                                if (!wasRunningAvgUpdated) wasRunningAvgUpdated = true;
+                            }
 
                             if (ShouldBePlotted)
                             {
                                 plotCounter++;
                                 if (plotCounter == plotCounterMax)
                                 {
-                                    _ChartValues.Add(new ObservableValue(LastValue));
+                                    _ChartValues.Add(new ObservableValue(RunningAvg));
                                     if (_ChartValues.Count > PediatricSensorData.PlotQueueLength) _ChartValues.RemoveAt(0);
                                     plotCounter = 0;
                                 }
-                            }
-
-                            lock (dataSaveLock)
-                            {
-                                if (dataSaveEnable)
-                                    dataSaveBuffer.Add(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
                             }
 
                             dataIndex = 0;
@@ -469,31 +482,31 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserCurrentModValue)));
 
             SendCommand(PediatricSensorData.SensorCommandLaserCurrent);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleLaserCurrent)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdLaserCurrent)));
 
             SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleLaserHeat)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdLaserHeat)));
 
             SendCommand(PediatricSensorData.SensorCommandCellHeat);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleCellHeat)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldXOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleFieldXOffset)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldXOffset)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldXAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleFieldXAmplitude)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldXAmplitude)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldYOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleFieldYOffset)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldYOffset)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldYAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleFieldYAmplitude)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldYAmplitude)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldZOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleFieldZOffset)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZOffset)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleFieldZAmplitude)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZAmplitude)));
 
         }
 
@@ -512,7 +525,10 @@ namespace PediatricSoft
             // Wait a bit and record the ADC value
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Waiting for {PediatricSensorData.StateHandlerADCColdDelay} ms");
             Thread.Sleep(PediatricSensorData.StateHandlerADCColdDelay);
-            sensorADCColdValueRaw = LastValue;
+            lock (dataLock)
+            {
+                sensorADCColdValueRaw = LastValue;
+            }
 
             // Here we check if we received non-zero value.
             // If it is zero (default) - something is wrong and we fail.
@@ -545,7 +561,10 @@ namespace PediatricSoft
                 Thread.Sleep(PediatricSensorData.StateHandlerLaserHeatSweepTime);
 
                 // See if the threshold was reached
-                data = dataValueRaw.ToArray();
+                lock (dataLock)
+                {
+                    data = dataValueRaw.ToArray();
+                }
                 transmission = (double)data.Min() / sensorADCColdValueRaw;
                 if (transmission < PediatricSensorData.SensorTargetLaserTransmissionSweep)
                 {
@@ -598,8 +617,10 @@ namespace PediatricSoft
                 while (!foundResonanceStep && state == PediatricSensorData.SensorStateLaserLockStep && laserHeat < PediatricSensorData.SensorMaxLaserHeat)
                 {
                     Thread.Sleep(PediatricSensorData.SensorLaserHeatStepSleepTime);
-
-                    transmission = (double)LastValue / sensorADCColdValueRaw;
+                    lock (dataLock)
+                    {
+                        transmission = (double)LastValue / sensorADCColdValueRaw;
+                    }
                     if (transmission < PediatricSensorData.SensorTargetLaserTransmissionStep)
                     {
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Step cycle - found Rb resonance");
@@ -653,11 +674,17 @@ namespace PediatricSoft
 
                 SendCommand(String.Concat("#", UInt16ToStringBE(laserHeatPlus)), PediatricSensorData.IsLaserLockDebugEnabled);
                 Thread.Sleep(PediatricSensorData.SensorLaserHeatWiggleSleepTime);
-                sensorADCPlus = LastValue;
+                lock (dataLock)
+                {
+                    sensorADCPlus = LastValue;
+                }
 
                 SendCommand(String.Concat("#", UInt16ToStringBE(laserHeatMinus)), PediatricSensorData.IsLaserLockDebugEnabled);
                 Thread.Sleep(PediatricSensorData.SensorLaserHeatWiggleSleepTime);
-                sensorADCMinus = LastValue;
+                lock (dataLock)
+                {
+                    sensorADCMinus = LastValue;
+                }
 
                 if (sensorADCPlus < sensorADCMinus)
                     laserHeat = laserHeatPlus;
@@ -687,23 +714,29 @@ namespace PediatricSoft
 
         private void SendCommandsZeroOneAxis()
         {
-            int sensorADCCurrent = 0;
-            int sensorADCMax = 0;
+            double sensorADCCurrent = 0;
+            double sensorADCMax = 0;
 
             ushort currentField = ushort.MinValue;
             ushort zeroField = ushort.MinValue;
 
             while (currentField < ushort.MaxValue)
             {
-                sensorADCCurrent = LastValue;
+                while (!wasRunningAvgUpdated) Thread.Sleep(1);
+                lock (dataLock)
+                {
+                    sensorADCCurrent = RunningAvg;
+                }
                 if (sensorADCCurrent > sensorADCMax)
                 {
                     sensorADCMax = sensorADCCurrent;
                     zeroField = currentField;
                 }
-
                 SendCommand(String.Concat("#", UInt16ToStringBE(currentField)), PediatricSensorData.IsLaserLockDebugEnabled);
-                //Thread.Sleep(PediatricSensorData.SensorFieldStepDelay);
+                lock (dataLock)
+                {
+                    wasRunningAvgUpdated = false;
+                }
                 currentField = UShortSafeInc(currentField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
             }
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroField)), PediatricSensorData.IsLaserLockDebugEnabled);
@@ -743,7 +776,7 @@ namespace PediatricSoft
                     case PediatricSensorData.SensorStateMakeCold:
 
                         SendCommandsColdSensor();
-                        if (state == PediatricSensorData.SensorStateValid)
+                        if (state == PediatricSensorData.SensorStateMakeCold)
                         {
                             state++;
                             OnPropertyChanged("State");

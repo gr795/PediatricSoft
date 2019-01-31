@@ -46,8 +46,9 @@ namespace PediatricSoft
         public const bool IsLaserLockDebugEnabled = false;
         public const int NumberOfThreads = 32;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
+        public const int DataQueueRunningAvgLength = 20; // number of data points for the running average
         public const int PlotQueueLength = 500;
-        public const int UIUpdateInterval = 500; // Update UI every X ms
+        public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string DefaultFolder = "Data";
         public const string ValidIDN = "12";
 
@@ -57,8 +58,8 @@ namespace PediatricSoft
         public const int SerialPortSleepTime = 1000;
         public const int SerialPortShutDownLoopDelay = 100;
         public const int SerialPortStreamBlockSize = 4096; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
-        public const int SerialPortStreamSleepMin = 15;
-        public const int SerialPortStreamSleepMax = 30;
+        public const int SerialPortStreamSleepMin = 1;
+        public const int SerialPortStreamSleepMax = 1;
         public const int SerialPortErrorCountMax = 10;
 
         public const byte StartDataFrameByte = 0x02;
@@ -95,38 +96,39 @@ namespace PediatricSoft
         public const ushort SensorLaserlockEnable = 0x0005;
 
         public const string SensorCommandLaserCurrent = "@3";
-        public const ushort SensorIdleLaserCurrent = 0x0000;
+        public const ushort SensorColdLaserCurrent = 0x0000;
         public const ushort SensorDefaultLaserCurrent = 0x9000;
 
         public const string SensorCommandLaserCurrentMod = "@4";
         public const ushort SensorLaserCurrentModValue = 0x0500;
 
         public const string SensorCommandLaserHeat = "@5";
-        public const ushort SensorIdleLaserHeat = 0x0000;
+        public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 10;
         public const ushort SensorLaserHeatWiggleStep = 20;
 
         public const string SensorCommandFieldXOffset = "@7";
-        public const ushort SensorIdleFieldXOffset = 0x8000;
+        public const ushort SensorColdFieldXOffset = 0x8000;
 
         public const string SensorCommandFieldXAmplitude = "@8";
-        public const ushort SensorIdleFieldXAmplitude = 0x0000;
+        public const ushort SensorColdFieldXAmplitude = 0x0000;
 
         public const string SensorCommandFieldYOffset = "@9";
-        public const ushort SensorIdleFieldYOffset = 0x8000;
+        public const ushort SensorColdFieldYOffset = 0x8000;
 
-        public const string SensorCommandFieldYAmplitude = "@a";
-        public const ushort SensorIdleFieldYAmplitude = 0x0000;
+        public const string SensorCommandFieldYAmplitude = "@A";
+        public const ushort SensorColdFieldYAmplitude = 0x0000;
 
-        public const string SensorCommandFieldZOffset = "@b";
-        public const ushort SensorIdleFieldZOffset = 0x8000;
+        public const string SensorCommandFieldZOffset = "@B";
+        public const ushort SensorColdFieldZOffset = 0xFFFF;
 
-        public const string SensorCommandFieldZAmplitude = "@c";
-        public const ushort SensorIdleFieldZAmplitude = 0x0000;
+        public const string SensorCommandFieldZAmplitude = "@C";
+        public const ushort SensorColdFieldZAmplitude = 0x0000;
+        public const ushort SensorRunFieldZAmplitude = 0x07C0;
 
-        public const ushort SensorFieldStep = 0x0001;
+        public const ushort SensorFieldStep = 0x0025;
 
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorIdleCellHeat = 0x0000;
@@ -192,7 +194,15 @@ namespace PediatricSoft
 
         public void LockAll()
         {
-
+            if (!IsRunning)
+            {
+                IsRunning = true;
+                if (SaveDataEnabled) CreateDataFolder();
+                Parallel.ForEach(Sensors, _PediatricSensor =>
+                {
+                    _PediatricSensor.Lock();
+                });
+            }
         }
 
         public void StartAll()

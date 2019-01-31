@@ -54,7 +54,10 @@ namespace PediatricSoft
                 if (PediatricSensorData.Sensors.Count > 0)
                 {
                     if (PediatricSensorData.DebugMode)
+                    {
+                        buttonLockSensors.IsEnabled = true;
                         buttonRunSensors.IsEnabled = true;
+                    }
                     else
                         buttonLockSensors.IsEnabled = true;
 
@@ -73,6 +76,7 @@ namespace PediatricSoft
         private async void ButtonLockSensors_Click(object sender, RoutedEventArgs e)
         {
             await Task.Run(() => PediatricSensorData.LockAll());
+            buttonRunSensors.IsEnabled = true;
         }
 
         private async void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
