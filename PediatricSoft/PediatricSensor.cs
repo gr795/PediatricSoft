@@ -25,12 +25,12 @@ namespace PediatricSoft
         private SerialPort _SerialPort;
         private Task streamingTask;
         private Task processingTask;
+        private Task dataSaveTask;
         private Task stateTask;
-        private string filePath = String.Empty;
-        private StreamWriter file;
         private System.Timers.Timer uiUpdateTimer;
         private Random rnd = new Random();
         private CancellationTokenSource streamCancellationTokenSource;
+        private CancellationTokenSource fileSaveCancellationTokenSource;
 
         private byte state = PediatricSensorData.SensorStateInit;
         private readonly Object stateLock = new Object();
@@ -42,7 +42,12 @@ namespace PediatricSoft
         private int bufferIndex = 0;
         private readonly Object bufferLock = new Object();
 
+        private bool dataSaveEnable = false;
+        private List<string> dataSaveBuffer = new List<string>();
+        private readonly Object dataSaveLock = new Object();
+
         private readonly Object lastValueLock = new Object();
+
 
         private Queue<int> dataTimeRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
         private Queue<int> dataValueRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
@@ -235,16 +240,9 @@ namespace PediatricSoft
 
             if (state == PediatricSensorData.SensorStateIdle)
             {
-                filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
-                filePath += ".txt";
-                if (PediatricSensorData.SaveDataEnabled) file = File.AppendText(filePath);
-
                 state++;
                 OnPropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-
-
-
             }
         }
 
@@ -258,8 +256,7 @@ namespace PediatricSoft
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
 
-                processingTask.Wait();
-                if (PediatricSensorData.SaveDataEnabled && (file != null)) file.Dispose();
+                // if (PediatricSensorData.SaveDataEnabled && (file != null)) file.Dispose();
 
             }
         }
@@ -270,8 +267,7 @@ namespace PediatricSoft
             byte[] byteArrayIn = new byte[PediatricSensorData.SerialPortStreamBlockSize];
             int bytesRead = 0;
 
-            //while (!cancellationToken.IsCancellationRequested)
-            while (!streamingTask.IsCanceled)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -280,6 +276,7 @@ namespace PediatricSoft
                 catch (UnauthorizedAccessException e)
                 {
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}");
+                    streamCancellationTokenSource.Cancel();
                     state = PediatricSensorData.SensorStateFailed;
                     OnPropertyChanged("State");
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
@@ -415,7 +412,6 @@ namespace PediatricSoft
                             dataValueRaw.Enqueue(LastValue);
                             if (dataValueRaw.Count > PediatricSensorData.DataQueueLength) dataValueRaw.Dequeue();
 
-
                             if (ShouldBePlotted)
                             {
                                 plotCounter++;
@@ -427,7 +423,11 @@ namespace PediatricSoft
                                 }
                             }
 
-                            if (PediatricSensorData.SaveDataEnabled) file.WriteLine(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
+                            lock (dataSaveLock)
+                            {
+                                if (dataSaveEnable)
+                                    dataSaveBuffer.Add(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
+                            }
 
                             dataIndex = 0;
                         }
@@ -439,7 +439,23 @@ namespace PediatricSoft
             };
         }
 
+        private void SaveData(CancellationToken token)
+        {
 
+            string filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
+            filePath += ".txt";
+
+            while (!token.IsCancellationRequested)
+            {
+                Thread.Sleep(1000);
+                lock (dataSaveLock)
+                {
+                    File.AppendAllLines(filePath, dataSaveBuffer);
+                    dataSaveBuffer.Clear();
+                }
+            }
+
+        }
 
 
 
@@ -823,6 +839,16 @@ namespace PediatricSoft
 
                     case PediatricSensorData.SensorStateStart:
 
+                        if (PediatricSensorData.SaveDataEnabled)
+                        {
+                            lock (dataSaveLock)
+                            {
+                                dataSaveEnable = true;
+                            }
+                            fileSaveCancellationTokenSource = new CancellationTokenSource();
+                            dataSaveTask = Task.Run(() => SaveData(fileSaveCancellationTokenSource.Token));
+                        }
+
                         state++;
                         OnPropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
@@ -832,6 +858,20 @@ namespace PediatricSoft
                         break;
 
                     case PediatricSensorData.SensorStateStop:
+
+                        if (PediatricSensorData.SaveDataEnabled)
+                        {
+                            lock (dataSaveLock)
+                            {
+                                dataSaveEnable = false;
+                            }
+                            fileSaveCancellationTokenSource.Cancel();
+                            dataSaveTask.Wait();
+                            fileSaveCancellationTokenSource.Dispose();
+                            fileSaveCancellationTokenSource = null;
+                            dataSaveTask.Dispose();
+                            dataSaveTask = null;
+                        }
 
                         if (state == PediatricSensorData.SensorStateStop)
                         {
@@ -909,11 +949,42 @@ namespace PediatricSoft
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
 
+            if (stateTask != null)
+                stateTask.Wait();
+
             if (uiUpdateTimer != null)
             {
                 uiUpdateTimer.Enabled = false;
                 uiUpdateTimer.Elapsed -= OnUIUpdateTimerEvent;
                 uiUpdateTimer.Dispose();
+            }
+
+            lock (dataSaveLock)
+            {
+                dataSaveEnable = false;
+            }
+            if (fileSaveCancellationTokenSource != null)
+            {
+                try
+                {
+                    fileSaveCancellationTokenSource.Cancel();
+                    dataSaveTask.Wait();
+                    fileSaveCancellationTokenSource.Dispose();
+                    fileSaveCancellationTokenSource = null;
+                    dataSaveTask.Dispose();
+                    dataSaveTask = null;
+                }
+                catch (Exception) { }
+            }
+            if (dataSaveTask != null)
+            {
+                try
+                {
+                    dataSaveTask.Wait();
+                    dataSaveTask.Dispose();
+                    dataSaveTask = null;
+                }
+                catch (Exception) { }
             }
 
             if (streamCancellationTokenSource != null)
