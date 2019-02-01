@@ -46,7 +46,7 @@ namespace PediatricSoft
         public const bool IsLaserLockDebugEnabled = false;
         public const int NumberOfThreads = 32;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
-        public const int DataQueueRunningAvgLength = 20; // number of data points for the running average
+        public const int DataQueueRunningAvgLength = 10; // number of data points for the running average
         public const int PlotQueueLength = 500;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string DefaultFolder = "Data";
@@ -130,12 +130,22 @@ namespace PediatricSoft
 
         public const ushort SensorFieldStep = 0x0025;
 
+        public const string SensorCommandDigitalDataStreamingAndGain = "@20";
+        public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;
+        public const ushort SensorDigitalDataStreamingOffGainHigh = 0x0001;
+        public const ushort SensorDigitalDataStreamingOnGainLow = 0x0002;
+        public const ushort SensorDigitalDataStreamingOnGainHigh = 0x0003;
+
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorIdleCellHeat = 0x0000;
-        public const ushort SensorRunCellHeat = 0x6000;
+        public const ushort SensorRunCellHeat = 0x5000;
         public const ushort SensorMinCellHeat = 0x0000;
         public const ushort SensorMaxCellHeat = 0x9000;
         public const ushort SensorCellHeatStep = 10;
+
+        public const string SensorCommandDigitalDataSelector = "@22";
+        public const ushort SensorDigitalDataSelectorADC = 0x0000;
+        public const ushort SensorDigitalDataSelectorZDemod = 0x0005;
 
         public const byte SensorStateInit = 0;
         public const byte SensorStateValid = 1;
@@ -164,7 +174,7 @@ namespace PediatricSoft
         public string CommandHistory { get; set; } = String.Empty;
 
         public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
-        public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString() ); } }
+        public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString()); } }
         public bool IsRunning { get; private set; } = false;
         public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public bool IsScanning { get; private set; } = false;
@@ -178,56 +188,46 @@ namespace PediatricSoft
 
         public void AddAll()
         {
-            Parallel.ForEach(SerialPort.GetPortNames(),port =>
-            {
-                PediatricSensor sensor = new PediatricSensor(port);
-                sensor.Validate();
-                if (sensor.IsValid)
-                    App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
-                else
-                    while (!sensor.IsDisposed)
-                        Thread.Sleep(SerialPortShutDownLoopDelay);
-                OnPropertyChanged("SensorCount");
-            });
+            Parallel.ForEach(SerialPort.GetPortNames(), port =>
+             {
+                 PediatricSensor sensor = new PediatricSensor(port);
+                 sensor.Validate();
+                 if (sensor.IsValid)
+                     App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                 else
+                     while (!sensor.IsDisposed)
+                         Thread.Sleep(StateHandlerSleepTime);
+                 OnPropertyChanged("SensorCount");
+             });
 
         }
 
         public void LockAll()
         {
-            if (!IsRunning)
+            if (SaveDataEnabled) CreateDataFolder();
+            Parallel.ForEach(Sensors, _PediatricSensor =>
             {
-                IsRunning = true;
-                if (SaveDataEnabled) CreateDataFolder();
-                Parallel.ForEach(Sensors, _PediatricSensor =>
-                {
-                    _PediatricSensor.Lock();
-                });
-            }
+                _PediatricSensor.Lock();
+            });
         }
 
         public void StartAll()
         {
-            if (!IsRunning)
+            IsRunning = true;
+            if (SaveDataEnabled) CreateDataFolder();
+            Parallel.ForEach(Sensors, _PediatricSensor =>
             {
-                IsRunning = true;
-                if (SaveDataEnabled) CreateDataFolder();
-                Parallel.ForEach(Sensors, _PediatricSensor =>
-                {
-                    _PediatricSensor.Start();
-                });
-            }
+                _PediatricSensor.Start();
+            });
         }
 
         public void StopAll()
         {
-            if (IsRunning)
+            IsRunning = false;
+            Parallel.ForEach(Sensors, _PediatricSensor =>
             {
-                Parallel.ForEach(Sensors, _PediatricSensor =>
-                {
-                    _PediatricSensor.Stop();
-                });
-                IsRunning = false;
-            }
+                _PediatricSensor.Stop();
+            });
         }
 
         public void ClearAll()
@@ -236,23 +236,15 @@ namespace PediatricSoft
             Parallel.ForEach(Sensors, _PediatricSensor =>
             {
                 _PediatricSensor.Dispose();
-                while (!_PediatricSensor.IsDisposed) Thread.Sleep(SerialPortShutDownLoopDelay);
+                while (!_PediatricSensor.IsDisposed) Thread.Sleep(StateHandlerSleepTime);
             });
             Sensors.Clear();
             OnPropertyChanged("SensorCount");
         }
 
-        public void FieldZeroAll()
-        {
-            Parallel.ForEach(Sensors, _PediatricSensor =>
-            {
-                _PediatricSensor.SendCommandsZeroFields();
-            });
-        }
-
         public void ValidateSuffixString()
         {
-                SaveSuffix = Regex.Replace(SaveSuffix, @"[^\w]", "");
+            SaveSuffix = Regex.Replace(SaveSuffix, @"[^\w]", "");
         }
 
         private void CreateDataFolder()
@@ -269,6 +261,6 @@ namespace PediatricSoft
                     String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
             System.IO.Directory.CreateDirectory(dataFolder);
         }
-        
+
     }
 }

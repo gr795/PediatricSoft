@@ -42,30 +42,27 @@ namespace PediatricSoft
             }
             catch (Exception) { }
 
-            if (!PediatricSensorData.IsScanning)
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Clearing sensor list\n");
+            PediatricSensorData.ClearAll();
+
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Scanning COM ports...\n");
+            await Task.Run(() => PediatricSensorData.AddAll());
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Found {PediatricSensorData.Sensors.Count} sensors\n");
+
+            if (PediatricSensorData.Sensors.Count > 0)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Clearing sensor list\n");
-                PediatricSensorData.ClearAll();
-
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Scanning COM ports...\n");
-                await Task.Run(() => PediatricSensorData.AddAll());
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Found {PediatricSensorData.Sensors.Count} sensors\n");
-
-                if (PediatricSensorData.Sensors.Count > 0)
+                if (PediatricSensorData.DebugMode)
                 {
-                    if (PediatricSensorData.DebugMode)
-                    {
-                        buttonLockSensors.IsEnabled = true;
-                        buttonRunSensors.IsEnabled = true;
-                    }
-                    else
-                        buttonLockSensors.IsEnabled = true;
-
-                    buttonSendCommands.IsEnabled = true;
-                    buttonPlot.IsEnabled = true;
+                    buttonLockSensors.IsEnabled = true;
+                    buttonRunSensors.IsEnabled = true;
                 }
+                else
+                    buttonLockSensors.IsEnabled = true;
 
+                buttonSendCommands.IsEnabled = true;
+                buttonPlot.IsEnabled = true;
             }
+
             buttonScanPorts.IsEnabled = true;
 
             HidePlot();
@@ -139,11 +136,6 @@ namespace PediatricSoft
 
         }
 
-        private async void ButtonFieldZero_Click(object sender, RoutedEventArgs e)
-        {
-            await Task.Run(() => PediatricSensorData.FieldZeroAll());
-        }
-
         private void OnPlotWindowClosing(object sender, EventArgs e)
         {
             buttonPlot.Content = "Show Plot";
@@ -190,7 +182,7 @@ namespace PediatricSoft
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            PediatricSensorData.StopAll();
+            PediatricSensorData.ClearAll();
             try
             {
                 plotWindow.Close();

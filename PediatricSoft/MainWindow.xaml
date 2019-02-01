@@ -73,11 +73,6 @@
                      Text="{Binding Path=SaveSuffix}">
             </TextBox>
 
-            <Button Name="buttonFieldZero" Margin="10,5" Height="20"
-                            IsEnabled="True" DockPanel.Dock="Top" Click="ButtonFieldZero_Click">
-                Zero Fields
-            </Button>
-
         </DockPanel>
 
         <TextBox Name="logTextBox" Margin="10" Height="96"
