@@ -300,17 +300,17 @@ namespace PediatricSoft
                 {
                     bytesRead = stream.Read(byteArrayIn, 0, PediatricSensorData.SerialPortStreamBlockSize);
                 }
-                catch (UnauthorizedAccessException e)
+                catch (TimeoutException)
+                {
+
+                }
+                catch (Exception e)
                 {
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}");
                     streamCancellationTokenSource.Cancel();
                     state = PediatricSensorData.SensorStateFailed;
                     OnPropertyChanged("State");
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-                }
-                catch (TimeoutException)
-                {
-
                 }
 
                 if (bytesRead > 0)
