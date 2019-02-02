@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Timers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
 
 namespace PediatricSoft
 {
@@ -37,7 +38,11 @@ namespace PediatricSoft
         private readonly Object stateLock = new Object();
 
         private int sensorADCColdValueRaw;
+        private double sensorZDemodCalibration = 1;
         private ushort laserHeat = PediatricSensorData.SensorMinLaserHeat;
+        private ushort zeroXField = PediatricSensorData.SensorColdFieldXOffset;
+        private ushort zeroYField = PediatricSensorData.SensorColdFieldYOffset;
+        private ushort zeroZField = PediatricSensorData.SensorColdFieldZOffset;
         private bool foundResonanceWiggle = false;
 
         private readonly byte[] buffer = new byte[PediatricSensorData.ProcessingBufferSize];
@@ -45,6 +50,7 @@ namespace PediatricSoft
         private readonly Object bufferLock = new Object();
 
         private bool dataSaveEnable = false;
+        private bool dataSaveRAW = true;
         private List<string> dataSaveBuffer = new List<string>();
         private readonly Object dataSaveLock = new Object();
 
@@ -58,8 +64,17 @@ namespace PediatricSoft
         public int LastValue { get; private set; } = 0;
         public int LastTime { get; private set; } = 0;
         public double RunningAvg { get; private set; } = 0;
-        private bool wasRunningAvgUpdated = false;
-        public double Voltage { get { return RunningAvg * 5 / 125 / 16777215; } }
+        private bool wasDataUpdated = false;
+        public double Voltage
+        {
+            get
+            {
+                if (state < PediatricSensorData.SensorStateIdle)
+                    return RunningAvg * PediatricSensorData.SensorADCRawToVolts;
+                else
+                    return RunningAvg * sensorZDemodCalibration;
+            }
+        }
 
         public string Port { get; private set; } = String.Empty;
         public string IDN { get; private set; } = String.Empty;
@@ -261,6 +276,18 @@ namespace PediatricSoft
             }
         }
 
+        public void ZeroFields()
+        {
+            if (state == PediatricSensorData.SensorStateIdle)
+            {
+                state = PediatricSensorData.SensorStateZeroFields;
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            }
+            else
+                MessageBox.Show($"Sensor {SN} on port {Port}: The sensor needs to be in state {PediatricSensorData.SensorStateIdle}");
+        }
+
         private void StreamData(CancellationToken cancellationToken)
         {
             Stream stream = _SerialPort.BaseStream;
@@ -420,10 +447,13 @@ namespace PediatricSoft
                                 lock (dataSaveLock)
                                 {
                                     if (dataSaveEnable)
-                                        dataSaveBuffer.Add(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
+                                        if (dataSaveRAW)
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(LastTime), "\t", Convert.ToString(LastValue)));
+                                        else
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(LastTime * 0.001), "\t", Convert.ToString(LastValue * sensorZDemodCalibration)));
                                 }
 
-                                if (!wasRunningAvgUpdated) wasRunningAvgUpdated = true;
+                                if (!wasDataUpdated) wasDataUpdated = true;
                             }
 
                             if (ShouldBePlotted)
@@ -431,7 +461,10 @@ namespace PediatricSoft
                                 plotCounter++;
                                 if (plotCounter == plotCounterMax)
                                 {
-                                    _ChartValues.Add(new ObservableValue(RunningAvg));
+                                    if (state < PediatricSensorData.SensorStateIdle)
+                                        _ChartValues.Add(new ObservableValue(RunningAvg * PediatricSensorData.SensorADCRawToVolts));
+                                    else
+                                        _ChartValues.Add(new ObservableValue(RunningAvg * sensorZDemodCalibration));
                                     if (_ChartValues.Count > PediatricSensorData.PlotQueueLength) _ChartValues.RemoveAt(0);
                                     plotCounter = 0;
                                 }
@@ -488,7 +521,7 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdLaserHeat)));
 
             SendCommand(PediatricSensorData.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorIdleCellHeat)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdCellHeat)));
 
             SendCommand(PediatricSensorData.SensorCommandFieldXOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldXOffset)));
@@ -545,6 +578,9 @@ namespace PediatricSoft
                 SendCommand(PediatricSensorData.SensorCommandCellHeat);
                 SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorMaxCellHeat)));
             }
+
+            SendCommand(PediatricSensorData.SensorCommandFieldZOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserLockFieldZOffset)));
 
             // Laser heat sweep cycle. Here we look for the Rb resonance.
             while (!foundResonanceSweep && state == PediatricSensorData.SensorStateLaserLockSweep && numberOfLaserLockSweepCycles < PediatricSensorData.MaxNumberOfLaserLockSweepCycles)
@@ -715,7 +751,7 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorRunCellHeat)));
         }
 
-        private void SendCommandsZeroOneAxis()
+        private ushort SendCommandsZeroOneAxis()
         {
             double sensorADCCurrent = 0;
             double sensorADCMax = 0;
@@ -725,10 +761,10 @@ namespace PediatricSoft
 
             while (currentField < ushort.MaxValue)
             {
-                while (!wasRunningAvgUpdated) Thread.Sleep(1);
+                while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
                 lock (dataLock)
                 {
-                    sensorADCCurrent = RunningAvg;
+                    sensorADCCurrent = (double)LastValue;
                 }
                 if (sensorADCCurrent > sensorADCMax)
                 {
@@ -738,30 +774,58 @@ namespace PediatricSoft
                 SendCommand(String.Concat("#", UInt16ToStringBE(currentField)), PediatricSensorData.IsLaserLockDebugEnabled);
                 lock (dataLock)
                 {
-                    wasRunningAvgUpdated = false;
+                    wasDataUpdated = false;
                 }
                 currentField = UShortSafeInc(currentField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
             }
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroField)), PediatricSensorData.IsLaserLockDebugEnabled);
+            return zeroField;
 
         }
 
-        public void SendCommandsZeroFields()
+        private void SendCommandsZeroFields()
         {
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
 
+            SendCommand(PediatricSensorData.SensorCommandDigitalDataSelector);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataSelectorADC)));
+
+            SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZAmplitude)));
+
             // Z-field
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
             SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            SendCommandsZeroOneAxis();
+            zeroZField = SendCommandsZeroOneAxis();
 
             // Y-field
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Y-field");
             SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            SendCommandsZeroOneAxis();
+            zeroYField = SendCommandsZeroOneAxis();
+
+            // X-field
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing X-field");
+            SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            zeroXField = SendCommandsZeroOneAxis();
+
+            // Z-field again
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
+            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            zeroZField = SendCommandsZeroOneAxis();
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
+        }
+
+        private void SendCommandsCalibrateMagnetometer()
+        {
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin calibration");
+
+            ushort plusField = UShortSafeInc(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+            ushort minusField = UShortSafeDec(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+
+            double plusSum = 0;
+            double minusSum = 0;
 
             SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorRunFieldZAmplitude)));
@@ -769,6 +833,44 @@ namespace PediatricSoft
             SendCommand(PediatricSensorData.SensorCommandDigitalDataSelector);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataSelectorZDemod)));
 
+            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+
+            for (int i = 0; i < PediatricSensorData.NumberOfMagnetometerCalibrationSteps; i++)
+            {
+                SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                lock (dataLock)
+                {
+                    wasDataUpdated = false;
+                }
+                while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                lock (dataLock)
+                {
+                    plusSum += (double)LastValue;
+                }
+
+                SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                lock (dataLock)
+                {
+                    wasDataUpdated = false;
+                }
+                while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                lock (dataLock)
+                {
+                    minusSum += (double)LastValue;
+                }
+
+            }
+
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)), PediatricSensorData.IsLaserLockDebugEnabled);
+            sensorZDemodCalibration = PediatricSensorData.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSensorData.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSensorData.SensorFieldStep);
+
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta sum {(plusSum - minusSum)}");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of averages {PediatricSensorData.NumberOfMagnetometerCalibrationSteps}");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta {(plusSum - minusSum) / PediatricSensorData.NumberOfMagnetometerCalibrationSteps}");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of hex steps {2 * PediatricSensorData.SensorFieldStep}");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response per hex step {(plusSum - minusSum) / PediatricSensorData.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSensorData.SensorFieldStep}");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: ZDemod calibration {sensorZDemodCalibration}");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Calibration done");
         }
 
         private void StateHandler(CancellationToken stateHandlerCancellationToken)
@@ -857,6 +959,14 @@ namespace PediatricSoft
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
+                    case PediatricSensorData.SensorStateCalibrateMagnetometer:
+
+                        SendCommandsCalibrateMagnetometer();
+                        state++;
+                        OnPropertyChanged("State");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        break;
+
                     case PediatricSensorData.SensorStateIdle:
                         break;
 
@@ -867,6 +977,7 @@ namespace PediatricSoft
                             lock (dataSaveLock)
                             {
                                 dataSaveEnable = true;
+                                dataSaveRAW = PediatricSensorData.SaveRAWValues;
                             }
                             fileSaveCancellationTokenSource = new CancellationTokenSource();
                             dataSaveTask = Task.Run(() => SaveData(fileSaveCancellationTokenSource.Token));
@@ -958,7 +1069,7 @@ namespace PediatricSoft
         {
 
             command = Regex.Replace(command, @"[^\w@#?+-]", "");
-            
+
             if (state > PediatricSensorData.SensorStateInit && state < PediatricSensorData.SensorStateShutDown)
             {
                 if (!String.IsNullOrEmpty(command))

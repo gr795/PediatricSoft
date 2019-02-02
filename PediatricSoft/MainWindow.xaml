@@ -58,6 +58,20 @@
 
             <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
+                <TextBlock VerticalAlignment="Center">
+                            Save RAW Data
+                </TextBlock>
+
+                <CheckBox Margin="5,0,0,0" VerticalAlignment="Center" 
+                          Name="saveRAWValuesCheckbox"
+                          IsChecked="{Binding Path=SaveRAWValues}">
+
+                </CheckBox>
+
+            </StackPanel>
+
+            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
+
                 <CheckBox Name="saveDataCheckbox" VerticalAlignment="Center" 
                           IsChecked="{Binding Path=SaveDataEnabled}">
 
@@ -72,6 +86,11 @@
             <TextBox Name="saveSuffixTextBox" Margin="10,5" DockPanel.Dock="Top" 
                      Text="{Binding Path=SaveSuffix}">
             </TextBox>
+
+            <Button Name="buttonFieldZero" Margin="10,5" Height="20"
+                            IsEnabled="True" DockPanel.Dock="Top" Click="ButtonZeroFields_Click">
+                Zero Fields
+            </Button>
 
         </DockPanel>
 
@@ -93,9 +112,9 @@
 
                     <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
 
-                    <GridViewColumn Header="Last Value" DisplayMemberBinding="{Binding LastValue}"/>
+                    <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValue}"/>
 
-                    <GridViewColumn Header="Voltage" DisplayMemberBinding="{Binding Voltage}"/>
+                    <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Voltage}"/>
 
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>

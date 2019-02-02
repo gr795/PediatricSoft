@@ -86,6 +86,7 @@ namespace PediatricSoft
                 buttonScanPorts.IsEnabled = false;
                 saveSuffixTextBox.IsEnabled = false;
                 saveDataCheckbox.IsEnabled = false;
+                saveRAWValuesCheckbox.IsEnabled = false;
                 await Task.Run(() => PediatricSensorData.StartAll());
                 buttonRunSensors.IsEnabled = true;
                 buttonRunSensors.Content = "Stop Sensors";
@@ -98,6 +99,7 @@ namespace PediatricSoft
                 buttonRunSensors.IsEnabled = true;
                 saveSuffixTextBox.IsEnabled = true;
                 saveDataCheckbox.IsEnabled = true;
+                saveRAWValuesCheckbox.IsEnabled = true;
                 buttonRunSensors.Content = "Start Sensors";
             }
         }
@@ -178,6 +180,11 @@ namespace PediatricSoft
                 sendCommandsWindow = new SendCommandsWindow();
                 sendCommandsWindow.Show();
             }
+        }
+
+        private async void ButtonZeroFields_Click(object sender, RoutedEventArgs e)
+        {
+            await Task.Run(() => PediatricSensorData.ZeroFieldsAll());
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)

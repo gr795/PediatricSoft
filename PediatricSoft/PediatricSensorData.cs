@@ -77,11 +77,16 @@ namespace PediatricSoft
         public const int StateHandlerADCColdDelay = 1000; // 1 second
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
+
+        public const double SensorADCRawToVolts = (double) 5 / 125 / 16777215;
+        public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
+        public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
         public const double SensorTargetLaserTransmissionStep = 0.5;
         public const double SensorTargetLaserTransmissionWiggle = 0.3;
 
         public const int MaxNumberOfLaserLockSweepCycles = 10;
         public const int MaxNumberOfLaserLockStepCycles = 3;
+        public const int NumberOfMagnetometerCalibrationSteps = 1000;
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
@@ -122,13 +127,14 @@ namespace PediatricSoft
         public const ushort SensorColdFieldYAmplitude = 0x0000;
 
         public const string SensorCommandFieldZOffset = "@B";
-        public const ushort SensorColdFieldZOffset = 0xFFFF;
+        public const ushort SensorColdFieldZOffset = 0x8000;
+        public const ushort SensorLaserLockFieldZOffset = 0x0000;
 
         public const string SensorCommandFieldZAmplitude = "@C";
         public const ushort SensorColdFieldZAmplitude = 0x0000;
         public const ushort SensorRunFieldZAmplitude = 0x07C0;
 
-        public const ushort SensorFieldStep = 0x0025;
+        public const ushort SensorFieldStep = 0x0018; // about 0.5 nT assuming 21 pT per hex step
 
         public const string SensorCommandDigitalDataStreamingAndGain = "@20";
         public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;
@@ -137,7 +143,7 @@ namespace PediatricSoft
         public const ushort SensorDigitalDataStreamingOnGainHigh = 0x0003;
 
         public const string SensorCommandCellHeat = "@21";
-        public const ushort SensorIdleCellHeat = 0x0000;
+        public const ushort SensorColdCellHeat = 0x0000;
         public const ushort SensorRunCellHeat = 0x5000;
         public const ushort SensorMinCellHeat = 0x0000;
         public const ushort SensorMaxCellHeat = 0x9000;
@@ -157,10 +163,11 @@ namespace PediatricSoft
         public const byte SensorStateLaserLockPID = 7;
         public const byte SensorStateStabilizeCellHeat = 8;
         public const byte SensorStateZeroFields = 9;
-        public const byte SensorStateIdle = 10;
-        public const byte SensorStateStart = 11;
-        public const byte SensorStateRun = 12;
-        public const byte SensorStateStop = 13;
+        public const byte SensorStateCalibrateMagnetometer = 10;
+        public const byte SensorStateIdle = 11;
+        public const byte SensorStateStart = 12;
+        public const byte SensorStateRun = 13;
+        public const byte SensorStateStop = 14;
         public const byte SensorStateLaserLockWiggle = 200;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
@@ -170,6 +177,7 @@ namespace PediatricSoft
         public bool PlotWindowClosed = false;
         public bool DebugMode { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
+        public bool SaveRAWValues { get; set; } = false;
         public string SaveSuffix { get; set; } = String.Empty;
         public string CommandHistory { get; set; } = String.Empty;
 
@@ -240,6 +248,14 @@ namespace PediatricSoft
             });
             Sensors.Clear();
             OnPropertyChanged("SensorCount");
+        }
+
+        public void ZeroFieldsAll()
+        {
+            Parallel.ForEach(Sensors, _PediatricSensor =>
+            {
+                _PediatricSensor.ZeroFields();
+            });
         }
 
         public void ValidateSuffixString()
