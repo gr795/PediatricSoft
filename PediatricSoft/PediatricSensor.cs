@@ -43,7 +43,6 @@ namespace PediatricSoft
         private ushort zeroXField = PediatricSensorData.SensorColdFieldXOffset;
         private ushort zeroYField = PediatricSensorData.SensorColdFieldYOffset;
         private ushort zeroZField = PediatricSensorData.SensorColdFieldZOffset;
-        private bool foundResonanceWiggle = false;
 
         private readonly byte[] buffer = new byte[PediatricSensorData.ProcessingBufferSize];
         private int bufferIndex = 0;
@@ -688,54 +687,6 @@ namespace PediatricSoft
 
         }
 
-        private void SendCommandsLaserLockWiggle()
-        {
-
-            int wiggleIterationMax = PediatricSensorData.SensorLaserHeatWiggleCycleLength / 2 / PediatricSensorData.SensorLaserHeatWiggleSleepTime;
-            int sensorADCPlus = 0;
-            int sensorADCMinus = 0; ;
-            ushort laserHeatPlus = 0;
-            ushort laserHeatMinus = 0;
-
-            double transmission = 0;
-
-            Thread.Sleep(PediatricSensorData.SensorLaserHeatWiggleCycleDelay);
-            SendCommand(PediatricSensorData.SensorCommandLaserHeat, PediatricSensorData.IsLaserLockDebugEnabled);
-            //sensorADCLast = LastValue;
-
-            for (int wiggleIteration = 0; wiggleIteration < wiggleIterationMax; wiggleIteration++)
-            {
-                laserHeatPlus = UShortSafeInc(laserHeat, PediatricSensorData.SensorLaserHeatWiggleStep, PediatricSensorData.SensorMaxLaserHeat);
-                laserHeatMinus = UShortSafeDec(laserHeat, PediatricSensorData.SensorLaserHeatWiggleStep, PediatricSensorData.SensorMinLaserHeat);
-
-                SendCommand(String.Concat("#", UInt16ToStringBE(laserHeatPlus)), PediatricSensorData.IsLaserLockDebugEnabled);
-                Thread.Sleep(PediatricSensorData.SensorLaserHeatWiggleSleepTime);
-                lock (dataLock)
-                {
-                    sensorADCPlus = LastValue;
-                }
-
-                SendCommand(String.Concat("#", UInt16ToStringBE(laserHeatMinus)), PediatricSensorData.IsLaserLockDebugEnabled);
-                Thread.Sleep(PediatricSensorData.SensorLaserHeatWiggleSleepTime);
-                lock (dataLock)
-                {
-                    sensorADCMinus = LastValue;
-                }
-
-                if (sensorADCPlus < sensorADCMinus)
-                    laserHeat = laserHeatPlus;
-                if (sensorADCPlus > sensorADCMinus)
-                    laserHeat = laserHeatMinus;
-
-                transmission = (double)sensorADCMinus / sensorADCColdValueRaw;
-                if (transmission > PediatricSensorData.SensorTargetLaserTransmissionWiggle) break;
-            }
-
-            if (transmission < PediatricSensorData.SensorTargetLaserTransmissionWiggle)
-                foundResonanceWiggle = true;
-
-        }
-
         private void SendCommandsLaserLockPID()
         {
             //SendCommand(PediatricSensorData.SensorCommandDigitalDataStreamingAndGain);
@@ -805,14 +756,14 @@ namespace PediatricSoft
             zeroYField = SendCommandsZeroOneAxis();
 
             // X-field
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing X-field");
-            SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            zeroXField = SendCommandsZeroOneAxis();
+            //Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing X-field");
+            //SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            //zeroXField = SendCommandsZeroOneAxis();
 
             // Z-field again
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
-            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            zeroZField = SendCommandsZeroOneAxis();
+            //Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
+            //SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            //zeroZField = SendCommandsZeroOneAxis();
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
         }
@@ -1012,26 +963,6 @@ namespace PediatricSoft
                             state = PediatricSensorData.SensorStateIdle;
                             OnPropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-                        }
-                        break;
-
-                    case PediatricSensorData.SensorStateLaserLockWiggle:
-
-                        SendCommandsLaserLockWiggle();
-                        if (state == PediatricSensorData.SensorStateLaserLockWiggle)
-                        {
-                            if (foundResonanceWiggle)
-                            {
-                                state++;
-                                OnPropertyChanged("State");
-                                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-                            }
-                            else
-                            {
-                                state--;
-                                OnPropertyChanged("State");
-                                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-                            }
                         }
                         break;
 

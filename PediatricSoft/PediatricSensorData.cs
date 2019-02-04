@@ -44,7 +44,7 @@ namespace PediatricSoft
         // Constants
         public const bool IsDebugEnabled = true;
         public const bool IsLaserLockDebugEnabled = false;
-        public const int NumberOfThreads = 32;
+        public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
         public const int DataQueueRunningAvgLength = 10; // number of data points for the running average
         public const int PlotQueueLength = 500;
@@ -82,7 +82,6 @@ namespace PediatricSoft
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
         public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
         public const double SensorTargetLaserTransmissionStep = 0.5;
-        public const double SensorTargetLaserTransmissionWiggle = 0.3;
 
         public const int MaxNumberOfLaserLockSweepCycles = 10;
         public const int MaxNumberOfLaserLockStepCycles = 3;
@@ -90,11 +89,6 @@ namespace PediatricSoft
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
-        public const int SensorLaserHeatWiggleCycleDelay = 1000;
-        public const int SensorLaserHeatWiggleSleepTime = 10;
-        public const int SensorLaserHeatWiggleCycleLength = 10000; // in ms
-
-        public const int SensorFieldStepDelay = 10;
 
         public const string SensorCommandLaserlock = "@0";
         public const ushort SensorLaserlockDisable = 0x0000;
@@ -112,7 +106,6 @@ namespace PediatricSoft
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 10;
-        public const ushort SensorLaserHeatWiggleStep = 20;
 
         public const string SensorCommandFieldXOffset = "@7";
         public const ushort SensorColdFieldXOffset = 0x8000;
@@ -168,7 +161,6 @@ namespace PediatricSoft
         public const byte SensorStateStart = 12;
         public const byte SensorStateRun = 13;
         public const byte SensorStateStop = 14;
-        public const byte SensorStateLaserLockWiggle = 200;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
 
