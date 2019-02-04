@@ -42,7 +42,7 @@ namespace PediatricSoft
         }
 
         // Constants
-        public const bool IsDebugEnabled = true;
+        public const bool IsDebugEnabled = false;
         public const bool IsLaserLockDebugEnabled = false;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
@@ -73,17 +73,18 @@ namespace PediatricSoft
 
         public const int StateHandlerSleepTime = 10; // in ms
         public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
-        public const int StateHandlerLaserHeatSweepTime = 2000; // 2 seconds
+        public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
+        public const double SensorTargetLaserTransmissionStep = 0.5;
 
         public const double SensorADCRawToVolts = (double) 5 / 125 / 16777215;
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
-        public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
-        public const double SensorTargetLaserTransmissionStep = 0.5;
 
-        public const int MaxNumberOfLaserLockSweepCycles = 10;
+        public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
+
+        public const int MaxNumberOfLaserLockSweepCycles = 30;
         public const int MaxNumberOfLaserLockStepCycles = 3;
         public const int NumberOfMagnetometerCalibrationSteps = 1000;
 
@@ -99,7 +100,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultLaserCurrent = 0x9000;
 
         public const string SensorCommandLaserCurrentMod = "@4";
-        public const ushort SensorLaserCurrentModValue = 0x0500;
+        public const ushort SensorLaserCurrentModValue = 0x0250;
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;
