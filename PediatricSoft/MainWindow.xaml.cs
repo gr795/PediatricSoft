@@ -62,6 +62,8 @@ namespace PediatricSoft
                 buttonSendCommands.IsEnabled = true;
                 buttonPlot.IsEnabled = true;
             }
+            else
+                MessageBox.Show("No sensors found. Check connection.");
 
             buttonScanPorts.IsEnabled = true;
 
