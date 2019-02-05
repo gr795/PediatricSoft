@@ -43,7 +43,7 @@ namespace PediatricSoft
 
         // Constants
         public const bool IsDebugEnabled = false;
-        public const bool IsLaserLockDebugEnabled = false;
+        public const bool IsLaserLockDebugEnabled = true;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
         public const int DataQueueRunningAvgLength = 10; // number of data points for the running average
@@ -104,6 +104,7 @@ namespace PediatricSoft
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;
+        public const ushort SensorDefaultLaserHeat = 0x0500;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 10;
@@ -147,21 +148,27 @@ namespace PediatricSoft
         public const ushort SensorDigitalDataSelectorADC = 0x0000;
         public const ushort SensorDigitalDataSelectorZDemod = 0x0005;
 
+        public const string SensorCommandGetOptimalLaserCurrent = "@2C";
+        public const string SensorCommandGetOptimalBzMod = "@2D";
+        public const string SensorCommandGetOptimalCellHeatLockPoint = "@2E";
+        public const string SensorCommandGetMaxCellHeat = "@2F"; // Not used. Set to 9000
+
         public const byte SensorStateInit = 0;
         public const byte SensorStateValid = 1;
-        public const byte SensorStateMakeCold = 2;
-        public const byte SensorStateCold = 3;
-        public const byte SensorStateLockStart = 4;
-        public const byte SensorStateLaserLockSweep = 5;
-        public const byte SensorStateLaserLockStep = 6;
-        public const byte SensorStateLaserLockPID = 7;
-        public const byte SensorStateStabilizeCellHeat = 8;
-        public const byte SensorStateZeroFields = 9;
-        public const byte SensorStateCalibrateMagnetometer = 10;
-        public const byte SensorStateIdle = 11;
-        public const byte SensorStateStart = 12;
-        public const byte SensorStateRun = 13;
-        public const byte SensorStateStop = 14;
+        public const byte SensorStateGetOptimalParameters = 2;
+        public const byte SensorStateMakeCold = 3;
+        public const byte SensorStateCold = 4;
+        public const byte SensorStateLockStart = 5;
+        public const byte SensorStateLaserLockSweep = 6;
+        public const byte SensorStateLaserLockStep = 7;
+        public const byte SensorStateLaserLockPID = 8;
+        public const byte SensorStateStabilizeCellHeat = 9;
+        public const byte SensorStateZeroFields = 10;
+        public const byte SensorStateCalibrateMagnetometer = 11;
+        public const byte SensorStateIdle = 12;
+        public const byte SensorStateStart = 13;
+        public const byte SensorStateRun = 14;
+        public const byte SensorStateStop = 15;
         public const byte SensorStateFailed = 254;
         public const byte SensorStateShutDown = 255;
 

@@ -44,6 +44,11 @@ namespace PediatricSoft
         private ushort zeroYField = PediatricSensorData.SensorColdFieldYOffset;
         private ushort zeroZField = PediatricSensorData.SensorColdFieldZOffset;
 
+        private string optimalLaserCurrentString = string.Empty;
+        private string optimalBzModString = string.Empty;
+        private string optimalCellHeatLockPointString = string.Empty;
+        private string optimalMaxCellHeatString = string.Empty;
+
         private readonly byte[] buffer = new byte[PediatricSensorData.ProcessingBufferSize];
         private int bufferIndex = 0;
         private readonly Object bufferLock = new Object();
@@ -52,6 +57,9 @@ namespace PediatricSoft
         private bool dataSaveRAW = true;
         private List<string> dataSaveBuffer = new List<string>();
         private readonly Object dataSaveLock = new Object();
+
+        private bool infoRequested = false;
+        private string requestedInfoString = string.Empty;
 
         private Queue<int> dataTimeRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
         private Queue<int> dataValueRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
@@ -418,8 +426,17 @@ namespace PediatricSoft
 
                         if (infoIndex == PediatricSensorData.InfoBlockSize)
                         {
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Info message: {System.Text.Encoding.ASCII.GetString(info)}");
-                            PediatricSensorData.CommandHistory = String.Concat(System.Text.Encoding.ASCII.GetString(info), "\n", PediatricSensorData.CommandHistory);
+                            string infoMessage = System.Text.Encoding.ASCII.GetString(info);
+                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Info message: {infoMessage}");
+                            PediatricSensorData.CommandHistory = String.Concat(infoMessage, "\n", PediatricSensorData.CommandHistory);
+                            lock (dataLock)
+                            {
+                                if (infoRequested)
+                                {
+                                    requestedInfoString = infoMessage;
+                                    infoRequested = false;
+                                }
+                            }
                             inInfoFrame = false;
                             infoIndex = 0;
                         }
@@ -497,7 +514,52 @@ namespace PediatricSoft
 
         }
 
+        private void SendCommandsGetOptimalParameters()
+        {
+            // Get optimal laser current
+            lock (dataLock)
+            {
+                infoRequested = true;
+            }
+            SendCommand(PediatricSensorData.SensorCommandGetOptimalLaserCurrent);
+            SendCommand("?");
+            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Laser Current: {requestedInfoString}");
+            optimalLaserCurrentString = requestedInfoString;
 
+            // Get optimal Bz modulation amplitude
+            lock (dataLock)
+            {
+                infoRequested = true;
+            }
+            SendCommand(PediatricSensorData.SensorCommandGetOptimalBzMod);
+            SendCommand("?");
+            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Bz modulation amplitude: {requestedInfoString}");
+            optimalBzModString = requestedInfoString;
+
+            // Get Optimal Cell Heat Lock Point
+            lock (dataLock)
+            {
+                infoRequested = true;
+            }
+            SendCommand(PediatricSensorData.SensorCommandGetOptimalCellHeatLockPoint);
+            SendCommand("?");
+            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Cell Heat Lock Point: {requestedInfoString}");
+            optimalCellHeatLockPointString = requestedInfoString;
+
+            // Get Max Cell Heat
+            lock (dataLock)
+            {
+                infoRequested = true;
+            }
+            SendCommand(PediatricSensorData.SensorCommandGetMaxCellHeat);
+            SendCommand("?");
+            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Max Cell Heat: {requestedInfoString}");
+            optimalMaxCellHeatString = requestedInfoString;
+        }
 
         private void SendCommandsColdSensor()
         {
@@ -510,8 +572,8 @@ namespace PediatricSoft
             SendCommand(PediatricSensorData.SensorCommandLaserlock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserlockDisable)));
 
-            SendCommand(PediatricSensorData.SensorCommandLaserCurrentMod);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserCurrentModValue)));
+            //SendCommand(PediatricSensorData.SensorCommandLaserCurrentMod);
+            //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserCurrentModValue)));
 
             SendCommand(PediatricSensorData.SensorCommandLaserCurrent);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdLaserCurrent)));
@@ -552,7 +614,7 @@ namespace PediatricSoft
 
             // Turn on the laser
             SendCommand(PediatricSensorData.SensorCommandLaserCurrent);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDefaultLaserCurrent)));
+            SendCommand(String.Concat("#", optimalLaserCurrentString));
 
             // Wait a bit and record the ADC value
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Waiting for {PediatricSensorData.StateHandlerADCColdDelay} ms");
@@ -575,7 +637,7 @@ namespace PediatricSoft
             {
                 // Set the cell heater to the max value, wait for the cell to warm up
                 SendCommand(PediatricSensorData.SensorCommandCellHeat);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorMaxCellHeat)));
+                SendCommand(String.Concat("#", optimalMaxCellHeatString));
                 Thread.Sleep(PediatricSensorData.StateHandlerCellHeatInitialTime);
             }
 
@@ -699,6 +761,9 @@ namespace PediatricSoft
 
             SendCommand(PediatricSensorData.SensorCommandLaserlock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserlockEnable)));
+
+            SendCommand(PediatricSensorData.SensorCommandLaserHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDefaultLaserHeat)));
         }
 
         private void SendCommandsStabilizeCellHeat()
@@ -798,7 +863,7 @@ namespace PediatricSoft
             double minusSum = 0;
 
             SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorRunFieldZAmplitude)));
+            SendCommand(String.Concat("#", optimalBzModString));
 
             SendCommand(PediatricSensorData.SensorCommandDigitalDataSelector);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataSelectorZDemod)));
@@ -852,6 +917,17 @@ namespace PediatricSoft
                 {
 
                     case PediatricSensorData.SensorStateValid:
+                        break;
+
+                    case PediatricSensorData.SensorStateGetOptimalParameters:
+
+                        SendCommandsGetOptimalParameters();
+                        if (state == PediatricSensorData.SensorStateGetOptimalParameters)
+                        {
+                            state++;
+                            OnPropertyChanged("State");
+                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        }
                         break;
 
                     case PediatricSensorData.SensorStateMakeCold:
