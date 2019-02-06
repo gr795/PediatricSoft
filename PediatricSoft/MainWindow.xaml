@@ -6,73 +6,94 @@
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
         Title="MainWindow" Height="500" Width="800" MinHeight="300" MinWidth="400"
-        Closing="Window_Closing"
-        DataContext="{Binding Source={StaticResource resource}}">
+        Closing="Window_Closing">
 
     <Grid>
 
-        <DockPanel Width="200" HorizontalAlignment="Right" LastChildFill="False">
+        <DockPanel Width="200"
+                   HorizontalAlignment="Right"
+                   LastChildFill="False">
 
-            <Button Name="buttonScanPorts" Margin="10,10,10,5" Height="20"
-                            IsEnabled="True" DockPanel.Dock="Top" Click="ButtonScanPorts_Click">
+            <Button Margin="10,10,10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding Path=ButtonScanPorts_IsEnabled}"
+                    Click="ButtonScanPorts_Click">
                 Scan Ports
             </Button>
 
-            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
+            <StackPanel Margin="10,5"
+                        DockPanel.Dock="Top"
+                        Orientation="Horizontal">
 
                 <TextBlock VerticalAlignment="Center">
                             Debug Mode
                 </TextBlock>
 
-                <CheckBox Margin="5,0,0,0" VerticalAlignment="Center" 
+                <CheckBox Margin="5,0,0,0"
+                          VerticalAlignment="Center"
+                          DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
                           IsChecked="{Binding Path=DebugMode}">
-                    
                 </CheckBox>
 
             </StackPanel>
 
             <TextBlock Margin="10,5" Height="20"
                        DockPanel.Dock="Top"
+                       DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
                        Text="{Binding Path=SensorCount}">
             </TextBlock>
 
-            <Button Name="buttonLockSensors" Margin="10,5" Height="20"
-                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonLockSensors_Click">
+            <Button Margin="10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding Path=ButtonLockSensors_IsEnabled}"
+                    Click="ButtonLockSensors_Click">
                 Lock Sensors
             </Button>
 
-            <Button Name="buttonRunSensors" Margin="10,5" Height="20"
-                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonRunSensors_Click">
-                Start Sensors
+            <Button Margin="10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding Path=ButtonRunSensors_IsEnabled}"
+                    Content="{Binding Path=ButtonRunSensors_Content}"
+                    Click="ButtonRunSensors_Click">
             </Button>
 
-            <Button Name="buttonSendCommands" Margin="10,5" Height="20"
-                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonSendCommands_Click">
+            <Button Margin="10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding Path=ButtonSendCommands_IsEnabled}"
+                    Click="ButtonSendCommands_Click">
                 Send Commands
             </Button>
 
-            <Button Name="buttonPlot" Margin="10,5" Height="20"
-                            IsEnabled="False" DockPanel.Dock="Top" Click="ButtonPlot_Click">
-                Show Plot
+            <Button Margin="10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding Path=ButtonPlot_IsEnabled}"
+                    Content="{Binding Path=ButtonPlot_Content}"
+                    Click="ButtonPlot_Click">
             </Button>
 
-            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
+            <StackPanel Margin="10,5"
+                        DockPanel.Dock="Top"
+                        Orientation="Horizontal">
 
                 <TextBlock VerticalAlignment="Center">
                             Save RAW Data
                 </TextBlock>
 
-                <CheckBox Margin="5,0,0,0" VerticalAlignment="Center" 
-                          Name="saveRAWValuesCheckbox"
+                <CheckBox Margin="5,0,0,0"
+                          VerticalAlignment="Center" 
                           IsChecked="{Binding Path=SaveRAWValues}">
-
                 </CheckBox>
 
             </StackPanel>
 
             <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
-                <CheckBox Name="saveDataCheckbox" VerticalAlignment="Center" 
+                <CheckBox VerticalAlignment="Center" 
                           IsChecked="{Binding Path=SaveDataEnabled}">
 
                 </CheckBox>
@@ -83,21 +104,22 @@
 
             </StackPanel>
 
-            <TextBox Name="saveSuffixTextBox" Margin="10,5" DockPanel.Dock="Top" 
+            <TextBox Margin="10,5" DockPanel.Dock="Top" 
                      Text="{Binding Path=SaveSuffix}">
             </TextBox>
 
-            <Button Name="buttonFieldZero" Margin="10,5" Height="20"
+            <Button Margin="10,5" Height="20"
                             IsEnabled="True" DockPanel.Dock="Top" Click="ButtonZeroFields_Click">
                 Zero Fields
             </Button>
 
         </DockPanel>
 
-        <TextBox Name="logTextBox" Margin="10" Height="96"
+        <TextBox Margin="10" Height="96"
                          VerticalAlignment="Bottom" IsReadOnly="True"/>
 
-        <ListView Name="sensorListView" Margin="10,10,200,120"
+        <ListView Margin="10,10,200,120"
+                  DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
                   ItemsSource="{Binding Path=Sensors}">
 
             <ListView.View>

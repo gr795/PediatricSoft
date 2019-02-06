@@ -9,32 +9,116 @@ using System.ComponentModel;
 using LiveCharts;
 using LiveCharts.Wpf;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace PediatricSoft
 {
 
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
 
         PlotWindow plotWindow = new PlotWindow();
         SendCommandsWindow sendCommandsWindow = new SendCommandsWindow();
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
+        private bool buttonScanPorts_IsEnabled = true;
+        public bool ButtonScanPorts_IsEnabled
+        {
+            get { return buttonScanPorts_IsEnabled; }
+            private set { buttonScanPorts_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private bool buttonLockSensors_IsEnabled = false;
+        public bool ButtonLockSensors_IsEnabled
+        {
+            get { return buttonLockSensors_IsEnabled; }
+            private set { buttonLockSensors_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private bool buttonRunSensors_IsEnabled = false;
+        public bool ButtonRunSensors_IsEnabled
+        {
+            get { return buttonRunSensors_IsEnabled; }
+            private set { buttonRunSensors_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private string buttonRunSensors_Content = "Start Sensors";
+        public string ButtonRunSensors_Content
+        {
+            get { return buttonRunSensors_Content; }
+            private set { buttonRunSensors_Content = value; OnPropertyChanged(); }
+        }
+
+        private bool buttonSendCommands_IsEnabled = false;
+        public bool ButtonSendCommands_IsEnabled
+        {
+            get { return buttonSendCommands_IsEnabled; }
+            private set { buttonSendCommands_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private bool buttonPlot_IsEnabled = false;
+        public bool ButtonPlot_IsEnabled
+        {
+            get { return buttonPlot_IsEnabled; }
+            private set { buttonPlot_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private string buttonPlot_Content = "Show Plot";
+        public string ButtonPlot_Content
+        {
+            get { return buttonPlot_Content; }
+            private set { buttonPlot_Content = value; OnPropertyChanged(); }
+        }
+
+        private bool saveRAWValuesCheckbox_IsEnabled = false;
+        public bool SaveRAWValuesCheckbox_IsEnabled
+        {
+            get { return saveRAWValuesCheckbox_IsEnabled; }
+            private set { saveRAWValuesCheckbox_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private bool saveDataCheckbox_IsEnabled = false;
+        public bool SaveDataCheckbox_IsEnabled
+        {
+            get { return saveDataCheckbox_IsEnabled; }
+            private set { saveDataCheckbox_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        private bool saveSuffixTextBox_IsEnabled = false;
+        public bool SaveSuffixTextBox_IsEnabled
+        {
+            get { return saveSuffixTextBox_IsEnabled; }
+            private set { saveSuffixTextBox_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        public string SaveSuffixTextBox_Text
+        {
+            get { return PediatricSensorData.SaveSuffix; }
+            set { PediatricSensorData.SaveSuffix = value; }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         public MainWindow()
         {
             InitializeComponent();
-            ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
+            DataContext = this;
 
+            ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
             plotWindow.Closed += OnPlotWindowClosing;
         }
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
         {
-            buttonScanPorts.IsEnabled = false;
-            buttonLockSensors.IsEnabled = false;
-            buttonRunSensors.IsEnabled = false;
-            buttonSendCommands.IsEnabled = false;
-            buttonPlot.IsEnabled = false;
+            ButtonScanPorts_IsEnabled = false;
+            ButtonLockSensors_IsEnabled = false;
+            ButtonRunSensors_IsEnabled = false;
+            ButtonSendCommands_IsEnabled = false;
+            ButtonPlot_IsEnabled = false;
             try
             {
                 plotWindow.Close();
@@ -53,19 +137,21 @@ namespace PediatricSoft
             {
                 if (PediatricSensorData.DebugMode)
                 {
-                    buttonLockSensors.IsEnabled = true;
-                    buttonRunSensors.IsEnabled = true;
+                    ButtonLockSensors_IsEnabled = true;
+                    ButtonRunSensors_IsEnabled = true;
                 }
                 else
-                    buttonLockSensors.IsEnabled = true;
+                {
+                    ButtonLockSensors_IsEnabled = true;
+                }
 
-                buttonSendCommands.IsEnabled = true;
-                buttonPlot.IsEnabled = true;
+                ButtonSendCommands_IsEnabled = true;
+                ButtonPlot_IsEnabled = true;
             }
             else
                 MessageBox.Show("No sensors found. Check connection.");
 
-            buttonScanPorts.IsEnabled = true;
+            ButtonScanPorts_IsEnabled = true;
 
             HidePlot();
             PlotToggle(sender, e);
@@ -75,41 +161,41 @@ namespace PediatricSoft
         private async void ButtonLockSensors_Click(object sender, RoutedEventArgs e)
         {
             await Task.Run(() => PediatricSensorData.LockAll());
-            buttonRunSensors.IsEnabled = true;
+            ButtonRunSensors_IsEnabled = true;
         }
 
         private async void ButtonRunSensors_Click(object sender, RoutedEventArgs e)
         {
             PediatricSensorData.ValidateSuffixString();
-            saveSuffixTextBox.Text = PediatricSensorData.SaveSuffix;
+            SaveSuffixTextBox_Text = PediatricSensorData.SaveSuffix;
             if (!PediatricSensorData.IsRunning)
             {
-                buttonRunSensors.IsEnabled = false;
-                buttonScanPorts.IsEnabled = false;
-                saveSuffixTextBox.IsEnabled = false;
-                saveDataCheckbox.IsEnabled = false;
-                saveRAWValuesCheckbox.IsEnabled = false;
+                ButtonRunSensors_IsEnabled = false;
+                ButtonScanPorts_IsEnabled = false;
+                SaveSuffixTextBox_IsEnabled = false;
+                SaveDataCheckbox_IsEnabled = false;
+                SaveRAWValuesCheckbox_IsEnabled = false;
                 await Task.Run(() => PediatricSensorData.StartAll());
-                buttonRunSensors.IsEnabled = true;
-                buttonRunSensors.Content = "Stop Sensors";
+                ButtonRunSensors_IsEnabled = true;
+                ButtonRunSensors_Content = "Stop Sensors";
             }
             else
             {
-                buttonRunSensors.IsEnabled = false;
+                ButtonRunSensors_IsEnabled = false;
                 await Task.Run(() => PediatricSensorData.StopAll());
-                buttonScanPorts.IsEnabled = true;
-                buttonRunSensors.IsEnabled = true;
-                saveSuffixTextBox.IsEnabled = true;
-                saveDataCheckbox.IsEnabled = true;
-                saveRAWValuesCheckbox.IsEnabled = true;
-                buttonRunSensors.Content = "Start Sensors";
+                ButtonScanPorts_IsEnabled = true;
+                ButtonRunSensors_IsEnabled = true;
+                SaveSuffixTextBox_IsEnabled = true;
+                SaveDataCheckbox_IsEnabled = true;
+                SaveRAWValuesCheckbox_IsEnabled = true;
+                ButtonRunSensors_Content = "Start Sensors";
             }
         }
 
         private void ButtonPlot_Click(object sender, RoutedEventArgs e)
         {
 
-            buttonPlot.IsEnabled = false;
+            ButtonPlot_IsEnabled = false;
             if (plotWindow.IsVisible)
             {
                 HidePlot();
@@ -118,18 +204,19 @@ namespace PediatricSoft
             {
                 ShowPlot();
             }
-            buttonPlot.IsEnabled = true;
+            ButtonPlot_IsEnabled = true;
 
         }
 
         private void PlotToggle(object sender, RoutedEventArgs e)
         {
-            PediatricSensorData._SeriesCollection.Clear();
+            if (PediatricSensorData.SeriesCollection.Count > 0)
+                PediatricSensorData.SeriesCollection.Clear();
             foreach (PediatricSensor _PediatricSensor in PediatricSensorData.Sensors)
             {
                 if (_PediatricSensor.ShouldBePlotted)
                 {
-                    PediatricSensorData._SeriesCollection.Add(new LineSeries
+                    PediatricSensorData.SeriesCollection.Add(new LineSeries
                     {
                         Values = _PediatricSensor._ChartValues,
                         Fill = Brushes.Transparent,
@@ -142,7 +229,7 @@ namespace PediatricSoft
 
         private void OnPlotWindowClosing(object sender, EventArgs e)
         {
-            buttonPlot.Content = "Show Plot";
+            ButtonPlot_Content = "Show Plot";
         }
 
         private void ShowPlot()
@@ -159,13 +246,13 @@ namespace PediatricSoft
                 plotWindow.Closed += OnPlotWindowClosing;
                 plotWindow.Show();
             }
-            buttonPlot.Content = "Hide Plot";
+            ButtonPlot_Content = "Hide Plot";
         }
 
         private void HidePlot()
         {
             plotWindow.Hide();
-            buttonPlot.Content = "Show Plot";
+            ButtonPlot_Content = "Show Plot";
         }
 
         private void ButtonSendCommands_Click(object sender, RoutedEventArgs e)

@@ -16,18 +16,12 @@ using System.Windows.Shapes;
 
 namespace PediatricSoft
 {
-
-
-
     public partial class PlotWindow : Window
     {
-
-        PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
-
         public PlotWindow()
         {
             InitializeComponent();
-            plotBox.Series = PediatricSensorData._SeriesCollection;
+            DataContext = this;
         }
     }
 }

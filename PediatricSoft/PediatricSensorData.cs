@@ -189,7 +189,7 @@ namespace PediatricSoft
         public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public bool IsScanning { get; private set; } = false;
 
-        public SeriesCollection _SeriesCollection { get; set; } = new SeriesCollection();
+        public SeriesCollection SeriesCollection { get; set; } = new SeriesCollection();
 
         public string dataFolder = String.Empty;
 
