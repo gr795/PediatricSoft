@@ -77,11 +77,23 @@ namespace PediatricSoft
             private set { saveRAWValuesCheckbox_IsEnabled = value; OnPropertyChanged(); }
         }
 
+        public bool SaveRAWValuesCheckbox_IsChecked
+        {
+            get { return PediatricSensorData.SaveRAWValues; }
+            set { PediatricSensorData.SaveRAWValues = value; }
+        }
+
         private bool saveDataCheckbox_IsEnabled = false;
         public bool SaveDataCheckbox_IsEnabled
         {
             get { return saveDataCheckbox_IsEnabled; }
             private set { saveDataCheckbox_IsEnabled = value; OnPropertyChanged(); }
+        }
+
+        public bool SaveDataCheckbox_IsChecked
+        {
+            get { return PediatricSensorData.SaveDataEnabled; }
+            set { PediatricSensorData.SaveDataEnabled = value; }
         }
 
         private bool saveSuffixTextBox_IsEnabled = false;
@@ -97,10 +109,27 @@ namespace PediatricSoft
             set { PediatricSensorData.SaveSuffix = value; }
         }
 
+        private bool buttonZeroFields_IsEnabled = false;
+        public bool ButtonZeroFields_IsEnabled
+        {
+            get { return buttonZeroFields_IsEnabled; }
+            private set { buttonZeroFields_IsEnabled = value; OnPropertyChanged(); }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void OnPlotWindowClosing(object sender, EventArgs e)
+        {
+            ButtonPlot_Content = "Show Plot";
+        }
+
+        private void OnPediatricSensorDataPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "SensorCount") OnPropertyChanged("SensorCount");
         }
 
         public MainWindow()
@@ -110,6 +139,7 @@ namespace PediatricSoft
 
             ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
             plotWindow.Closed += OnPlotWindowClosing;
+            PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
         }
 
         private async void ButtonScanPorts_Click(object sender, RoutedEventArgs e)
@@ -225,11 +255,6 @@ namespace PediatricSoft
                 }
             }
 
-        }
-
-        private void OnPlotWindowClosing(object sender, EventArgs e)
-        {
-            ButtonPlot_Content = "Show Plot";
         }
 
         private void ShowPlot()

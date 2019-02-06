@@ -27,7 +27,7 @@
                         Orientation="Horizontal">
 
                 <TextBlock VerticalAlignment="Center">
-                            Debug Mode
+                    Debug Mode
                 </TextBlock>
 
                 <CheckBox Margin="5,0,0,0"
@@ -76,40 +76,36 @@
                     Click="ButtonPlot_Click">
             </Button>
 
-            <StackPanel Margin="10,5"
-                        DockPanel.Dock="Top"
-                        Orientation="Horizontal">
+            <CheckBox Margin="10,5"
+                      DockPanel.Dock="Top"
+                      IsEnabled="{Binding Path=SaveDataCheckbox_IsEnabled}"
+                      IsChecked="{Binding Path=SaveRAWValuesCheckbox_IsChecked}">
+                Save Data
+            </CheckBox>
 
-                <TextBlock VerticalAlignment="Center">
-                            Save RAW Data
-                </TextBlock>
+            <CheckBox Margin="30,5"
+                      DockPanel.Dock="Top"
+                      IsEnabled="{Binding Path=SaveRAWValuesCheckbox_IsEnabled}"
+                      IsChecked="{Binding Path=SaveRAWValuesCheckbox_IsChecked}">
+                RAW Data
+            </CheckBox>
 
-                <CheckBox Margin="5,0,0,0"
-                          VerticalAlignment="Center" 
-                          IsChecked="{Binding Path=SaveRAWValues}">
-                </CheckBox>
+            <TextBlock Margin="30,5"
+                       DockPanel.Dock="Top">
+                       Optional Suffix:
+            </TextBlock>
 
-            </StackPanel>
-
-            <StackPanel Margin="10,5" DockPanel.Dock="Top" Orientation="Horizontal">
-
-                <CheckBox VerticalAlignment="Center" 
-                          IsChecked="{Binding Path=SaveDataEnabled}">
-
-                </CheckBox>
-
-                <TextBlock Margin="5,0,0,0" VerticalAlignment="Center">
-                            Save Data with suffix:
-                </TextBlock>
-
-            </StackPanel>
-
-            <TextBox Margin="10,5" DockPanel.Dock="Top" 
-                     Text="{Binding Path=SaveSuffix}">
+            <TextBox Margin="30,5,10,5"
+                     DockPanel.Dock="Top"
+                     IsEnabled="{Binding Path=SaveSuffixTextBox_IsEnabled}"
+                     Text="{Binding Path=SaveSuffixTextBox_Text}">
             </TextBox>
 
-            <Button Margin="10,5" Height="20"
-                            IsEnabled="True" DockPanel.Dock="Top" Click="ButtonZeroFields_Click">
+            <Button Margin="10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding Path=ButtonZeroFields_IsEnabled}"
+                    Click="ButtonZeroFields_Click">
                 Zero Fields
             </Button>
 
@@ -142,8 +138,8 @@
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <CheckBox IsChecked="{Binding ShouldBePlotted}"
-                                                  ToggleButton.Checked="PlotToggle"
-                                                  ToggleButton.Unchecked="PlotToggle">
+                                          ToggleButton.Checked="PlotToggle"
+                                          ToggleButton.Unchecked="PlotToggle">
                                 </CheckBox>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
