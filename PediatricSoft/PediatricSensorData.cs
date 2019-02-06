@@ -86,6 +86,7 @@ namespace PediatricSoft
 
         public const int MaxNumberOfLaserLockSweepCycles = 30;
         public const int MaxNumberOfLaserLockStepCycles = 3;
+        public const int NumberOfFieldZeroingSteps = 1000;
         public const int NumberOfMagnetometerCalibrationSteps = 1000;
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
@@ -129,7 +130,8 @@ namespace PediatricSoft
         public const ushort SensorColdFieldZAmplitude = 0x0000;
         public const ushort SensorRunFieldZAmplitude = 0x07C0;
 
-        public const ushort SensorFieldStep = 0x0018; // about 0.5 nT assuming 21 pT per hex step
+        public const ushort SensorFieldCheckRange = 0x002F; // about 1 nT assuming 21 pT per hex step
+        public const ushort SensorFieldStep = 0x000A; // about 0.2 nT assuming 21 pT per hex step
 
         public const string SensorCommandDigitalDataStreamingAndGain = "@20";
         public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;

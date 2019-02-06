@@ -76,7 +76,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (state < PediatricSensorData.SensorStateFailed)
+                if (state < PediatricSensorData.SensorStateStart)
                     return RunningAvg * PediatricSensorData.SensorADCRawToVolts;
                 else
                     return RunningAvg * sensorZDemodCalibration;
@@ -291,8 +291,6 @@ namespace PediatricSoft
                 OnPropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
-            else
-                MessageBox.Show($"Sensor {SN} on port {Port}: The sensor needs to be in state {PediatricSensorData.SensorStateIdle}");
         }
 
         private void StreamData(CancellationToken cancellationToken)
@@ -477,7 +475,7 @@ namespace PediatricSoft
                                 plotCounter++;
                                 if (plotCounter == plotCounterMax)
                                 {
-                                    if (state < PediatricSensorData.SensorStateIdle)
+                                    if (state < PediatricSensorData.SensorStateStart)
                                         _ChartValues.Add(new ObservableValue(RunningAvg * PediatricSensorData.SensorADCRawToVolts));
                                     else
                                         _ChartValues.Add(new ObservableValue(RunningAvg * sensorZDemodCalibration));
@@ -786,40 +784,13 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorRunCellHeat)));
         }
 
-        private ushort SendCommandsZeroOneAxis()
-        {
-            double sensorADCCurrent = 0;
-            double sensorADCMax = 0;
-
-            ushort currentField = ushort.MinValue;
-            ushort zeroField = ushort.MinValue;
-
-            while (currentField < ushort.MaxValue)
-            {
-                while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
-                lock (dataLock)
-                {
-                    sensorADCCurrent = (double)LastValue;
-                }
-                if (sensorADCCurrent > sensorADCMax)
-                {
-                    sensorADCMax = sensorADCCurrent;
-                    zeroField = currentField;
-                }
-                SendCommand(String.Concat("#", UInt16ToStringBE(currentField)), PediatricSensorData.IsLaserLockDebugEnabled);
-                lock (dataLock)
-                {
-                    wasDataUpdated = false;
-                }
-                currentField = UShortSafeInc(currentField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
-            }
-            SendCommand(String.Concat("#", UInt16ToStringBE(zeroField)), PediatricSensorData.IsLaserLockDebugEnabled);
-            return zeroField;
-
-        }
-
         private void SendCommandsZeroFields()
         {
+            int reminder = 0;
+            ushort plusField = ushort.MaxValue;
+            ushort minusField = ushort.MinValue;
+            double plusValue = 0;
+            double minusValue = 0;
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
 
@@ -829,25 +800,120 @@ namespace PediatricSoft
             SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZAmplitude)));
 
-            // Z-field
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
-            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            zeroZField = SendCommandsZeroOneAxis();
+            for (int i=0; i<(PediatricSensorData.NumberOfFieldZeroingSteps*3); i++)
+            {
+                Math.DivRem(i, 3, out reminder);
+                switch (reminder)
+                {
+                    case 0:
+                        SendCommand(PediatricSensorData.SensorCommandFieldXOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+                        plusField = UShortSafeInc(zeroXField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
+                        minusField = UShortSafeDec(zeroXField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);
 
-            // Y-field
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Y-field");
-            SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            zeroYField = SendCommandsZeroOneAxis();
+                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        lock (dataLock)
+                        {
+                            wasDataUpdated = false;
+                        }
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        lock (dataLock)
+                        {
+                            plusValue = (double)LastValue;
+                        }
 
-            // X-field
-            //Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing X-field");
-            //SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            //zeroXField = SendCommandsZeroOneAxis();
+                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        lock (dataLock)
+                        {
+                            wasDataUpdated = false;
+                        }
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        lock (dataLock)
+                        {
+                            minusValue = (double)LastValue;
+                        }
 
-            // Z-field again
-            //Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Zeroing Z-field");
-            //SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-            //zeroZField = SendCommandsZeroOneAxis();
+                        if (plusValue > minusValue)
+                            zeroXField = UShortSafeInc(zeroXField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+
+                        if (plusValue < minusValue)
+                            zeroXField = UShortSafeDec(zeroXField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+
+                        break;
+
+                    case 1:
+                        SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+                        plusField = UShortSafeInc(zeroYField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
+                        minusField = UShortSafeDec(zeroYField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);
+
+                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        lock (dataLock)
+                        {
+                            wasDataUpdated = false;
+                        }
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        lock (dataLock)
+                        {
+                            plusValue = (double)LastValue;
+                        }
+
+                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        lock (dataLock)
+                        {
+                            wasDataUpdated = false;
+                        }
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        lock (dataLock)
+                        {
+                            minusValue = (double)LastValue;
+                        }
+
+                        if (plusValue > minusValue)
+                            zeroYField = UShortSafeInc(zeroYField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+
+                        if (plusValue < minusValue)
+                            zeroYField = UShortSafeDec(zeroYField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+
+                        break;
+
+                    case 2:
+                        SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+                        plusField = UShortSafeInc(zeroZField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
+                        minusField = UShortSafeDec(zeroZField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);
+
+                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        lock (dataLock)
+                        {
+                            wasDataUpdated = false;
+                        }
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        lock (dataLock)
+                        {
+                            plusValue = (double)LastValue;
+                        }
+
+                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        lock (dataLock)
+                        {
+                            wasDataUpdated = false;
+                        }
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        lock (dataLock)
+                        {
+                            minusValue = (double)LastValue;
+                        }
+
+                        if (plusValue > minusValue)
+                            zeroZField = UShortSafeInc(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+
+                        if (plusValue < minusValue)
+                            zeroZField = UShortSafeDec(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+
+                        break;
+
+                    default:
+                        break;
+                }
+            }
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
         }
