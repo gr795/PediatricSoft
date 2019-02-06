@@ -245,6 +245,8 @@ namespace PediatricSoft
                 if (state == PediatricSensorData.SensorStateValid)
                 {
                     state++;
+                    if (SN == "16")
+                        state = PediatricSensorData.SensorStateIdle;
                     OnPropertyChanged("State");
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                 }
@@ -288,6 +290,8 @@ namespace PediatricSoft
             if (state == PediatricSensorData.SensorStateIdle)
             {
                 state = PediatricSensorData.SensorStateZeroFields;
+                if (SN == "16")
+                    state = PediatricSensorData.SensorStateIdle;
                 OnPropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
