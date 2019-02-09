@@ -240,6 +240,8 @@ namespace PediatricSoft
 
         public void Lock()
         {
+            byte currentState;
+
             lock (stateLock)
             {
                 if (state == PediatricSensorData.SensorStateValid)
@@ -247,53 +249,101 @@ namespace PediatricSoft
                     state++;
                     if (SN == "16")
                         state = PediatricSensorData.SensorStateIdle;
-                    OnPropertyChanged("State");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                }
+                currentState = state;
+            }
+
+            OnPropertyChanged("State");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+
+            while (currentState != PediatricSensorData.SensorStateIdle)
+            {
+                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = state;
                 }
             }
-            //while (state != PediatricSensorData.SensorStateIdle) Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
         }
 
         public void Start()
         {
+            byte currentState;
+
             lock (stateLock)
             {
                 if (PediatricSensorData.DebugMode && state == PediatricSensorData.SensorStateValid)
-                {
                     state = PediatricSensorData.SensorStateIdle;
-                    OnPropertyChanged("State");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-                }
 
                 if (state == PediatricSensorData.SensorStateIdle)
-                {
                     state++;
-                    OnPropertyChanged("State");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+
+                currentState = state;
+            }
+
+            OnPropertyChanged("State");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+
+            while (currentState != PediatricSensorData.SensorStateRun)
+            {
+                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = state;
                 }
             }
-            //while (state != PediatricSensorData.SensorStateRun) Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
         }
 
         public void Stop()
         {
-            if (state == PediatricSensorData.SensorStateRun)
+            byte currentState;
+
+            lock (stateLock)
             {
-                state++;
-                OnPropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                if (state == PediatricSensorData.SensorStateRun)
+                    state++;
+
+                currentState = state;
+            }
+
+            OnPropertyChanged("State");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+
+            while (currentState != PediatricSensorData.SensorStateIdle)
+            {
+                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = state;
+                }
             }
         }
 
         public void ZeroFields()
         {
-            if (state == PediatricSensorData.SensorStateIdle)
+            byte currentState;
+
+            lock (stateLock)
             {
-                state = PediatricSensorData.SensorStateZeroFields;
-                if (SN == "16")
-                    state = PediatricSensorData.SensorStateIdle;
-                OnPropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                if (state == PediatricSensorData.SensorStateIdle)
+                {
+                    state = PediatricSensorData.SensorStateZeroFields;
+                    if (SN == "16")
+                        state = PediatricSensorData.SensorStateIdle;
+                }
+                currentState = state;
+            }
+
+            OnPropertyChanged("State");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+
+            while (currentState != PediatricSensorData.SensorStateIdle)
+            {
+                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = state;
+                }
             }
         }
 
@@ -804,12 +854,12 @@ namespace PediatricSoft
             SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZAmplitude)));
 
-            for (int i=0; i<(PediatricSensorData.NumberOfFieldZeroingSteps*3); i++)
+            for (int i = 0; i < (PediatricSensorData.NumberOfFieldZeroingSteps * 3); i++)
             {
                 Math.DivRem(i, 3, out reminder);
                 switch (reminder)
                 {
-                    case 0:
+                    case -1:
                         SendCommand(PediatricSensorData.SensorCommandFieldXOffset, PediatricSensorData.IsLaserLockDebugEnabled);
                         plusField = UShortSafeInc(zeroXField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
                         minusField = UShortSafeDec(zeroXField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);

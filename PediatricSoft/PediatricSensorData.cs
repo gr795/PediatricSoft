@@ -9,16 +9,20 @@ using LiveCharts;
 using LiveCharts.Wpf;
 using System.Diagnostics;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Prism.Mvvm;
+using Prism.Commands;
 
 namespace PediatricSoft
 {
-    public sealed class PediatricSensorData : INotifyPropertyChanged
+    public sealed class PediatricSensorData : BindableBase
     {
 
         private static readonly PediatricSensorData instance = new PediatricSensorData();
 
         static PediatricSensorData()
         {
+            ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
         }
 
         private PediatricSensorData()
@@ -35,14 +39,8 @@ namespace PediatricSoft
 
         public static PediatricSensorData GetInstance() { return instance; }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged(string prop)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        }
-
         // Constants
-        public const bool IsDebugEnabled = false;
+        public const bool IsDebugEnabled = true;
         public const bool IsLaserLockDebugEnabled = true;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
@@ -79,15 +77,15 @@ namespace PediatricSoft
         public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.5;
 
-        public const double SensorADCRawToVolts = (double) 5 / 125 / 16777215;
+        public const double SensorADCRawToVolts = (double)5 / 125 / 16777215;
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
 
         public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
 
         public const int MaxNumberOfLaserLockSweepCycles = 30;
         public const int MaxNumberOfLaserLockStepCycles = 3;
-        public const int NumberOfFieldZeroingSteps = 1000;
-        public const int NumberOfMagnetometerCalibrationSteps = 1000;
+        public const int NumberOfFieldZeroingSteps = 100;
+        public const int NumberOfMagnetometerCalibrationSteps = 100;
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
@@ -185,7 +183,7 @@ namespace PediatricSoft
 
         public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
         public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString()); } }
-        public bool IsRunning { get; private set; } = false;
+        
         public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public bool IsScanning { get; private set; } = false;
 
@@ -194,70 +192,195 @@ namespace PediatricSoft
         public string dataFolder = String.Empty;
 
 
-
-
-        public void AddAll()
+        
+        private bool isRunning = false;
+        public bool IsRunning
         {
-            Parallel.ForEach(SerialPort.GetPortNames(), port =>
-             {
-                 PediatricSensor sensor = new PediatricSensor(port);
-                 sensor.Validate();
-                 if (sensor.IsValid)
-                     App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
-                 else
-                     while (!sensor.IsDisposed)
-                         Thread.Sleep(StateHandlerSleepTime);
-                 OnPropertyChanged("SensorCount");
-             });
-
+            get { return isRunning; }
+            private set { isRunning = value; RaisePropertyChanged(); }
         }
 
-        public void LockAll()
+        private bool canScan = true;
+        public bool CanScan
         {
-            if (SaveDataEnabled) CreateDataFolder();
-            Parallel.ForEach(Sensors, _PediatricSensor =>
+            get { return canScan; }
+            private set { canScan = value; RaisePropertyChanged(); }
+        }
+        public bool ScanPortsAsyncCanExecute() { return CanScan; }
+
+        public void ScanPortsAsync()
+        {
+            Task.Run(() =>
             {
-                _PediatricSensor.Lock();
+                if (CanScan)
+                {
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Begin port scan");
+
+                    CanScan = false;
+                    CanLock = false;
+                    CanStartStop = false;
+                    CanZeroFields = false;
+
+                    Parallel.ForEach(SerialPort.GetPortNames(), port =>
+                     {
+                         PediatricSensor sensor = new PediatricSensor(port);
+                         sensor.Validate();
+                         if (sensor.IsValid)
+                             App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                         else
+                             while (!sensor.IsDisposed)
+                                 Thread.Sleep(StateHandlerSleepTime);
+                         RaisePropertyChanged("SensorCount");
+                     });
+
+                    if (Sensors.Count > 0)
+                        CanLock = true;
+                    else
+                        CanLock = false;
+
+                    CanScan = true;
+
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Port scan done");
+                }
             });
         }
 
-        public void StartAll()
+        private bool canLock = false;
+        public bool CanLock
         {
-            IsRunning = true;
-            if (SaveDataEnabled) CreateDataFolder();
-            Parallel.ForEach(Sensors, _PediatricSensor =>
+            get { return canLock; }
+            set { canLock = value; RaisePropertyChanged(); }
+        }
+        public bool LockAllAsyncCanExecute() { return CanLock; }
+
+        public void LockAllAsync()
+        {
+            Task.Run(() =>
             {
-                _PediatricSensor.Start();
+                if (CanLock)
+                {
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Begin sensor lock");
+
+                    CanScan = false;
+                    CanLock = false;
+                    CanStartStop = false;
+                    CanZeroFields = false;
+
+
+                    Parallel.ForEach(Sensors, sensor =>
+                    {
+                        sensor.Lock();
+                    });
+
+                    CanScan = true;
+                    CanLock = true;
+                    CanStartStop = true;
+                    CanZeroFields = true;
+
+                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Sensor lock done");
+                }
             });
         }
 
-        public void StopAll()
+        private bool canStartStop = false;
+        public bool CanStartStop
         {
-            IsRunning = false;
-            Parallel.ForEach(Sensors, _PediatricSensor =>
+            get { return canStartStop; }
+            set { canStartStop = value; RaisePropertyChanged(); }
+        }
+        public bool StartStopAsyncCanExecute() { return CanStartStop; }
+
+        public void StartStopAsync()
+        {
+            Task.Run(() =>
             {
-                _PediatricSensor.Stop();
+                if (CanStartStop)
+                {
+                    CanScan = false;
+                    CanLock = false;
+                    CanStartStop = false;
+                    CanZeroFields = false;
+
+                    if (IsRunning)
+                    {
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Stopping all sensors");
+
+                        Parallel.ForEach(Sensors, sensor =>
+                        {
+                            sensor.Stop();
+                        });
+
+                        IsRunning = false;
+
+                        CanScan = true;
+                        CanLock = true;
+                        CanZeroFields = true;
+                    }
+                    else
+                    {
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Starting all sensors");
+
+                        IsRunning = true;
+
+                        if (SaveDataEnabled) CreateDataFolder();
+                        Parallel.ForEach(Sensors, sensor =>
+                        {
+                            sensor.Start();
+                        });
+                    }
+
+                    CanStartStop = true;
+                }
             });
         }
+
+        private bool canZeroFields = false;
+        public bool CanZeroFields
+        {
+            get { return canZeroFields; }
+            set { canZeroFields = value; RaisePropertyChanged(); }
+        }
+        public bool ZeroFieldsAsyncCanExecute() { return CanZeroFields; }
+
+        public void ZeroFieldsAsync()
+        {
+            Task.Run(() =>
+            {
+                if (CanZeroFields)
+                {
+                    CanScan = false;
+                    CanLock = false;
+                    CanStartStop = false;
+                    CanZeroFields = false;
+
+                    Parallel.ForEach(Sensors, sensor =>
+                    {
+                        sensor.ZeroFields();
+                    });
+
+                    CanScan = true;
+                    CanLock = true;
+                    CanStartStop = true;
+                    CanZeroFields = true;
+                }
+            });
+        }
+
+
+
+
+
+
 
         public void ClearAll()
         {
-            StopAll();
             Parallel.ForEach(Sensors, _PediatricSensor =>
             {
                 _PediatricSensor.Dispose();
                 while (!_PediatricSensor.IsDisposed) Thread.Sleep(StateHandlerSleepTime);
             });
             Sensors.Clear();
-            OnPropertyChanged("SensorCount");
-        }
-
-        public void ZeroFieldsAll()
-        {
-            Parallel.ForEach(Sensors, _PediatricSensor =>
-            {
-                _PediatricSensor.ZeroFields();
-            });
+            RaisePropertyChanged("SensorCount");
         }
 
         public void ValidateSuffixString()

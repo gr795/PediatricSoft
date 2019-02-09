@@ -5,8 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="800" MinHeight="300" MinWidth="400"
+        Title="MainWindow" Height="500" Width="800" MinHeight="500" MinWidth="800"
         Closing="Window_Closing">
+    <Window.DataContext>
+        <local:MainWindowViewModel/>
+    </Window.DataContext>
 
     <Grid>
 
@@ -14,12 +17,12 @@
                    HorizontalAlignment="Right"
                    LastChildFill="False">
 
-            <Button Margin="10,10,10,5"
+            <Button Name="ButtonScanPorts"
+                    Margin="10,10,10,5"
                     Height="20"
                     DockPanel.Dock="Top"
-                    IsEnabled="{Binding Path=ButtonScanPorts_IsEnabled}"
-                    Click="ButtonScanPorts_Click">
-                Scan Ports
+                    Command="{Binding ButtonScanPortsCommand}"
+                    Content="Scan Ports">
             </Button>
 
             <StackPanel Margin="10,5"
@@ -33,6 +36,7 @@
                 <CheckBox Margin="5,0,0,0"
                           VerticalAlignment="Center"
                           DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
+                          IsEnabled="False"
                           IsChecked="{Binding Path=DebugMode}">
                 </CheckBox>
 
@@ -44,36 +48,42 @@
                        Text="{Binding Path=SensorCount}">
             </TextBlock>
 
-            <Button Margin="10,5"
+            <Button Name="ButtonLockSensors"
+                    Margin="10,5"
                     Height="20"
                     DockPanel.Dock="Top"
-                    IsEnabled="{Binding Path=ButtonLockSensors_IsEnabled}"
-                    Click="ButtonLockSensors_Click">
-                Lock Sensors
+                    Command="{Binding ButtonLockSensorsCommand}"
+                    Content="Lock Sensors">
             </Button>
 
-            <Button Margin="10,5"
+            <Button Name="ButtonStartStopSensors"
+                    Margin="10,5"
                     Height="20"
                     DockPanel.Dock="Top"
-                    IsEnabled="{Binding Path=ButtonRunSensors_IsEnabled}"
-                    Content="{Binding Path=ButtonRunSensors_Content}"
-                    Click="ButtonRunSensors_Click">
+                    Command="{Binding ButtonStartStopSensorsCommand}"
+                    Content="{Binding ButtonStartStopSensorsContent}">
             </Button>
 
-            <Button Margin="10,5"
+            <Button Name="ButtonZeroFields"
+                    Margin="10,5"
                     Height="20"
                     DockPanel.Dock="Top"
-                    IsEnabled="{Binding Path=ButtonSendCommands_IsEnabled}"
-                    Click="ButtonSendCommands_Click">
+                    Command="{Binding ButtonZeroFieldsCommand}"
+                    Content="Zero Fields">
+            </Button>
+
+            <Button Name="Bu" Margin="10,5"
+                    Height="20"
+                    DockPanel.Dock="Top"
+                    IsEnabled="False">
                 Send Commands
             </Button>
 
             <Button Margin="10,5"
                     Height="20"
                     DockPanel.Dock="Top"
-                    IsEnabled="{Binding Path=ButtonPlot_IsEnabled}"
-                    Content="{Binding Path=ButtonPlot_Content}"
-                    Click="ButtonPlot_Click">
+                    IsEnabled="False"
+                    Content="{Binding Path=ButtonPlot_Content}">
             </Button>
 
             <CheckBox Margin="10,5"
@@ -101,13 +111,7 @@
                      Text="{Binding Path=SaveSuffixTextBox_Text}">
             </TextBox>
 
-            <Button Margin="10,5"
-                    Height="20"
-                    DockPanel.Dock="Top"
-                    IsEnabled="{Binding Path=ButtonZeroFields_IsEnabled}"
-                    Click="ButtonZeroFields_Click">
-                Zero Fields
-            </Button>
+            
 
         </DockPanel>
 
@@ -137,9 +141,7 @@
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <CheckBox IsChecked="{Binding ShouldBePlotted}"
-                                          ToggleButton.Checked="PlotToggle"
-                                          ToggleButton.Unchecked="PlotToggle">
+                                <CheckBox IsChecked="{Binding ShouldBePlotted}">
                                 </CheckBox>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
