@@ -173,30 +173,31 @@ namespace PediatricSoft
         public const byte SensorStateShutDown = 255;
 
         // Globals
-        public bool IsPlotting = false;
-        public bool PlotWindowClosed = false;
         public bool DebugMode { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
         public bool SaveRAWValues { get; set; } = false;
         public string SaveFolder { get; set; } = String.Empty;
+        public string SaveFolderCurrentRun { get; set; } = String.Empty;
         public string SaveSuffix { get; set; } = String.Empty;
         public string CommandHistory { get; set; } = String.Empty;
 
         public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
-        public int SensorCount { get { return Sensors.Count; } }
-        
-        public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
-        public bool IsScanning { get; private set; } = false;
-
         public SeriesCollection SeriesCollection { get; set; } = new SeriesCollection();
 
-        public string SaveFolderCurrentRun { get; set; } = String.Empty;
-        
+        public int SensorCount { get { return Sensors.Count; } }
+
         private bool isRunning = false;
         public bool IsRunning
         {
             get { return isRunning; }
             private set { isRunning = value; RaisePropertyChanged(); }
+        }
+
+        private bool canSendCommands = false;
+        public bool CanSendCommands
+        {
+            get { return canSendCommands; }
+            private set { canSendCommands = value; RaisePropertyChanged(); }
         }
 
         private bool canScan = true;
@@ -219,6 +220,7 @@ namespace PediatricSoft
                     CanLock = false;
                     CanStartStop = false;
                     CanZeroFields = false;
+                    CanSendCommands = false;
 
                     Parallel.ForEach(SerialPort.GetPortNames(), port =>
                      {
@@ -233,9 +235,10 @@ namespace PediatricSoft
                      });
 
                     if (Sensors.Count > 0)
+                    {
                         CanLock = true;
-                    else
-                        CanLock = false;
+                        CanSendCommands = true;
+                    }
 
                     CanScan = true;
 
@@ -264,6 +267,7 @@ namespace PediatricSoft
                     CanLock = false;
                     CanStartStop = false;
                     CanZeroFields = false;
+                    CanSendCommands = false;
 
 
                     Parallel.ForEach(Sensors, sensor =>
@@ -275,6 +279,7 @@ namespace PediatricSoft
                     CanLock = true;
                     CanStartStop = true;
                     CanZeroFields = true;
+                    CanSendCommands = true;
 
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Sensor lock done");
                 }
@@ -299,6 +304,7 @@ namespace PediatricSoft
                     CanLock = false;
                     CanStartStop = false;
                     CanZeroFields = false;
+                    CanSendCommands = false;
 
                     if (IsRunning)
                     {
@@ -314,6 +320,7 @@ namespace PediatricSoft
                         CanScan = true;
                         CanLock = true;
                         CanZeroFields = true;
+                        CanSendCommands = true;
                     }
                     else
                     {
@@ -351,6 +358,7 @@ namespace PediatricSoft
                     CanLock = false;
                     CanStartStop = false;
                     CanZeroFields = false;
+                    CanSendCommands = false;
 
                     Parallel.ForEach(Sensors, sensor =>
                     {
@@ -361,9 +369,12 @@ namespace PediatricSoft
                     CanLock = true;
                     CanStartStop = true;
                     CanZeroFields = true;
+                    CanSendCommands = true;
                 }
             });
         }
+
+
 
 
 

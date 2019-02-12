@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800" MinHeight="600" MinWidth="800">
+        Title="MainWindow" Height="600" Width="800" MinHeight="600" MinWidth="800"
+        Closing="Window_Closing">
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
@@ -70,11 +71,13 @@
                     Content="Zero Fields">
             </Button>
 
-            <Button Name="Bu" Margin="10,5"
+            <Button Name="ButtonSendCommands"
+                    Margin="10,5"
                     Height="20"
                     DockPanel.Dock="Top"
-                    IsEnabled="False">
-                Send Commands
+                    IsEnabled="{Binding ButtonSendCommandsIsEnabled}"
+                    Command="{Binding ButtonSendCommandsCommand}"
+                    Content="Send Commands">
             </Button>
 
             <Button Margin="10,5"

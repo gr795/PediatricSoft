@@ -2,6 +2,7 @@
 using Prism.Mvvm;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Forms;
 using System.IO;
 
@@ -11,7 +12,8 @@ namespace PediatricSoft
     {
 
         //PlotWindow plotWindow = new PlotWindow();
-        //SendCommandsWindow sendCommandsWindow = new SendCommandsWindow();
+
+        private SendCommandsWindow sendCommandsWindow;
 
         private PediatricSensorData PediatricSensorData;
 
@@ -20,6 +22,7 @@ namespace PediatricSoft
         public DelegateCommand ButtonStartStopSensorsCommand { get; private set; }
         public DelegateCommand ButtonZeroFieldsCommand { get; private set; }
         public DelegateCommand CheckBoxSaveDataCommand { get; private set; }
+        public DelegateCommand ButtonSendCommandsCommand { get; private set; }
 
 
 
@@ -31,18 +34,22 @@ namespace PediatricSoft
             private set { buttonPlot_Content = value; RaisePropertyChanged(); }
         }
 
-        
 
 
 
 
 
-        
 
 
 
 
 
+
+
+        public bool ButtonSendCommandsIsEnabled
+        {
+            get { return PediatricSensorData.CanSendCommands; }
+        }
 
         private bool checkBoxSaveDataIsEnabled = false;
         public bool CheckBoxSaveDataIsEnabled
@@ -154,6 +161,10 @@ namespace PediatricSoft
                     ButtonZeroFieldsCommand.RaiseCanExecuteChanged();
                     break;
 
+                case "CanSendCommands":
+                    RaisePropertyChanged("ButtonSendCommandsIsEnabled");
+                    break;
+
                 default:
                     break;
             }
@@ -168,14 +179,18 @@ namespace PediatricSoft
             ButtonStartStopSensorsCommand = new DelegateCommand(PediatricSensorData.StartStopAsync, PediatricSensorData.StartStopAsyncCanExecute);
             ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, PediatricSensorData.ZeroFieldsAsyncCanExecute);
             CheckBoxSaveDataCommand = new DelegateCommand(CheckBoxSaveDataOnToggle);
+            ButtonSendCommandsCommand = new DelegateCommand(ButtonSendCommandsOnClick);
 
             //plotWindow.Closed += OnPlotWindowClosing;
+
             PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
         }
 
-        public void WindowMainWindowOnClosing(object sender, CancelEventArgs e)
+        public void WindowMainWindowOnClosing()
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: closing window");
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Closing Main Window");
+
+            sendCommandsWindow?.Close();
             //PediatricSensorData.Dispose();
         }
 
@@ -210,6 +225,29 @@ namespace PediatricSoft
                 }
                 else CheckBoxSaveDataIsChecked = false;
             }
+        }
+
+        private void ButtonSendCommandsOnClick()
+        {
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
+
+            if (sendCommandsWindow == null)
+            {
+                sendCommandsWindow = new SendCommandsWindow();
+                sendCommandsWindow.Closing += SendCommandsWindow_Closing;
+                sendCommandsWindow.Show();
+            }
+            else
+            {
+                sendCommandsWindow.WindowState = WindowState.Normal;
+                sendCommandsWindow.Focus();
+            }
+        }
+
+        private void SendCommandsWindow_Closing(object sender, CancelEventArgs e)
+        {
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Closing Send Commands window");
+            sendCommandsWindow = null;
         }
 
     }

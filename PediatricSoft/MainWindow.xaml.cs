@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.ComponentModel;
 
 namespace PediatricSoft
 {
@@ -10,7 +11,11 @@ namespace PediatricSoft
         {
             InitializeComponent();
             ViewModel = DataContext as MainWindowViewModel;
-            Closing += ViewModel.WindowMainWindowOnClosing;
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            ViewModel.WindowMainWindowOnClosing();
         }
     }
 }
