@@ -3,10 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+        xmlns:prism="http://prismlibrary.com/"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
         Title="SendCommandsWindow" Height="500" Width="300"
         ResizeMode="CanMinimize">
+
+    <Window.DataContext>
+        <local:SendCommandsWindowViewModel/>
+    </Window.DataContext>
+
     <Grid>
 
         <DockPanel LastChildFill="False">
@@ -20,16 +27,24 @@
                 <ComboBox Margin="10,0,0,0" VerticalAlignment="Center"
                           ItemsSource="{Binding Path=Sensors}"
                           DisplayMemberPath="PortSN"
-                          SelectedItem="{Binding Path=CurrentSensor}"
-                          >
+                          SelectedItem="{Binding Path=CurrentSensor}">
                 </ComboBox>
-                            
+
             </StackPanel>
 
-            <TextBox Margin="10,5" DockPanel.Dock="Top"
-                     Text="{Binding Path=CommandBoxText}"
-                     KeyDown="TextBox_KeyDown"
-                     KeyUp="TextBox_KeyUp">
+            <TextBox Name="TextBoxCommandString"
+                     Margin="10,5"
+                     DockPanel.Dock="Top"
+                     Text="{Binding TextBoxCommandStringText, UpdateSourceTrigger=PropertyChanged}">
+
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="KeyDown">
+                        <prism:InvokeCommandAction Command="{Binding TextBoxCommandStringKeyDownCommand}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="KeyUp">
+                        <prism:InvokeCommandAction Command="{Binding TextBoxCommandStringKeyUpCommand}"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
 
             </TextBox>
 

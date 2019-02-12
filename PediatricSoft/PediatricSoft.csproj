@@ -97,6 +97,7 @@
     <Compile Include="SendCommandsWindow.xaml.cs">
       <DependentUpon>SendCommandsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SendCommandsWindowViewModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
