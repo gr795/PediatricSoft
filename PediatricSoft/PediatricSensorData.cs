@@ -15,7 +15,7 @@ using Prism.Commands;
 
 namespace PediatricSoft
 {
-    public sealed class PediatricSensorData : BindableBase
+    public sealed class PediatricSensorData : BindableBase, IDisposable
     {
 
         private static readonly PediatricSensorData instance = new PediatricSensorData();
@@ -178,20 +178,19 @@ namespace PediatricSoft
         public bool DebugMode { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
         public bool SaveRAWValues { get; set; } = false;
+        public string SaveFolder { get; set; } = String.Empty;
         public string SaveSuffix { get; set; } = String.Empty;
         public string CommandHistory { get; set; } = String.Empty;
 
         public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
-        public string SensorCount { get { return String.Concat("Sensor Count: ", Sensors.Count.ToString()); } }
+        public int SensorCount { get { return Sensors.Count; } }
         
         public List<SensorScanItem> SensorScanList = new List<SensorScanItem>();
         public bool IsScanning { get; private set; } = false;
 
         public SeriesCollection SeriesCollection { get; set; } = new SeriesCollection();
 
-        public string dataFolder = String.Empty;
-
-
+        public string SaveFolderCurrentRun { get; set; } = String.Empty;
         
         private bool isRunning = false;
         public bool IsRunning
@@ -383,24 +382,25 @@ namespace PediatricSoft
             RaisePropertyChanged("SensorCount");
         }
 
-        public void ValidateSuffixString()
-        {
-            SaveSuffix = Regex.Replace(SaveSuffix, @"[^\w]", "");
-        }
-
         private void CreateDataFolder()
         {
             if (String.IsNullOrEmpty(SaveSuffix))
-                dataFolder = System.IO.Path.Combine(
-                System.IO.Directory.GetCurrentDirectory(),
-                DefaultFolder,
+                SaveFolderCurrentRun = System.IO.Path.Combine(
+                SaveFolder,
                 DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
             else
-                dataFolder = System.IO.Path.Combine(
-                    System.IO.Directory.GetCurrentDirectory(),
-                    DefaultFolder,
-                    String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
-            System.IO.Directory.CreateDirectory(dataFolder);
+                SaveFolderCurrentRun = System.IO.Path.Combine(
+                    SaveFolder,
+                    String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", Regex.Replace(SaveSuffix, @"[^\w]", "")));
+            System.IO.Directory.CreateDirectory(SaveFolderCurrentRun);
+        }
+
+        public void Dispose()
+        {
+            Parallel.ForEach(Sensors, sensor =>
+            {
+                sensor.Dispose();
+            });
         }
 
     }

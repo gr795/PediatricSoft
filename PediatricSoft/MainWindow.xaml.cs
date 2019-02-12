@@ -1,18 +1,16 @@
 ﻿using System.Windows;
-using System.ComponentModel;
 
 namespace PediatricSoft
 {
     public partial class MainWindow : Window
     {
+        private MainWindowViewModel ViewModel;
+
         public MainWindow()
         {
             InitializeComponent();
-        }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-
+            ViewModel = DataContext as MainWindowViewModel;
+            Closing += ViewModel.WindowMainWindowOnClosing;
         }
     }
 }

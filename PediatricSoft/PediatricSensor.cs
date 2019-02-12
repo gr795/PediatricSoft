@@ -551,7 +551,7 @@ namespace PediatricSoft
         private void SaveData(CancellationToken token)
         {
 
-            string filePath = System.IO.Path.Combine(PediatricSensorData.dataFolder, SN);
+            string filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, SN);
             filePath += ".txt";
 
             while (!token.IsCancellationRequested)

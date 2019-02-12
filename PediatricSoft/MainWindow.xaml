@@ -5,8 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="800" MinHeight="500" MinWidth="800"
-        Closing="Window_Closing">
+        Title="MainWindow" Height="600" Width="800" MinHeight="600" MinWidth="800">
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
@@ -35,17 +34,16 @@
 
                 <CheckBox Margin="5,0,0,0"
                           VerticalAlignment="Center"
-                          DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
-                          IsEnabled="False"
-                          IsChecked="{Binding Path=DebugMode}">
+                          IsEnabled="False">
                 </CheckBox>
 
             </StackPanel>
 
-            <TextBlock Margin="10,5" Height="20"
+            <TextBlock Name="TextBlockSensorCount"
+                       Margin="10,5"
+                       Height="20"
                        DockPanel.Dock="Top"
-                       DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
-                       Text="{Binding Path=SensorCount}">
+                       Text="{Binding TextBlockSensorCountText}">
             </TextBlock>
 
             <Button Name="ButtonLockSensors"
@@ -86,29 +84,39 @@
                     Content="{Binding Path=ButtonPlot_Content}">
             </Button>
 
-            <CheckBox Margin="10,5"
+            <CheckBox Name="CheckBoxSaveData"
+                      Margin="10,5"
                       DockPanel.Dock="Top"
-                      IsEnabled="{Binding Path=SaveDataCheckbox_IsEnabled}"
-                      IsChecked="{Binding Path=SaveRAWValuesCheckbox_IsChecked}">
-                Save Data
+                      IsEnabled="{Binding CheckBoxSaveDataIsEnabled}"
+                      IsChecked="{Binding CheckBoxSaveDataIsChecked}"
+                      Command="{Binding CheckBoxSaveDataCommand}"
+                      Content="Save Data">
             </CheckBox>
 
-            <CheckBox Margin="30,5"
+            <TextBlock Name="TextBlockSaveFolder"
+                       Margin="10,5"
+                       DockPanel.Dock="Top"
+                       Text="{Binding TextBlockSaveFolderText}">
+            </TextBlock>
+
+            <CheckBox Name="CheckBoxSaveRAWValues"
+                      Margin="30,5"
                       DockPanel.Dock="Top"
-                      IsEnabled="{Binding Path=SaveRAWValuesCheckbox_IsEnabled}"
-                      IsChecked="{Binding Path=SaveRAWValuesCheckbox_IsChecked}">
-                RAW Data
+                      IsEnabled="{Binding CheckBoxSaveRAWValuesIsEnabled}"
+                      IsChecked="{Binding CheckBoxSaveRAWValuesIsChecked}"
+                      Content="RAW Data">
             </CheckBox>
 
             <TextBlock Margin="30,5"
-                       DockPanel.Dock="Top">
-                       Optional Suffix:
+                       DockPanel.Dock="Top"
+                       Text="Optional Suffix:">
             </TextBlock>
 
-            <TextBox Margin="30,5,10,5"
+            <TextBox Name="TextBlockSaveSuffix"
+                     Margin="30,5,10,5"
                      DockPanel.Dock="Top"
-                     IsEnabled="{Binding Path=SaveSuffixTextBox_IsEnabled}"
-                     Text="{Binding Path=SaveSuffixTextBox_Text}">
+                     IsEnabled="{Binding TextBlockSaveSuffixIsEnabled}"
+                     Text="{Binding TextBlockSaveSuffixText}">
             </TextBox>
 
             
