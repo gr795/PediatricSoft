@@ -23,6 +23,7 @@ namespace PediatricSoft
         public DelegateCommand ButtonZeroFieldsCommand { get; private set; }
         public DelegateCommand CheckBoxSaveDataCommand { get; private set; }
         public DelegateCommand ButtonSendCommandsCommand { get; private set; }
+        public DelegateCommand WindowMainWindowOnClosingCommand { get; private set; }
 
 
 
@@ -180,13 +181,14 @@ namespace PediatricSoft
             ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, PediatricSensorData.ZeroFieldsAsyncCanExecute);
             CheckBoxSaveDataCommand = new DelegateCommand(CheckBoxSaveDataOnToggle);
             ButtonSendCommandsCommand = new DelegateCommand(ButtonSendCommandsOnClick);
+            WindowMainWindowOnClosingCommand = new DelegateCommand(WindowMainWindowOnClosing);
 
             //plotWindow.Closed += OnPlotWindowClosing;
 
             PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
         }
 
-        public void WindowMainWindowOnClosing()
+        private void WindowMainWindowOnClosing()
         {
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Closing Main Window");
 
