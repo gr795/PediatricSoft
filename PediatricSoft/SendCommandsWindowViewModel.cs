@@ -66,10 +66,7 @@ namespace PediatricSoft
 
                 case Key.Enter:
                     if (CurrentSensor != null)
-                    {
-                        RaisePropertyChanged("TextBoxCommandStringText");
                         CurrentSensor.SendCommand(TextBoxCommandStringText);
-                    }
                     else
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
 

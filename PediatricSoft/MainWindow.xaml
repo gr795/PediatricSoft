@@ -87,13 +87,6 @@
                     Content="Send Commands">
             </Button>
 
-            <Button Margin="10,5"
-                    Height="20"
-                    DockPanel.Dock="Top"
-                    IsEnabled="False"
-                    Content="{Binding Path=ButtonPlot_Content}">
-            </Button>
-
             <CheckBox Name="CheckBoxSaveData"
                       Margin="10,5"
                       DockPanel.Dock="Top"
@@ -159,7 +152,8 @@
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <CheckBox IsChecked="{Binding ShouldBePlotted}">
+                                <CheckBox IsChecked="{Binding IsPlotted}"
+                                          Command="{Binding CheckBoxIsPlottedCommand}">
                                 </CheckBox>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>

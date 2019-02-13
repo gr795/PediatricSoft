@@ -15,6 +15,7 @@ using System.Timers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using Prism.Commands;
 
 namespace PediatricSoft
 {
@@ -22,6 +23,8 @@ namespace PediatricSoft
     {
 
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
+
+        public DelegateCommand CheckBoxIsPlottedCommand { get; private set; }
 
         private SerialPort _SerialPort;
         private Task streamingTask;
@@ -66,8 +69,15 @@ namespace PediatricSoft
         private Queue<int> dataValueRawRunningAvg = new Queue<int>(PediatricSensorData.DataQueueRunningAvgLength);
         private readonly Object dataLock = new Object();
 
-        public ChartValues<ObservableValue> _ChartValues = new ChartValues<ObservableValue>();
-        public bool ShouldBePlotted { get; set; } = false;
+        public ChartValues<ObservableValue> ChartValues = new ChartValues<ObservableValue>();
+
+        private bool isPlotted = false;
+        public bool IsPlotted
+        {
+            get { return isPlotted; }
+            set { isPlotted = value; OnPropertyChanged("IsPlotted"); }
+        }
+
         public int LastValue { get; private set; } = 0;
         public int LastTime { get; private set; } = 0;
         public double RunningAvg { get; private set; } = 0;
@@ -152,6 +162,8 @@ namespace PediatricSoft
                 DtrEnable = false,
                 RtsEnable = false
             };
+
+            CheckBoxIsPlottedCommand = new DelegateCommand(PediatricSensorData.UpdateSeriesCollection);
 
         }
 
@@ -524,16 +536,16 @@ namespace PediatricSoft
                                 if (!wasDataUpdated) wasDataUpdated = true;
                             }
 
-                            if (ShouldBePlotted)
+                            if (IsPlotted)
                             {
                                 plotCounter++;
                                 if (plotCounter == plotCounterMax)
                                 {
                                     if (state < PediatricSensorData.SensorStateStart)
-                                        _ChartValues.Add(new ObservableValue(RunningAvg * PediatricSensorData.SensorADCRawToVolts));
+                                        ChartValues.Add(new ObservableValue(RunningAvg * PediatricSensorData.SensorADCRawToVolts));
                                     else
-                                        _ChartValues.Add(new ObservableValue(RunningAvg * sensorZDemodCalibration));
-                                    if (_ChartValues.Count > PediatricSensorData.PlotQueueLength) _ChartValues.RemoveAt(0);
+                                        ChartValues.Add(new ObservableValue(RunningAvg * sensorZDemodCalibration));
+                                    if (ChartValues.Count > PediatricSensorData.PlotQueueLength) ChartValues.RemoveAt(0);
                                     plotCounter = 0;
                                 }
                             }

@@ -10,9 +10,6 @@ namespace PediatricSoft
 {
     public class MainWindowViewModel : BindableBase
     {
-
-        //PlotWindow plotWindow = new PlotWindow();
-
         private SendCommandsWindow sendCommandsWindow;
 
         private PediatricSensorData PediatricSensorData;
@@ -24,28 +21,6 @@ namespace PediatricSoft
         public DelegateCommand CheckBoxSaveDataCommand { get; private set; }
         public DelegateCommand ButtonSendCommandsCommand { get; private set; }
         public DelegateCommand WindowMainWindowOnClosingCommand { get; private set; }
-
-
-
-
-        private string buttonPlot_Content = "Show Plot";
-        public string ButtonPlot_Content
-        {
-            get { return buttonPlot_Content; }
-            private set { buttonPlot_Content = value; RaisePropertyChanged(); }
-        }
-
-
-
-
-
-
-
-
-
-
-
-
 
         public bool ButtonSendCommandsIsEnabled
         {
@@ -236,7 +211,7 @@ namespace PediatricSoft
             if (sendCommandsWindow == null)
             {
                 sendCommandsWindow = new SendCommandsWindow();
-                sendCommandsWindow.Closing += SendCommandsWindow_Closing;
+                sendCommandsWindow.Closing += SendCommandsWindowOnClosing;
                 sendCommandsWindow.Show();
             }
             else
@@ -246,7 +221,7 @@ namespace PediatricSoft
             }
         }
 
-        private void SendCommandsWindow_Closing(object sender, CancelEventArgs e)
+        private void SendCommandsWindowOnClosing(object sender, CancelEventArgs e)
         {
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Closing Send Commands window");
             sendCommandsWindow = null;

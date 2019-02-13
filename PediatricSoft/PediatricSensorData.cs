@@ -12,6 +12,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Prism.Mvvm;
 using Prism.Commands;
+using System.Windows.Media;
+using System.Windows;
 
 namespace PediatricSoft
 {
@@ -181,10 +183,12 @@ namespace PediatricSoft
         public string SaveSuffix { get; set; } = String.Empty;
         public string CommandHistory { get; set; } = String.Empty;
 
-        public ObservableCollection<PediatricSensor> Sensors { get; set; } = new ObservableCollection<PediatricSensor>();
-        public SeriesCollection SeriesCollection { get; set; } = new SeriesCollection();
+        public ObservableCollection<PediatricSensor> Sensors { get; private set; } = new ObservableCollection<PediatricSensor>();
+        public SeriesCollection SeriesCollection { get; private set; } = new SeriesCollection();
 
         public int SensorCount { get { return Sensors.Count; } }
+
+        private PlotWindow PlotWindow;
 
         private bool isRunning = false;
         public bool IsRunning
@@ -374,9 +378,58 @@ namespace PediatricSoft
             });
         }
 
+        public void UpdateSeriesCollection()
+        {
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Updating Plot");
 
+            if (PlotWindow == null)
+            {
+                PlotWindow = new PlotWindow();
+                PlotWindow.Closing += PlotWindowOnClosing;
+            }
 
+            SeriesCollection.Clear();
 
+            bool plotAtLeastOne = false;
+
+            Parallel.ForEach(Sensors, sensor =>
+            {
+                if (sensor.IsPlotted)
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (!plotAtLeastOne) plotAtLeastOne = true;
+                        SeriesCollection.Add(new LineSeries
+                        {
+                            Values = sensor.ChartValues,
+                            Fill = Brushes.Transparent,
+                            PointGeometry = DefaultGeometries.None
+                        });
+                    });
+
+            });
+
+            if (plotAtLeastOne)
+            {
+                PlotWindow.Show();
+                PlotWindow.WindowState = WindowState.Normal;
+            }
+            else
+                PlotWindow.Close();
+        }
+
+        private void PlotWindowOnClosing(object sender, CancelEventArgs e)
+        {
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Closing Plot Window");
+
+            Parallel.ForEach(Sensors, sensor =>
+            {
+                sensor.IsPlotted = false;
+            });
+
+            SeriesCollection.Clear();
+
+            PlotWindow = null;
+        }
 
 
 
