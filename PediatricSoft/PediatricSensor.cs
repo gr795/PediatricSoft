@@ -24,8 +24,6 @@ namespace PediatricSoft
 
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
-        public DelegateCommand CheckBoxIsPlottedCommand { get; private set; }
-
         private SerialPort _SerialPort;
         private Task streamingTask;
         private Task processingTask;
@@ -75,7 +73,7 @@ namespace PediatricSoft
         public bool IsPlotted
         {
             get { return isPlotted; }
-            set { isPlotted = value; OnPropertyChanged("IsPlotted"); }
+            set { isPlotted = value; OnPropertyChanged("IsPlotted"); PediatricSensorData.UpdateSeriesCollection(); }
         }
 
         public int LastValue { get; private set; } = 0;
@@ -162,8 +160,6 @@ namespace PediatricSoft
                 DtrEnable = false,
                 RtsEnable = false
             };
-
-            CheckBoxIsPlottedCommand = new DelegateCommand(PediatricSensorData.UpdateSeriesCollection);
 
         }
 

@@ -1,18 +1,39 @@
 ﻿using Prism.Commands;
+using Prism.Events;
 using Prism.Mvvm;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows;
 using System.Windows.Forms;
-using System.IO;
 
 namespace PediatricSoft
 {
     public class MainWindowViewModel : BindableBase
     {
-        private SendCommandsWindow sendCommandsWindow;
 
+        // Fields
+        
         private PediatricSensorData PediatricSensorData;
+        private readonly IEventAggregator eventAggregator;
+
+        // Constructors
+
+        public MainWindowViewModel()
+        {
+            PediatricSensorData = PediatricSensorData.Instance;
+            eventAggregator = PediatricSoftEventGlue.eventAggregator;
+
+            ButtonScanPortsCommand = new DelegateCommand(PediatricSensorData.ScanPortsAsync, PediatricSensorData.ScanPortsAsyncCanExecute);
+            ButtonLockSensorsCommand = new DelegateCommand(PediatricSensorData.LockAllAsync, PediatricSensorData.LockAllAsyncCanExecute);
+            ButtonStartStopSensorsCommand = new DelegateCommand(PediatricSensorData.StartStopAsync, PediatricSensorData.StartStopAsyncCanExecute);
+            ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, PediatricSensorData.ZeroFieldsAsyncCanExecute);
+            CheckBoxSaveDataCommand = new DelegateCommand(CheckBoxSaveDataOnToggle);
+            ButtonSendCommandsCommand = new DelegateCommand(ButtonSendCommandsOnClick);
+
+            PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
+        }
+
+        // Properties
 
         public DelegateCommand ButtonScanPortsCommand { get; private set; }
         public DelegateCommand ButtonLockSensorsCommand { get; private set; }
@@ -20,7 +41,8 @@ namespace PediatricSoft
         public DelegateCommand ButtonZeroFieldsCommand { get; private set; }
         public DelegateCommand CheckBoxSaveDataCommand { get; private set; }
         public DelegateCommand ButtonSendCommandsCommand { get; private set; }
-        public DelegateCommand WindowMainWindowOnClosingCommand { get; private set; }
+
+        public ObservableCollection<PediatricSensor> Sensors { get { return PediatricSensorData.Sensors; } }
 
         public bool ButtonSendCommandsIsEnabled
         {
@@ -84,92 +106,7 @@ namespace PediatricSoft
             private set { buttonStartStopSensorsContent = value; RaisePropertyChanged(); }
         }
 
-        private void OnPediatricSensorDataPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case "SensorCount":
-                    RaisePropertyChanged("TextBlockSensorCountText");
-                    break;
-
-                case "CanScan":
-                    ButtonScanPortsCommand.RaiseCanExecuteChanged();
-                    break;
-
-                case "CanLock":
-                    ButtonLockSensorsCommand.RaiseCanExecuteChanged();
-                    break;
-
-                case "CanStartStop":
-                    ButtonStartStopSensorsCommand.RaiseCanExecuteChanged();
-                    if (PediatricSensorData.CanStartStop)
-                        if (PediatricSensorData.IsRunning)
-                        {
-                            CheckBoxSaveDataIsEnabled = false;
-                            CheckBoxSaveRAWValuesIsEnabled = false;
-                            TextBlockSaveSuffixIsEnabled = false;
-                        }
-                        else
-                        {
-                            CheckBoxSaveDataIsEnabled = true;
-                            if (CheckBoxSaveDataIsChecked)
-                            {
-                                CheckBoxSaveRAWValuesIsEnabled = true;
-                                TextBlockSaveSuffixIsEnabled = true;
-                            }
-                        }
-                    else
-                    {
-                        CheckBoxSaveDataIsEnabled = false;
-                        CheckBoxSaveRAWValuesIsEnabled = false;
-                        TextBlockSaveSuffixIsEnabled = false;
-                    }
-                    break;
-
-                case "IsRunning":
-                    if (PediatricSensorData.IsRunning)
-                        ButtonStartStopSensorsContent = "Stop Sensors";
-                    else
-                        ButtonStartStopSensorsContent = "Start Sensors";
-                    break;
-
-                case "CanZeroFields":
-                    ButtonZeroFieldsCommand.RaiseCanExecuteChanged();
-                    break;
-
-                case "CanSendCommands":
-                    RaisePropertyChanged("ButtonSendCommandsIsEnabled");
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        public MainWindowViewModel()
-        {
-            PediatricSensorData = PediatricSensorData.Instance;
-
-            ButtonScanPortsCommand = new DelegateCommand(PediatricSensorData.ScanPortsAsync, PediatricSensorData.ScanPortsAsyncCanExecute);
-            ButtonLockSensorsCommand = new DelegateCommand(PediatricSensorData.LockAllAsync, PediatricSensorData.LockAllAsyncCanExecute);
-            ButtonStartStopSensorsCommand = new DelegateCommand(PediatricSensorData.StartStopAsync, PediatricSensorData.StartStopAsyncCanExecute);
-            ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, PediatricSensorData.ZeroFieldsAsyncCanExecute);
-            CheckBoxSaveDataCommand = new DelegateCommand(CheckBoxSaveDataOnToggle);
-            ButtonSendCommandsCommand = new DelegateCommand(ButtonSendCommandsOnClick);
-            WindowMainWindowOnClosingCommand = new DelegateCommand(WindowMainWindowOnClosing);
-
-            //plotWindow.Closed += OnPlotWindowClosing;
-
-            PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
-        }
-
-        private void WindowMainWindowOnClosing()
-        {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Closing Main Window");
-
-            sendCommandsWindow?.Close();
-            //PediatricSensorData.Dispose();
-        }
+        // Methods
 
         private void CheckBoxSaveDataOnToggle()
         {
@@ -207,24 +144,72 @@ namespace PediatricSoft
         private void ButtonSendCommandsOnClick()
         {
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
-
-            if (sendCommandsWindow == null)
-            {
-                sendCommandsWindow = new SendCommandsWindow();
-                sendCommandsWindow.Closing += SendCommandsWindowOnClosing;
-                sendCommandsWindow.Show();
-            }
-            else
-            {
-                sendCommandsWindow.WindowState = WindowState.Normal;
-                sendCommandsWindow.Focus();
-            }
+            eventAggregator.GetEvent<EventWindowManager>().Publish("ShowSendCommandsWindow");
         }
 
-        private void SendCommandsWindowOnClosing(object sender, CancelEventArgs e)
+
+        // Event handlers
+
+        private void OnPediatricSensorDataPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Closing Send Commands window");
-            sendCommandsWindow = null;
+            switch (e.PropertyName)
+            {
+                case "SensorCount":
+                    RaisePropertyChanged("TextBlockSensorCountText");
+                    break;
+
+                case "CanScan":
+                    App.Current.Dispatcher.Invoke(() => ButtonScanPortsCommand.RaiseCanExecuteChanged() );
+                    break;
+
+                case "CanLock":
+                    App.Current.Dispatcher.Invoke(() => ButtonLockSensorsCommand.RaiseCanExecuteChanged());
+                    break;
+
+                case "CanStartStop":
+                    App.Current.Dispatcher.Invoke(() => ButtonStartStopSensorsCommand.RaiseCanExecuteChanged());
+                    if (PediatricSensorData.CanStartStop)
+                        if (PediatricSensorData.IsRunning)
+                        {
+                            CheckBoxSaveDataIsEnabled = false;
+                            CheckBoxSaveRAWValuesIsEnabled = false;
+                            TextBlockSaveSuffixIsEnabled = false;
+                        }
+                        else
+                        {
+                            CheckBoxSaveDataIsEnabled = true;
+                            if (CheckBoxSaveDataIsChecked)
+                            {
+                                CheckBoxSaveRAWValuesIsEnabled = true;
+                                TextBlockSaveSuffixIsEnabled = true;
+                            }
+                        }
+                    else
+                    {
+                        CheckBoxSaveDataIsEnabled = false;
+                        CheckBoxSaveRAWValuesIsEnabled = false;
+                        TextBlockSaveSuffixIsEnabled = false;
+                    }
+                    break;
+
+                case "IsRunning":
+                    if (PediatricSensorData.IsRunning)
+                        ButtonStartStopSensorsContent = "Stop Sensors";
+                    else
+                        ButtonStartStopSensorsContent = "Start Sensors";
+                    break;
+
+                case "CanZeroFields":
+                    App.Current.Dispatcher.Invoke(() => ButtonZeroFieldsCommand.RaiseCanExecuteChanged());
+                    break;
+
+                case "CanSendCommands":
+                    RaisePropertyChanged("ButtonSendCommandsIsEnabled");
+                    break;
+
+                default:
+                    break;
+            }
         }
 
     }

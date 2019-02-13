@@ -13,5 +13,6 @@ namespace PediatricSoft
     /// </summary>
     public partial class App : Application
     {
+        private PediatricSoftWindowManager pediatricSoftWindowManager = PediatricSoftWindowManager.Instance;
     }
 }

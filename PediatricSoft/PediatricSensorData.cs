@@ -14,6 +14,7 @@ using Prism.Mvvm;
 using Prism.Commands;
 using System.Windows.Media;
 using System.Windows;
+using Prism.Events;
 
 namespace PediatricSoft
 {
@@ -22,6 +23,8 @@ namespace PediatricSoft
 
         private static readonly PediatricSensorData instance = new PediatricSensorData();
 
+        private readonly IEventAggregator eventAggregator;
+
         static PediatricSensorData()
         {
             ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
@@ -29,6 +32,7 @@ namespace PediatricSoft
 
         private PediatricSensorData()
         {
+            eventAggregator = PediatricSoftEventGlue.eventAggregator;
         }
 
         public static PediatricSensorData Instance
@@ -187,8 +191,6 @@ namespace PediatricSoft
         public SeriesCollection SeriesCollection { get; private set; } = new SeriesCollection();
 
         public int SensorCount { get { return Sensors.Count; } }
-
-        private PlotWindow PlotWindow;
 
         private bool isRunning = false;
         public bool IsRunning
@@ -380,24 +382,17 @@ namespace PediatricSoft
 
         public void UpdateSeriesCollection()
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Updating Plot");
+            try { SeriesCollection.Clear(); }
+            catch (Exception) { }
 
-            if (PlotWindow == null)
-            {
-                PlotWindow = new PlotWindow();
-                PlotWindow.Closing += PlotWindowOnClosing;
-            }
-
-            SeriesCollection.Clear();
-
-            bool plotAtLeastOne = false;
+            int count = 0;
 
             Parallel.ForEach(Sensors, sensor =>
             {
                 if (sensor.IsPlotted)
+                {
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        if (!plotAtLeastOne) plotAtLeastOne = true;
                         SeriesCollection.Add(new LineSeries
                         {
                             Values = sensor.ChartValues,
@@ -405,31 +400,23 @@ namespace PediatricSoft
                             PointGeometry = DefaultGeometries.None
                         });
                     });
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        count++;
+                    });
+                }
 
             });
 
-            if (plotAtLeastOne)
-            {
-                PlotWindow.Show();
-                PlotWindow.WindowState = WindowState.Normal;
-            }
+            if (count > 0)
+                eventAggregator.GetEvent<EventWindowManager>().Publish("ShowPlotWindow");
             else
-                PlotWindow.Close();
+                eventAggregator.GetEvent<EventWindowManager>().Publish("ClosePlotWindow");
+
         }
 
-        private void PlotWindowOnClosing(object sender, CancelEventArgs e)
-        {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Closing Plot Window");
 
-            Parallel.ForEach(Sensors, sensor =>
-            {
-                sensor.IsPlotted = false;
-            });
 
-            SeriesCollection.Clear();
-
-            PlotWindow = null;
-        }
 
 
 

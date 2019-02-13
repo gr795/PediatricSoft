@@ -92,8 +92,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="EventWindowManager.cs" />
     <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="PediatricSoftEventGlue.cs" />
     <Compile Include="PediatricSoftStructures.cs" />
+    <Compile Include="PediatricSoftWindowManager.cs" />
+    <Compile Include="PlotWindowViewModel.cs" />
     <Compile Include="SendCommandsWindow.xaml.cs">
       <DependentUpon>SendCommandsWindow.xaml</DependentUpon>
     </Compile>

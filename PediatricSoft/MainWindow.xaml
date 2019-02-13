@@ -3,20 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="800" MinHeight="600" MinWidth="800">
-    
+
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
-    
-    <i:Interaction.Triggers>
-        <i:EventTrigger EventName="Closing">
-            <i:InvokeCommandAction Command="{Binding WindowMainWindowOnClosingCommand}"/>
-        </i:EventTrigger>
-    </i:Interaction.Triggers>
 
     <Grid>
 
@@ -130,7 +123,6 @@
                          VerticalAlignment="Bottom" IsReadOnly="True"/>
 
         <ListView Margin="10,10,200,120"
-                  DataContext="{Binding Source={StaticResource PediatricSensorDataResource}}"
                   ItemsSource="{Binding Path=Sensors}">
 
             <ListView.View>
@@ -152,8 +144,7 @@
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsPlotted}"
-                                          Command="{Binding CheckBoxIsPlottedCommand}">
+                                <CheckBox IsChecked="{Binding IsPlotted}">
                                 </CheckBox>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
