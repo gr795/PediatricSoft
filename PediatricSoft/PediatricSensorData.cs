@@ -15,6 +15,7 @@ using Prism.Commands;
 using System.Windows.Media;
 using System.Windows;
 using Prism.Events;
+using FTD2XX_NET;
 
 namespace PediatricSoft
 {
@@ -54,14 +55,14 @@ namespace PediatricSoft
         public const int PlotQueueLength = 500;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string DefaultFolder = "Data";
-        public const string ValidIDN = "12";
+        public const string ValidIDN = "Arrow USB Blaster B";
 
-        public const int SerialPortBaudRate = 115200;
-        public const int SerialPortWriteTimeout = 1000;
-        public const int SerialPortReadTimeout = 1000;
-        public const int SerialPortSleepTime = 1000;
+        public const UInt32 SerialPortBaudRate = 115200;
+        public const UInt32 SerialPortWriteTimeout = 250;
+        public const UInt32 SerialPortReadTimeout = 250;
+        public const int SerialPortSleepTime = 100;
         public const int SerialPortShutDownLoopDelay = 100;
-        public const int SerialPortStreamBlockSize = 4096; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
+        public const UInt32 SerialPortStreamBlockSize = 16; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
         public const int SerialPortStreamSleepMin = 1;
         public const int SerialPortStreamSleepMax = 1;
         public const int SerialPortErrorCountMax = 10;
@@ -71,9 +72,9 @@ namespace PediatricSoft
         public const byte StartInfoFrameByte = 0x3F;
         public const byte FrameEscapeByte = 0x10;
 
-        public const int ProcessingBufferSize = 1048576; // 1 MiB
-        public const int DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
-        public const int InfoBlockSize = 4;
+        public const UInt32 ProcessingBufferSize = 1048576; // 1 MiB
+        public const UInt32 DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
+        public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
         public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
@@ -228,12 +229,14 @@ namespace PediatricSoft
                     CanZeroFields = false;
                     CanSendCommands = false;
 
-                    Parallel.ForEach(SerialPort.GetPortNames(), port =>
+                    Parallel.ForEach(GetPotentialSensorSerialNumbers(), serial =>
                      {
-                         PediatricSensor sensor = new PediatricSensor(port);
-                         sensor.Validate();
+                         PediatricSensor sensor = new PediatricSensor(serial);
                          if (sensor.IsValid)
+                         {
+                             sensor.KickOffTasks();
                              App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                         }
                          else
                              while (!sensor.IsDisposed)
                                  Thread.Sleep(StateHandlerSleepTime);
@@ -415,7 +418,58 @@ namespace PediatricSoft
 
         }
 
+        private string[] GetPotentialSensorSerialNumbers()
+        {
+            List<string> SerialNumbers = new List<string>();
 
+            UInt32 ftdiDeviceCount = 0;
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
+
+            // Create new instance of the FTDI device class
+            FTDI myFtdiDevice = new FTDI();
+
+            // Determine the number of FTDI devices connected to the machine
+            ftStatus = myFtdiDevice.GetNumberOfDevices(ref ftdiDeviceCount);
+
+            // Check status
+            if (ftStatus == FTDI.FT_STATUS.FT_OK)
+            {
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Number of FTDI devices: " + ftdiDeviceCount.ToString());
+            }
+            else
+            {
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Failed to get number of devices (error " + ftStatus.ToString() + ")");
+                return SerialNumbers.ToArray();
+            }
+
+            // If no devices available, return
+            if (ftdiDeviceCount == 0)
+            {
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "FTDI devices found");
+                return SerialNumbers.ToArray();
+            }
+
+            // Allocate storage for device info list
+            FTDI.FT_DEVICE_INFO_NODE[] ftdiDeviceList = new FTDI.FT_DEVICE_INFO_NODE[ftdiDeviceCount];
+
+            // Populate our device list
+            ftStatus = myFtdiDevice.GetDeviceList(ftdiDeviceList);
+
+            // Add potential sensors to the list
+            if (ftStatus == FTDI.FT_STATUS.FT_OK)
+            {
+                for (UInt32 i = 0; i < ftdiDeviceCount; i++)
+                {
+                    if (ftdiDeviceList[i].Description.ToString() == PediatricSensorData.ValidIDN)
+                    {
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
+                        SerialNumbers.Add(ftdiDeviceList[i].SerialNumber.ToString());
+                    }
+                }
+            }
+
+            return SerialNumbers.ToArray();
+        }
 
 
 

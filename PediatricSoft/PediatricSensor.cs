@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using Prism.Commands;
+using FTD2XX_NET;
 
 namespace PediatricSoft
 {
@@ -24,13 +25,13 @@ namespace PediatricSoft
 
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
-        private SerialPort _SerialPort;
+        private FTDI _FTDIPort;
         private Task streamingTask;
         private Task processingTask;
         private Task dataSaveTask;
         private Task stateTask;
         private System.Timers.Timer uiUpdateTimer;
-        private Random rnd = new Random();
+        //private Random rnd = new Random();
         private CancellationTokenSource stateHandlerCancellationTokenSource;
         private CancellationTokenSource streamCancellationTokenSource;
         private CancellationTokenSource fileSaveCancellationTokenSource;
@@ -51,7 +52,7 @@ namespace PediatricSoft
         private string optimalMaxCellHeatString = string.Empty;
 
         private readonly byte[] buffer = new byte[PediatricSensorData.ProcessingBufferSize];
-        private int bufferIndex = 0;
+        private UInt32 bufferIndex = 0;
         private readonly Object bufferLock = new Object();
 
         private bool dataSaveEnable = false;
@@ -102,7 +103,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (state > PediatricSensorData.SensorStateInit && state < PediatricSensorData.SensorStateShutDown) return true;
+                if (state > PediatricSensorData.SensorStateInit && state < PediatricSensorData.SensorStateFailed) return true;
                 else return false;
             }
         }
@@ -145,105 +146,216 @@ namespace PediatricSoft
             return s;
         }
 
-        private PediatricSensor() { }
-        public PediatricSensor(string port)
+        private bool FTDIPurgeBuffers()
         {
-            Port = port;
-            SN = Regex.Replace(port, @"[^\d]", "");
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
 
-            _SerialPort = new SerialPort()
+            ftStatus = _FTDIPort.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {
-                PortName = port,
-                WriteTimeout = PediatricSensorData.SerialPortWriteTimeout,
-                ReadTimeout = PediatricSensorData.SerialPortReadTimeout,
-                BaudRate = PediatricSensorData.SerialPortBaudRate,
-                DtrEnable = false,
-                RtsEnable = false
-            };
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                return false;
+            }
+            else return true;
+        }
+
+        private bool FTDICheckRxBuffer()
+        {
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
+
+            UInt32 numBytes = 0;
+
+            ftStatus = _FTDIPort.GetRxBytesAvailable(ref numBytes);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                return false;
+            }
+            else return (numBytes > 0);
+        }
+
+        private UInt32 FTDIWriteString(string data)
+        {
+            // Write string data to the device
+
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
+            UInt32 numBytesWritten = 0;
+
+            // Note that the Write method is overloaded, so can write string or byte array data
+            ftStatus = _FTDIPort.Write(data, data.Length, ref numBytesWritten);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                return numBytesWritten;
+            }
+            else return numBytesWritten;
+        }
+
+        private void FTDIReadBytes()
+        {
 
         }
 
-        private void PortOpen()
+        private PediatricSensor() { }
+        public PediatricSensor(string serial)
         {
-            if (_SerialPort != null)
-                if (!_SerialPort.IsOpen)
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
+
+            _FTDIPort = new FTDI();
+
+            // Open the device by serial number
+            ftStatus = _FTDIPort.OpenBySerialNumber(serial);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
                 {
-                    try
-                    {
-                        _SerialPort.Open();
-                        _SerialPort.DiscardOutBuffer();
-                        _SerialPort.DiscardInBuffer();
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Opened port {Port}");
-                    }
-                    catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}"); }
+                    state = PediatricSensorData.SensorStateFailed;
                 }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set Baud rate
+            ftStatus = _FTDIPort.SetBaudRate(PediatricSensorData.SerialPortBaudRate);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set data characteristics - Data bits, Stop bits, Parity
+            ftStatus = _FTDIPort.SetDataCharacteristics(FTDI.FT_DATA_BITS.FT_BITS_8, FTDI.FT_STOP_BITS.FT_STOP_BITS_1, FTDI.FT_PARITY.FT_PARITY_NONE);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set flow control - set RTS/CTS flow control - we don't have flow control
+            ftStatus = _FTDIPort.SetFlowControl(FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0x11, 0x13);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set timeouts
+            ftStatus = _FTDIPort.SetTimeouts(PediatricSensorData.SerialPortReadTimeout, PediatricSensorData.SerialPortWriteTimeout);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Get COM Port
+            ftStatus = _FTDIPort.GetCOMPort(out string port);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to get the COM Port Name on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Update the properties
+            Port = port;
+            SN = serial;
+
+            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Opened Port {Port} on FTDI device with S/N {serial}");
+
+            bool success = false;
+
+            success = FTDIPurgeBuffers();
+            if (!success) return;
+
+            UInt32 numBytes = FTDIWriteString("?\n");
+            if (numBytes == 0)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateFailed;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
+                return;
+            }
+
+            Thread.Sleep(PediatricSensorData.SerialPortSleepTime);
+
+            success = FTDICheckRxBuffer();
+            if (success)
+            {
+                lock (stateLock)
+                {
+                    state = PediatricSensorData.SensorStateValid;
+                }
+                OnPropertyChanged("State");
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            }
+            else
+            {
+                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
+                Dispose();
+            }
+
+            FTDIPurgeBuffers();
+
         }
 
-        private void PortClose()
+        public void KickOffTasks()
         {
-            if (_SerialPort != null)
-                if (_SerialPort.IsOpen)
-                {
-                    try
-                    {
-                        _SerialPort.DiscardOutBuffer();
-                        _SerialPort.DiscardInBuffer();
-                        _SerialPort.Close();
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Closed port {Port}");
-                    }
-                    catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}"); }
 
-                }
-        }
+            streamCancellationTokenSource = new CancellationTokenSource();
+            streamingTask = Task.Run(() => StreamData(streamCancellationTokenSource.Token));
+            processingTask = Task.Run(() => ProcessData());
 
-        public void Validate()
-        {
-            PortOpen();
+            stateHandlerCancellationTokenSource = new CancellationTokenSource();
+            stateTask = Task.Run(() => StateHandler(stateHandlerCancellationTokenSource.Token));
 
-            if (_SerialPort != null)
-                if (_SerialPort.IsOpen)
-                {
-                    try
-                    {
-                        _SerialPort.WriteLine("?");
-                        Thread.Sleep(PediatricSensorData.SerialPortReadTimeout);
-                        int bytesToRead = _SerialPort.BytesToRead;
-                        if (bytesToRead > 0)
-                        {
-                            _SerialPort.DiscardInBuffer();
+            uiUpdateTimer = new System.Timers.Timer(PediatricSensorData.UIUpdateInterval);
+            uiUpdateTimer.Elapsed += OnUIUpdateTimerEvent;
+            uiUpdateTimer.Enabled = true;
 
-                            lock (stateLock)
-                            {
-                                state = PediatricSensorData.SensorStateValid;
-                            }
-                            OnPropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-
-                            streamCancellationTokenSource = new CancellationTokenSource();
-                            streamingTask = Task.Run(() => StreamData(streamCancellationTokenSource.Token));
-                            processingTask = Task.Run(() => ProcessData());
-
-                            stateHandlerCancellationTokenSource = new CancellationTokenSource();
-                            stateTask = Task.Run(() => StateHandler(stateHandlerCancellationTokenSource.Token));
-
-                            uiUpdateTimer = new System.Timers.Timer(PediatricSensorData.UIUpdateInterval);
-                            uiUpdateTimer.Elapsed += OnUIUpdateTimerEvent;
-                            uiUpdateTimer.Enabled = true;
-                        }
-                        else
-                        {
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: Not valid. Calling Dispose()");
-                            Dispose();
-                        }
-                    }
-                    catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}"); }
-
-                }
-                else
-                {
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: Not valid. Calling Dispose()");
-                    Dispose();
-                }
         }
 
         public void Lock()
@@ -357,15 +469,28 @@ namespace PediatricSoft
 
         private void StreamData(CancellationToken cancellationToken)
         {
-            Stream stream = _SerialPort.BaseStream;
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
+
             byte[] byteArrayIn = new byte[PediatricSensorData.SerialPortStreamBlockSize];
-            int bytesRead = 0;
+            UInt32 bytesRead = 0;
 
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    bytesRead = stream.Read(byteArrayIn, 0, PediatricSensorData.SerialPortStreamBlockSize);
+                    // Note that the Read method is overloaded, so can read string or byte array data
+                    // This thing blocks! Adjust the block size accordingly or call 
+                    ftStatus = _FTDIPort.Read(byteArrayIn, PediatricSensorData.SerialPortStreamBlockSize, ref bytesRead);
+                    if (ftStatus != FTDI.FT_STATUS.FT_OK)
+                    {
+                        lock (stateLock)
+                        {
+                            state = PediatricSensorData.SensorStateFailed;
+                        }
+                        OnPropertyChanged("State");
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to read in the Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                        return;
+                    }
                 }
                 catch (TimeoutException)
                 {
@@ -390,7 +515,7 @@ namespace PediatricSoft
                     bytesRead = 0;
 
                 }
-                Thread.Sleep(rnd.Next(PediatricSensorData.SerialPortStreamSleepMin, PediatricSensorData.SerialPortStreamSleepMax));
+                //Thread.Sleep(rnd.Next(PediatricSensorData.SerialPortStreamSleepMin, PediatricSensorData.SerialPortStreamSleepMax));
             }
 
         }
@@ -398,13 +523,13 @@ namespace PediatricSoft
         private void ProcessData()
         {
             byte[] data = new byte[PediatricSensorData.DataBlockSize];
-            int dataIndex = 0;
+            UInt32 dataIndex = 0;
 
             byte[] info = new byte[PediatricSensorData.InfoBlockSize];
-            int infoIndex = 0;
+            UInt32 infoIndex = 0;
 
             byte[] localBuffer = new byte[PediatricSensorData.ProcessingBufferSize];
-            int localBufferIndex = 0;
+            UInt32 localBufferIndex = 0;
 
             bool inEscape = false;
             bool inInfoFrame = false;
@@ -1228,16 +1353,13 @@ namespace PediatricSoft
             {
                 if (!String.IsNullOrEmpty(command))
                 {
-                    if (_SerialPort != null)
-                        if (_SerialPort.IsOpen)
-                        {
-                            try
-                            {
-                                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled && debug, $"Sensor {SN} on port {Port}: sending command \"{command}\"");
-                                _SerialPort.WriteLine(command);
-                            }
-                            catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, e.Message); }
-                        }
+                    try
+                    {
+                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled && debug, $"Sensor {SN} on port {Port}: sending command \"{command}\"");
+                        FTDIWriteString($"{command}\n");
+                    }
+                    catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, e.Message); }
+
 
                 }
             }
@@ -1341,11 +1463,10 @@ namespace PediatricSoft
                 stateTask.Dispose();
             };
 
-            if (_SerialPort != null)
+            if (_FTDIPort != null)
             {
-                PortClose();
-                _SerialPort.Dispose();
-            };
+                try { _FTDIPort.Close(); } catch { } finally { _FTDIPort = null; };
+            }
 
             IsDisposed = true;
         }
