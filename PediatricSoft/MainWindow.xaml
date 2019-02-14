@@ -130,9 +130,7 @@
                 <GridView>
 
                     <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
-                    
-                    <GridViewColumn Header="IDN" DisplayMemberBinding="{Binding IDN}"/>
-                    
+
                     <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
 
                     <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>

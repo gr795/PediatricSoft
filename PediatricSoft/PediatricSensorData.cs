@@ -24,16 +24,14 @@ namespace PediatricSoft
 
         private static readonly PediatricSensorData instance = new PediatricSensorData();
 
-        private readonly IEventAggregator eventAggregator;
+        private readonly IEventAggregator eventAggregator = PediatricSoftEventGlue.eventAggregator;
 
         static PediatricSensorData()
         {
-            ThreadPool.SetMinThreads(PediatricSensorData.NumberOfThreads, PediatricSensorData.NumberOfThreads);
         }
 
         private PediatricSensorData()
         {
-            eventAggregator = PediatricSoftEventGlue.eventAggregator;
         }
 
         public static PediatricSensorData Instance
@@ -47,14 +45,13 @@ namespace PediatricSoft
         public static PediatricSensorData GetInstance() { return instance; }
 
         // Constants
-        public const bool IsDebugEnabled = true;
+        public const bool IsDebugEnabled = false;
         public const bool IsLaserLockDebugEnabled = true;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
         public const int DataQueueRunningAvgLength = 10; // number of data points for the running average
         public const int PlotQueueLength = 500;
         public const int UIUpdateInterval = 250; // Update UI every X ms
-        public const string DefaultFolder = "Data";
         public const string ValidIDN = "Arrow USB Blaster B";
 
         public const UInt32 SerialPortBaudRate = 115200;
@@ -62,7 +59,7 @@ namespace PediatricSoft
         public const UInt32 SerialPortReadTimeout = 250;
         public const int SerialPortSleepTime = 100;
         public const int SerialPortShutDownLoopDelay = 100;
-        public const UInt32 SerialPortStreamBlockSize = 16; // 4 KiB = 32768 bits = ~284 ms at full 115200 baud
+        public const UInt32 SerialPortStreamBlockSize = 16;
         public const int SerialPortStreamSleepMin = 1;
         public const int SerialPortStreamSleepMax = 1;
         public const int SerialPortErrorCountMax = 10;

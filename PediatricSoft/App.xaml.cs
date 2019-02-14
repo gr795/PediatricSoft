@@ -1,18 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Prism.Events;
+using System.Threading;
 using System.Windows;
 
 namespace PediatricSoft
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
-        private PediatricSoftWindowManager pediatricSoftWindowManager = PediatricSoftWindowManager.Instance;
+        private IEventAggregator eventAggregator;
+        private PediatricSensorData PediatricSensorData;
+        private PediatricSoftWindowManager PediatricSoftWindowManager;
+
+        public App()
+        {
+            ThreadPool.SetMinThreads(128, 128);
+            eventAggregator = PediatricSoftEventGlue.eventAggregator;
+            PediatricSensorData = PediatricSensorData.Instance;
+            PediatricSoftWindowManager = PediatricSoftWindowManager.Instance;
+        }
     }
 }
