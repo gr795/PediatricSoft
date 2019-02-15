@@ -93,11 +93,14 @@ namespace PediatricSoft
 
         }
 
+        // Event Handlers
+
         private void MainWindowOnClosing(object sender, CancelEventArgs e)
         {
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Closing Main Window");
             SendCommandsWindow?.Close();
             PlotWindow?.Close();
+            App.Current.Dispatcher.Invoke(() => eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown"));
             MainWindow = null;
         }
 

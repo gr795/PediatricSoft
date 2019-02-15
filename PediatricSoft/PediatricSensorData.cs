@@ -32,6 +32,7 @@ namespace PediatricSoft
 
         private PediatricSensorData()
         {
+            eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
         }
 
         public static PediatricSensorData Instance
@@ -45,8 +46,8 @@ namespace PediatricSoft
         public static PediatricSensorData GetInstance() { return instance; }
 
         // Constants
-        public const bool IsDebugEnabled = false;
-        public const bool IsLaserLockDebugEnabled = true;
+        public const bool IsDebugEnabled = true;
+        public const bool IsLaserLockDebugEnabled = false;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
         public const int DataQueueRunningAvgLength = 10; // number of data points for the running average
@@ -225,6 +226,12 @@ namespace PediatricSoft
                     CanStartStop = false;
                     CanZeroFields = false;
                     CanSendCommands = false;
+
+                    Parallel.ForEach(Sensors, sensor =>
+                    {
+                        if (sensor.State == PediatricSensorData.SensorStateFailed)
+                            App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
+                    });
 
                     Parallel.ForEach(GetPotentialSensorSerialNumbers(), serial =>
                      {
@@ -471,7 +478,10 @@ namespace PediatricSoft
 
 
 
-
+        private void DataLayerEventHandler(string eventString)
+        {
+            ClearAll();
+        }
 
         public void ClearAll()
         {

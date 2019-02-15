@@ -17,10 +17,11 @@ using System.Linq;
 using System.Windows;
 using Prism.Commands;
 using FTD2XX_NET;
+using Prism.Mvvm;
 
 namespace PediatricSoft
 {
-    public sealed class PediatricSensor : INotifyPropertyChanged, IDisposable
+    public sealed class PediatricSensor : BindableBase, IDisposable
     {
 
         PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
@@ -74,7 +75,7 @@ namespace PediatricSoft
         public bool IsPlotted
         {
             get { return isPlotted; }
-            set { isPlotted = value; OnPropertyChanged("IsPlotted"); PediatricSensorData.UpdateSeriesCollection(); }
+            set { isPlotted = value; RaisePropertyChanged(); PediatricSensorData.UpdateSeriesCollection(); }
         }
 
         public int LastValue { get; private set; } = 0;
@@ -109,16 +110,10 @@ namespace PediatricSoft
         }
         public byte State { get { return state; } }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged(string prop)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        }
-
         private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
         {
-            OnPropertyChanged("LastValue");
-            OnPropertyChanged("Voltage");
+            RaisePropertyChanged("LastValue");
+            RaisePropertyChanged("Voltage");
         }
 
         private ushort UShortSafeInc(ushort value, ushort step, ushort max)
@@ -157,8 +152,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return false;
             }
             else return true;
@@ -177,8 +173,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return false;
             }
             else return (numBytes > 0);
@@ -199,16 +196,12 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return numBytesWritten;
             }
             else return numBytesWritten;
-        }
-
-        private void FTDIReadBytes()
-        {
-
         }
 
         private PediatricSensor() { }
@@ -218,6 +211,8 @@ namespace PediatricSoft
 
             _FTDIPort = new FTDI();
 
+            SN = serial;
+
             // Open the device by serial number
             ftStatus = _FTDIPort.OpenBySerialNumber(serial);
             if (ftStatus != FTDI.FT_STATUS.FT_OK)
@@ -226,8 +221,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return;
             }
 
@@ -239,8 +235,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return;
             }
 
@@ -252,8 +249,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return;
             }
 
@@ -265,8 +263,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return;
             }
 
@@ -278,8 +277,9 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return;
             }
 
@@ -291,14 +291,14 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to get the COM Port Name on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
                 return;
             }
 
-            // Update the properties
+            // Update the Port property
             Port = port;
-            SN = serial;
 
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Opened Port {Port} on FTDI device with S/N {serial}");
 
@@ -314,9 +314,10 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateFailed;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
+                Dispose();
                 return;
             }
 
@@ -329,7 +330,7 @@ namespace PediatricSoft
                 {
                     state = PediatricSensorData.SensorStateValid;
                 }
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
             else
@@ -373,7 +374,7 @@ namespace PediatricSoft
                 currentState = state;
             }
 
-            OnPropertyChanged("State");
+            RaisePropertyChanged("State");
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
             while (currentState != PediatricSensorData.SensorStateIdle)
@@ -401,7 +402,7 @@ namespace PediatricSoft
                 currentState = state;
             }
 
-            OnPropertyChanged("State");
+            RaisePropertyChanged("State");
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
             while (currentState != PediatricSensorData.SensorStateRun)
@@ -426,7 +427,7 @@ namespace PediatricSoft
                 currentState = state;
             }
 
-            OnPropertyChanged("State");
+            RaisePropertyChanged("State");
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
             while (currentState != PediatricSensorData.SensorStateIdle)
@@ -454,7 +455,7 @@ namespace PediatricSoft
                 currentState = state;
             }
 
-            OnPropertyChanged("State");
+            RaisePropertyChanged("State");
             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
             while (currentState != PediatricSensorData.SensorStateIdle)
@@ -487,7 +488,7 @@ namespace PediatricSoft
                         {
                             state = PediatricSensorData.SensorStateFailed;
                         }
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to read in the Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
                         return;
                     }
@@ -501,7 +502,7 @@ namespace PediatricSoft
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}");
                     streamCancellationTokenSource.Cancel();
                     state = PediatricSensorData.SensorStateFailed;
-                    OnPropertyChanged("State");
+                    RaisePropertyChanged("State");
                     Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                 }
 
@@ -815,7 +816,7 @@ namespace PediatricSoft
             {
                 SendCommandsColdSensor();
                 state = PediatricSensorData.SensorStateFailed;
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
             else
@@ -875,7 +876,7 @@ namespace PediatricSoft
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, giving up");
                 SendCommandsColdSensor();
                 state = PediatricSensorData.SensorStateFailed;
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
 
@@ -930,7 +931,7 @@ namespace PediatricSoft
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: We saw Rb resonance, but the step cycle failed. Giving up");
                 SendCommandsColdSensor();
                 state = PediatricSensorData.SensorStateFailed;
-                OnPropertyChanged("State");
+                RaisePropertyChanged("State");
                 Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
 
@@ -1178,7 +1179,7 @@ namespace PediatricSoft
                         if (state == PediatricSensorData.SensorStateGetOptimalParameters)
                         {
                             state++;
-                            OnPropertyChanged("State");
+                            RaisePropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
@@ -1189,7 +1190,7 @@ namespace PediatricSoft
                         if (state == PediatricSensorData.SensorStateMakeCold)
                         {
                             state++;
-                            OnPropertyChanged("State");
+                            RaisePropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
@@ -1197,7 +1198,7 @@ namespace PediatricSoft
                     case PediatricSensorData.SensorStateCold:
 
                         state++;
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
@@ -1206,7 +1207,7 @@ namespace PediatricSoft
                         if (state == PediatricSensorData.SensorStateLockStart)
                         {
                             state++;
-                            OnPropertyChanged("State");
+                            RaisePropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
@@ -1217,7 +1218,7 @@ namespace PediatricSoft
                         if (state == PediatricSensorData.SensorStateLaserLockSweep)
                         {
                             state++;
-                            OnPropertyChanged("State");
+                            RaisePropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
@@ -1228,7 +1229,7 @@ namespace PediatricSoft
                         if (state == PediatricSensorData.SensorStateLaserLockStep)
                         {
                             state++;
-                            OnPropertyChanged("State");
+                            RaisePropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
@@ -1237,7 +1238,7 @@ namespace PediatricSoft
 
                         SendCommandsLaserLockPID();
                         state++;
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
@@ -1246,7 +1247,7 @@ namespace PediatricSoft
                         SendCommandsStabilizeCellHeat();
                         state++;
                         state = PediatricSensorData.SensorStateIdle;
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
@@ -1254,7 +1255,7 @@ namespace PediatricSoft
 
                         SendCommandsZeroFields();
                         state++;
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
@@ -1262,7 +1263,7 @@ namespace PediatricSoft
 
                         SendCommandsCalibrateMagnetometer();
                         state++;
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
@@ -1283,7 +1284,7 @@ namespace PediatricSoft
                         }
 
                         state++;
-                        OnPropertyChanged("State");
+                        RaisePropertyChanged("State");
                         Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
@@ -1309,7 +1310,7 @@ namespace PediatricSoft
                         if (state == PediatricSensorData.SensorStateStop)
                         {
                             state = PediatricSensorData.SensorStateIdle;
-                            OnPropertyChanged("State");
+                            RaisePropertyChanged("State");
                             Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;

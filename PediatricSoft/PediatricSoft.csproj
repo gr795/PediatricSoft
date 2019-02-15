@@ -96,8 +96,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="EventDataLayer.cs" />
     <Compile Include="EventWindowManager.cs" />
     <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="PediatricSoftConstants.cs" />
     <Compile Include="PediatricSoftEventGlue.cs" />
     <Compile Include="PediatricSoftStructures.cs" />
     <Compile Include="PediatricSoftWindowManager.cs" />
