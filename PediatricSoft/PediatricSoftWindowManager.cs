@@ -54,14 +54,14 @@ namespace PediatricSoft
                 case "ShowSendCommandsWindow":
                     if (SendCommandsWindow == null)
                     {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Creating new Send Commands window");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Creating new Send Commands window");
                         SendCommandsWindow = new SendCommandsWindow();
                         SendCommandsWindow.Closing += SendCommandsWindowOnClosing;
                         SendCommandsWindow.Show();
                     }
                     else
                     {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Showing existing Send Commands window");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Showing existing Send Commands window");
                         SendCommandsWindow.WindowState = WindowState.Normal;
                         SendCommandsWindow.Focus();
                     }
@@ -70,14 +70,14 @@ namespace PediatricSoft
                 case "ShowPlotWindow":
                     if (PlotWindow == null)
                     {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Creating new Plot Window");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Creating new Plot Window");
                         PlotWindow = new PlotWindow();
                         PlotWindow.Closing += PlotWindowOnClosing;
                         PlotWindow.Show();
                     }
                     else
                     {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Showing existing Plot Window");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Showing existing Plot Window");
                         PlotWindow.WindowState = WindowState.Normal;
                         PlotWindow.Focus();
                     }
@@ -97,7 +97,7 @@ namespace PediatricSoft
 
         private void MainWindowOnClosing(object sender, CancelEventArgs e)
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Closing Main Window");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Closing Main Window");
             SendCommandsWindow?.Close();
             PlotWindow?.Close();
             App.Current.Dispatcher.Invoke(() => eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown"));
@@ -106,13 +106,13 @@ namespace PediatricSoft
 
         private void SendCommandsWindowOnClosing(object sender, CancelEventArgs e)
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Closing Send Commands window");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Closing Send Commands window");
             SendCommandsWindow = null;
         }
 
         private void PlotWindowOnClosing(object sender, CancelEventArgs e)
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Window Manager: Closing Plot Window");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Closing Plot Window");
             PlotWindow = null;
         }
 

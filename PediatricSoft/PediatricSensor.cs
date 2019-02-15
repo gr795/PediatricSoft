@@ -37,22 +37,22 @@ namespace PediatricSoft
         private CancellationTokenSource streamCancellationTokenSource;
         private CancellationTokenSource fileSaveCancellationTokenSource;
 
-        private byte state = PediatricSensorData.SensorStateInit;
+        private byte state = PediatricSoftConstants.SensorStateInit;
         private readonly Object stateLock = new Object();
 
         private int sensorADCColdValueRaw;
         private double sensorZDemodCalibration = 1;
-        private ushort laserHeat = PediatricSensorData.SensorMinLaserHeat;
-        private ushort zeroXField = PediatricSensorData.SensorColdFieldXOffset;
-        private ushort zeroYField = PediatricSensorData.SensorColdFieldYOffset;
-        private ushort zeroZField = PediatricSensorData.SensorColdFieldZOffset;
+        private ushort laserHeat = PediatricSoftConstants.SensorMinLaserHeat;
+        private ushort zeroXField = PediatricSoftConstants.SensorColdFieldXOffset;
+        private ushort zeroYField = PediatricSoftConstants.SensorColdFieldYOffset;
+        private ushort zeroZField = PediatricSoftConstants.SensorColdFieldZOffset;
 
         private string optimalLaserCurrentString = string.Empty;
         private string optimalBzModString = string.Empty;
         private string optimalCellHeatLockPointString = string.Empty;
         private string optimalMaxCellHeatString = string.Empty;
 
-        private readonly byte[] buffer = new byte[PediatricSensorData.ProcessingBufferSize];
+        private readonly byte[] buffer = new byte[PediatricSoftConstants.ProcessingBufferSize];
         private UInt32 bufferIndex = 0;
         private readonly Object bufferLock = new Object();
 
@@ -64,9 +64,9 @@ namespace PediatricSoft
         private bool infoRequested = false;
         private string requestedInfoString = string.Empty;
 
-        private Queue<int> dataTimeRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
-        private Queue<int> dataValueRaw = new Queue<int>(PediatricSensorData.DataQueueLength);
-        private Queue<int> dataValueRawRunningAvg = new Queue<int>(PediatricSensorData.DataQueueRunningAvgLength);
+        private Queue<int> dataTimeRaw = new Queue<int>(PediatricSoftConstants.DataQueueLength);
+        private Queue<int> dataValueRaw = new Queue<int>(PediatricSoftConstants.DataQueueLength);
+        private Queue<int> dataValueRawRunningAvg = new Queue<int>(PediatricSoftConstants.DataQueueRunningAvgLength);
         private readonly Object dataLock = new Object();
 
         public ChartValues<ObservableValue> ChartValues = new ChartValues<ObservableValue>();
@@ -86,8 +86,8 @@ namespace PediatricSoft
         {
             get
             {
-                if (state < PediatricSensorData.SensorStateStart)
-                    return RunningAvg * PediatricSensorData.SensorADCRawToVolts;
+                if (state < PediatricSoftConstants.SensorStateStart)
+                    return RunningAvg * PediatricSoftConstants.SensorADCRawToVolts;
                 else
                     return RunningAvg * sensorZDemodCalibration;
             }
@@ -104,7 +104,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (state > PediatricSensorData.SensorStateInit && state < PediatricSensorData.SensorStateFailed) return true;
+                if (state > PediatricSoftConstants.SensorStateInit && state < PediatricSoftConstants.SensorStateFailed) return true;
                 else return false;
             }
         }
@@ -150,10 +150,10 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return false;
             }
@@ -171,10 +171,10 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return false;
             }
@@ -194,10 +194,10 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return numBytesWritten;
             }
@@ -219,24 +219,24 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
 
             // Set Baud rate
-            ftStatus = _FTDIPort.SetBaudRate(PediatricSensorData.SerialPortBaudRate);
+            ftStatus = _FTDIPort.SetBaudRate(PediatricSoftConstants.SerialPortBaudRate);
             if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -247,10 +247,10 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -261,24 +261,24 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
 
             // Set timeouts
-            ftStatus = _FTDIPort.SetTimeouts(PediatricSensorData.SerialPortReadTimeout, PediatricSensorData.SerialPortWriteTimeout);
+            ftStatus = _FTDIPort.SetTimeouts(PediatricSoftConstants.SerialPortReadTimeout, PediatricSoftConstants.SerialPortWriteTimeout);
             if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -289,10 +289,10 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to get the COM Port Name on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get the COM Port Name on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -300,7 +300,7 @@ namespace PediatricSoft
             // Update the Port property
             Port = port;
 
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Opened Port {Port} on FTDI device with S/N {serial}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Opened Port {Port} on FTDI device with S/N {serial}");
 
             bool success = false;
 
@@ -312,30 +312,30 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
                 Dispose();
                 return;
             }
 
-            Thread.Sleep(PediatricSensorData.SerialPortSleepTime);
+            Thread.Sleep(PediatricSoftConstants.SerialPortSleepTime);
 
             success = FTDICheckRxBuffer();
             if (success)
             {
                 lock (stateLock)
                 {
-                    state = PediatricSensorData.SensorStateValid;
+                    state = PediatricSoftConstants.SensorStateValid;
                 }
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
             else
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
                 Dispose();
             }
 
@@ -353,7 +353,7 @@ namespace PediatricSoft
             stateHandlerCancellationTokenSource = new CancellationTokenSource();
             stateTask = Task.Run(() => StateHandler(stateHandlerCancellationTokenSource.Token));
 
-            uiUpdateTimer = new System.Timers.Timer(PediatricSensorData.UIUpdateInterval);
+            uiUpdateTimer = new System.Timers.Timer(PediatricSoftConstants.UIUpdateInterval);
             uiUpdateTimer.Elapsed += OnUIUpdateTimerEvent;
             uiUpdateTimer.Enabled = true;
 
@@ -365,21 +365,21 @@ namespace PediatricSoft
 
             lock (stateLock)
             {
-                if (state == PediatricSensorData.SensorStateValid)
+                if (state == PediatricSoftConstants.SensorStateValid)
                 {
                     state++;
                     if (SN == "16")
-                        state = PediatricSensorData.SensorStateIdle;
+                        state = PediatricSoftConstants.SensorStateIdle;
                 }
                 currentState = state;
             }
 
             RaisePropertyChanged("State");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
-            while (currentState != PediatricSensorData.SensorStateIdle)
+            while (currentState != PediatricSoftConstants.SensorStateIdle)
             {
-                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                 lock (stateLock)
                 {
                     currentState = state;
@@ -393,21 +393,21 @@ namespace PediatricSoft
 
             lock (stateLock)
             {
-                if (PediatricSensorData.DebugMode && state == PediatricSensorData.SensorStateValid)
-                    state = PediatricSensorData.SensorStateIdle;
+                if (PediatricSensorData.DebugMode && state == PediatricSoftConstants.SensorStateValid)
+                    state = PediatricSoftConstants.SensorStateIdle;
 
-                if (state == PediatricSensorData.SensorStateIdle)
+                if (state == PediatricSoftConstants.SensorStateIdle)
                     state++;
 
                 currentState = state;
             }
 
             RaisePropertyChanged("State");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
-            while (currentState != PediatricSensorData.SensorStateRun)
+            while (currentState != PediatricSoftConstants.SensorStateRun)
             {
-                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                 lock (stateLock)
                 {
                     currentState = state;
@@ -421,18 +421,18 @@ namespace PediatricSoft
 
             lock (stateLock)
             {
-                if (state == PediatricSensorData.SensorStateRun)
+                if (state == PediatricSoftConstants.SensorStateRun)
                     state++;
 
                 currentState = state;
             }
 
             RaisePropertyChanged("State");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
-            while (currentState != PediatricSensorData.SensorStateIdle)
+            while (currentState != PediatricSoftConstants.SensorStateIdle)
             {
-                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                 lock (stateLock)
                 {
                     currentState = state;
@@ -446,21 +446,21 @@ namespace PediatricSoft
 
             lock (stateLock)
             {
-                if (state == PediatricSensorData.SensorStateIdle)
+                if (state == PediatricSoftConstants.SensorStateIdle)
                 {
-                    state = PediatricSensorData.SensorStateZeroFields;
+                    state = PediatricSoftConstants.SensorStateZeroFields;
                     if (SN == "16")
-                        state = PediatricSensorData.SensorStateIdle;
+                        state = PediatricSoftConstants.SensorStateIdle;
                 }
                 currentState = state;
             }
 
             RaisePropertyChanged("State");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
 
-            while (currentState != PediatricSensorData.SensorStateIdle)
+            while (currentState != PediatricSoftConstants.SensorStateIdle)
             {
-                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                 lock (stateLock)
                 {
                     currentState = state;
@@ -472,7 +472,7 @@ namespace PediatricSoft
         {
             FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
 
-            byte[] byteArrayIn = new byte[PediatricSensorData.SerialPortStreamBlockSize];
+            byte[] byteArrayIn = new byte[PediatricSoftConstants.SerialPortStreamBlockSize];
             UInt32 bytesRead = 0;
 
             while (!cancellationToken.IsCancellationRequested)
@@ -481,15 +481,15 @@ namespace PediatricSoft
                 {
                     // Note that the Read method is overloaded, so can read string or byte array data
                     // This thing blocks! Adjust the block size accordingly or call 
-                    ftStatus = _FTDIPort.Read(byteArrayIn, PediatricSensorData.SerialPortStreamBlockSize, ref bytesRead);
+                    ftStatus = _FTDIPort.Read(byteArrayIn, PediatricSoftConstants.SerialPortStreamBlockSize, ref bytesRead);
                     if (ftStatus != FTDI.FT_STATUS.FT_OK)
                     {
                         lock (stateLock)
                         {
-                            state = PediatricSensorData.SensorStateFailed;
+                            state = PediatricSoftConstants.SensorStateFailed;
                         }
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Failed to read in the Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to read in the Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
                         return;
                     }
                 }
@@ -499,11 +499,11 @@ namespace PediatricSoft
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Port {Port}: {e.Message}");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Port {Port}: {e.Message}");
                     streamCancellationTokenSource.Cancel();
-                    state = PediatricSensorData.SensorStateFailed;
+                    state = PediatricSoftConstants.SensorStateFailed;
                     RaisePropertyChanged("State");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                 }
 
                 if (bytesRead > 0)
@@ -516,27 +516,27 @@ namespace PediatricSoft
                     bytesRead = 0;
 
                 }
-                //Thread.Sleep(rnd.Next(PediatricSensorData.SerialPortStreamSleepMin, PediatricSensorData.SerialPortStreamSleepMax));
+                //Thread.Sleep(rnd.Next(PediatricSoftConstants.SerialPortStreamSleepMin, PediatricSensorData.SerialPortStreamSleepMax));
             }
 
         }
 
         private void ProcessData()
         {
-            byte[] data = new byte[PediatricSensorData.DataBlockSize];
+            byte[] data = new byte[PediatricSoftConstants.DataBlockSize];
             UInt32 dataIndex = 0;
 
-            byte[] info = new byte[PediatricSensorData.InfoBlockSize];
+            byte[] info = new byte[PediatricSoftConstants.InfoBlockSize];
             UInt32 infoIndex = 0;
 
-            byte[] localBuffer = new byte[PediatricSensorData.ProcessingBufferSize];
+            byte[] localBuffer = new byte[PediatricSoftConstants.ProcessingBufferSize];
             UInt32 localBufferIndex = 0;
 
             bool inEscape = false;
             bool inInfoFrame = false;
 
             int plotCounter = 0;
-            const int plotCounterMax = PediatricSensorData.DataQueueLength / PediatricSensorData.PlotQueueLength;
+            const int plotCounterMax = PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength;
 
             if (streamingTask != null)
             {
@@ -556,7 +556,7 @@ namespace PediatricSoft
                         switch (localBuffer[i])
                         {
 
-                            case PediatricSensorData.FrameEscapeByte:
+                            case PediatricSoftConstants.FrameEscapeByte:
                                 if (inEscape)
                                 {
                                     data[dataIndex] = localBuffer[i];
@@ -566,7 +566,7 @@ namespace PediatricSoft
                                 else inEscape = true;
                                 break;
 
-                            case PediatricSensorData.StartDataFrameByte:
+                            case PediatricSoftConstants.StartDataFrameByte:
                                 if (inEscape)
                                 {
                                     data[dataIndex] = localBuffer[i];
@@ -581,7 +581,7 @@ namespace PediatricSoft
                                 }
                                 break;
 
-                            case PediatricSensorData.StartInfoFrameByte:
+                            case PediatricSoftConstants.StartInfoFrameByte:
                                 if (inEscape)
                                 {
                                     data[dataIndex] = localBuffer[i];
@@ -610,10 +610,10 @@ namespace PediatricSoft
                                 break;
                         }
 
-                        if (infoIndex == PediatricSensorData.InfoBlockSize)
+                        if (infoIndex == PediatricSoftConstants.InfoBlockSize)
                         {
                             string infoMessage = System.Text.Encoding.ASCII.GetString(info);
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Info message: {infoMessage}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Info message: {infoMessage}");
                             PediatricSensorData.CommandHistory = String.Concat(infoMessage, "\n", PediatricSensorData.CommandHistory);
                             lock (dataLock)
                             {
@@ -627,7 +627,7 @@ namespace PediatricSoft
                             infoIndex = 0;
                         }
 
-                        if (dataIndex == PediatricSensorData.DataBlockSize)
+                        if (dataIndex == PediatricSoftConstants.DataBlockSize)
                         {
                             lock (dataLock)
                             {
@@ -636,13 +636,13 @@ namespace PediatricSoft
                                 LastValue = BitConverter.ToInt32(data, 0);
 
                                 dataTimeRaw.Enqueue(LastTime);
-                                if (dataTimeRaw.Count > PediatricSensorData.DataQueueLength) dataTimeRaw.Dequeue();
+                                if (dataTimeRaw.Count > PediatricSoftConstants.DataQueueLength) dataTimeRaw.Dequeue();
 
                                 dataValueRaw.Enqueue(LastValue);
-                                if (dataValueRaw.Count > PediatricSensorData.DataQueueLength) dataValueRaw.Dequeue();
+                                if (dataValueRaw.Count > PediatricSoftConstants.DataQueueLength) dataValueRaw.Dequeue();
 
                                 dataValueRawRunningAvg.Enqueue(LastValue);
-                                if (dataValueRawRunningAvg.Count > PediatricSensorData.DataQueueRunningAvgLength) dataValueRawRunningAvg.Dequeue();
+                                if (dataValueRawRunningAvg.Count > PediatricSoftConstants.DataQueueRunningAvgLength) dataValueRawRunningAvg.Dequeue();
 
                                 RunningAvg = dataValueRawRunningAvg.Average();
 
@@ -663,11 +663,11 @@ namespace PediatricSoft
                                 plotCounter++;
                                 if (plotCounter == plotCounterMax)
                                 {
-                                    if (state < PediatricSensorData.SensorStateStart)
-                                        ChartValues.Add(new ObservableValue(RunningAvg * PediatricSensorData.SensorADCRawToVolts));
+                                    if (state < PediatricSoftConstants.SensorStateStart)
+                                        ChartValues.Add(new ObservableValue(RunningAvg * PediatricSoftConstants.SensorADCRawToVolts));
                                     else
                                         ChartValues.Add(new ObservableValue(RunningAvg * sensorZDemodCalibration));
-                                    if (ChartValues.Count > PediatricSensorData.PlotQueueLength) ChartValues.RemoveAt(0);
+                                    if (ChartValues.Count > PediatricSoftConstants.PlotQueueLength) ChartValues.RemoveAt(0);
                                     plotCounter = 0;
                                 }
                             }
@@ -677,7 +677,7 @@ namespace PediatricSoft
 
                     }
 
-                    Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                    Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                 };
             };
         }
@@ -707,10 +707,10 @@ namespace PediatricSoft
             {
                 infoRequested = true;
             }
-            SendCommand(PediatricSensorData.SensorCommandGetOptimalLaserCurrent);
+            SendCommand(PediatricSoftConstants.SensorCommandGetOptimalLaserCurrent);
             SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Laser Current: {requestedInfoString}");
+            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Laser Current: {requestedInfoString}");
             optimalLaserCurrentString = requestedInfoString;
 
             // Get optimal Bz modulation amplitude
@@ -718,10 +718,10 @@ namespace PediatricSoft
             {
                 infoRequested = true;
             }
-            SendCommand(PediatricSensorData.SensorCommandGetOptimalBzMod);
+            SendCommand(PediatricSoftConstants.SensorCommandGetOptimalBzMod);
             SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Bz modulation amplitude: {requestedInfoString}");
+            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Bz modulation amplitude: {requestedInfoString}");
             optimalBzModString = requestedInfoString;
 
             // Get Optimal Cell Heat Lock Point
@@ -729,10 +729,10 @@ namespace PediatricSoft
             {
                 infoRequested = true;
             }
-            SendCommand(PediatricSensorData.SensorCommandGetOptimalCellHeatLockPoint);
+            SendCommand(PediatricSoftConstants.SensorCommandGetOptimalCellHeatLockPoint);
             SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Cell Heat Lock Point: {requestedInfoString}");
+            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Cell Heat Lock Point: {requestedInfoString}");
             optimalCellHeatLockPointString = requestedInfoString;
 
             // Get Max Cell Heat
@@ -740,53 +740,53 @@ namespace PediatricSoft
             {
                 infoRequested = true;
             }
-            SendCommand(PediatricSensorData.SensorCommandGetMaxCellHeat);
+            SendCommand(PediatricSoftConstants.SensorCommandGetMaxCellHeat);
             SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Max Cell Heat: {requestedInfoString}");
+            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Max Cell Heat: {requestedInfoString}");
             optimalMaxCellHeatString = requestedInfoString;
         }
 
         private void SendCommandsColdSensor()
         {
-            SendCommand(PediatricSensorData.SensorCommandDigitalDataSelector);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataSelectorADC)));
+            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorADC)));
 
-            SendCommand(PediatricSensorData.SensorCommandDigitalDataStreamingAndGain);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataStreamingOnGainLow)));
+            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndGain);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOnGainLow)));
 
-            SendCommand(PediatricSensorData.SensorCommandLaserlock);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserlockDisable)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserlock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserlockDisable)));
 
-            //SendCommand(PediatricSensorData.SensorCommandLaserCurrentMod);
+            //SendCommand(PediatricSoftConstants.SensorCommandLaserCurrentMod);
             //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserCurrentModValue)));
 
-            SendCommand(PediatricSensorData.SensorCommandLaserCurrent);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdLaserCurrent)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdLaserCurrent)));
 
-            SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdLaserHeat)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdLaserHeat)));
 
-            SendCommand(PediatricSensorData.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdCellHeat)));
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdCellHeat)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldXOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldXOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXOffset)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldXAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldXAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldXAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXAmplitude)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldYOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldYOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYOffset)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldYAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldYAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldYAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYAmplitude)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldZOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZOffset)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZAmplitude)));
 
         }
 
@@ -795,16 +795,16 @@ namespace PediatricSoft
 
             bool foundResonanceSweep = false;
             int numberOfLaserLockSweepCycles = 0;
-            int[] data = new int[PediatricSensorData.DataQueueLength];
+            int[] data = new int[PediatricSoftConstants.DataQueueLength];
             double transmission = 0;
 
             // Turn on the laser
-            SendCommand(PediatricSensorData.SensorCommandLaserCurrent);
+            SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
             SendCommand(String.Concat("#", optimalLaserCurrentString));
 
             // Wait a bit and record the ADC value
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Waiting for {PediatricSensorData.StateHandlerADCColdDelay} ms");
-            Thread.Sleep(PediatricSensorData.StateHandlerADCColdDelay);
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Waiting for {PediatricSoftConstants.StateHandlerADCColdDelay} ms");
+            Thread.Sleep(PediatricSoftConstants.StateHandlerADCColdDelay);
             lock (dataLock)
             {
                 sensorADCColdValueRaw = LastValue;
@@ -815,35 +815,35 @@ namespace PediatricSoft
             if (sensorADCColdValueRaw == 0)
             {
                 SendCommandsColdSensor();
-                state = PediatricSensorData.SensorStateFailed;
+                state = PediatricSoftConstants.SensorStateFailed;
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
             else
             {
                 // Set the cell heater to the max value, wait for the cell to warm up
-                SendCommand(PediatricSensorData.SensorCommandCellHeat);
+                SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
                 SendCommand(String.Concat("#", optimalMaxCellHeatString));
-                Thread.Sleep(PediatricSensorData.StateHandlerCellHeatInitialTime);
+                Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
             }
 
             // Turn on the Z-coil to increase absorption
-            SendCommand(PediatricSensorData.SensorCommandFieldZOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserLockFieldZOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockFieldZOffset)));
 
             // Laser heat sweep cycle. Here we look for the Rb resonance.
-            while (!foundResonanceSweep && state == PediatricSensorData.SensorStateLaserLockSweep && numberOfLaserLockSweepCycles < PediatricSensorData.MaxNumberOfLaserLockSweepCycles)
+            while (!foundResonanceSweep && state == PediatricSoftConstants.SensorStateLaserLockSweep && numberOfLaserLockSweepCycles < PediatricSoftConstants.MaxNumberOfLaserLockSweepCycles)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Laser lock sweep cycle: {numberOfLaserLockSweepCycles}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Laser lock sweep cycle: {numberOfLaserLockSweepCycles}");
 
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Waiting for {PediatricSensorData.StateHandlerCellHeatInitialTime} ms");
-                Thread.Sleep(PediatricSensorData.StateHandlerLaserHeatSweepTime);
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Waiting for {PediatricSoftConstants.StateHandlerCellHeatInitialTime} ms");
+                Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
 
                 // Set the laser heater to the max value, wait a bit
-                SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorMaxLaserHeat)));
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Waiting for {PediatricSensorData.StateHandlerLaserHeatSweepTime} ms");
-                Thread.Sleep(PediatricSensorData.StateHandlerLaserHeatSweepTime);
+                SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMaxLaserHeat)));
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
+                Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
 
                 // See if the threshold was reached
                 lock (dataLock)
@@ -851,33 +851,33 @@ namespace PediatricSoft
                     data = dataValueRaw.ToArray();
                 }
                 transmission = (double)data.Min() / sensorADCColdValueRaw;
-                if (transmission < PediatricSensorData.SensorTargetLaserTransmissionSweep)
+                if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
                 {
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sweep cycle - found Rb resonance");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Transmission on resonance: {transmission}");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sweep cycle - found Rb resonance");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Transmission on resonance: {transmission}");
                     foundResonanceSweep = true;
-                    SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-                    SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorMinLaserHeat)));
+                    SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+                    SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMinLaserHeat)));
 
                 }
-                else if (numberOfLaserLockSweepCycles < PediatricSensorData.MaxNumberOfLaserLockSweepCycles)
+                else if (numberOfLaserLockSweepCycles < PediatricSoftConstants.MaxNumberOfLaserLockSweepCycles)
                 {
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, going to wait more");
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Minimal transmission {transmission} is higher than the target {PediatricSensorData.SensorTargetLaserTransmissionSweep}");
-                    SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-                    SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorMinLaserHeat)));
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, going to wait more");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Minimal transmission {transmission} is higher than the target {PediatricSoftConstants.SensorTargetLaserTransmissionSweep}");
+                    SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+                    SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMinLaserHeat)));
                     numberOfLaserLockSweepCycles++;
                 }
 
             }
 
-            if (!foundResonanceSweep && state == PediatricSensorData.SensorStateLaserLockSweep)
+            if (!foundResonanceSweep && state == PediatricSoftConstants.SensorStateLaserLockSweep)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, giving up");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't find Rb resonance, giving up");
                 SendCommandsColdSensor();
-                state = PediatricSensorData.SensorStateFailed;
+                state = PediatricSoftConstants.SensorStateFailed;
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
 
         }
@@ -889,33 +889,33 @@ namespace PediatricSoft
             int numberOfLaserLockStepCycles = 0;
             double transmission = double.MaxValue;
 
-            Thread.Sleep(PediatricSensorData.SensorLaserHeatStepCycleDelay);
+            Thread.Sleep(PediatricSoftConstants.SensorLaserHeatStepCycleDelay);
 
-            while (!foundResonanceStep && state == PediatricSensorData.SensorStateLaserLockStep && numberOfLaserLockStepCycles < PediatricSensorData.MaxNumberOfLaserLockStepCycles)
+            while (!foundResonanceStep && state == PediatricSoftConstants.SensorStateLaserLockStep && numberOfLaserLockStepCycles < PediatricSoftConstants.MaxNumberOfLaserLockStepCycles)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Laser lock step cycle: {numberOfLaserLockStepCycles}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Laser lock step cycle: {numberOfLaserLockStepCycles}");
 
-                laserHeat = PediatricSensorData.SensorMinLaserHeat;
-                SendCommand(PediatricSensorData.SensorCommandLaserHeat, PediatricSensorData.IsLaserLockDebugEnabled);
-                SendCommand(String.Concat("#", UInt16ToStringBE(laserHeat)), PediatricSensorData.IsLaserLockDebugEnabled);
+                laserHeat = PediatricSoftConstants.SensorMinLaserHeat;
+                SendCommand(PediatricSoftConstants.SensorCommandLaserHeat, PediatricSoftConstants.IsLaserLockDebugEnabled);
+                SendCommand(String.Concat("#", UInt16ToStringBE(laserHeat)), PediatricSoftConstants.IsLaserLockDebugEnabled);
 
-                while (!foundResonanceStep && state == PediatricSensorData.SensorStateLaserLockStep && laserHeat < PediatricSensorData.SensorMaxLaserHeat)
+                while (!foundResonanceStep && state == PediatricSoftConstants.SensorStateLaserLockStep && laserHeat < PediatricSoftConstants.SensorMaxLaserHeat)
                 {
-                    if (transmission < PediatricSensorData.SensorTargetLaserTransmissionStep)
+                    if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionStep)
                     {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Step cycle - found Rb resonance");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Transmission on resonance: {transmission}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Step cycle - found Rb resonance");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Transmission on resonance: {transmission}");
                         foundResonanceStep = true;
                     }
                     else
                     {
-                        laserHeat = UShortSafeInc(laserHeat, PediatricSensorData.SensorLaserHeatStep, PediatricSensorData.SensorMaxLaserHeat);
-                        SendCommand(String.Concat("#", UInt16ToStringBE(laserHeat)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        laserHeat = UShortSafeInc(laserHeat, PediatricSoftConstants.SensorLaserHeatStep, PediatricSoftConstants.SensorMaxLaserHeat);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(laserHeat)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             transmission = (double)LastValue / sensorADCColdValueRaw;
@@ -928,11 +928,11 @@ namespace PediatricSoft
 
             if (!foundResonanceStep)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: We saw Rb resonance, but the step cycle failed. Giving up");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: We saw Rb resonance, but the step cycle failed. Giving up");
                 SendCommandsColdSensor();
-                state = PediatricSensorData.SensorStateFailed;
+                state = PediatricSoftConstants.SensorStateFailed;
                 RaisePropertyChanged("State");
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
             }
 
 
@@ -940,36 +940,36 @@ namespace PediatricSoft
 
         private void SendCommandsLaserLockPID()
         {
-            //SendCommand(PediatricSensorData.SensorCommandDigitalDataStreamingAndGain);
+            //SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndGain);
             //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataStreamingOnGainHigh)));
 
             //sensorADCColdValueRaw = sensorADCColdValueRaw * 50 / 15;
 
-            SendCommand(PediatricSensorData.SensorCommandLaserlock);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserlockEnable)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserlock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserlockEnable)));
 
-            SendCommand(PediatricSensorData.SensorCommandLaserHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDefaultLaserHeat)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
         }
 
         private void SendCommandsStabilizeCellHeat()
         {
             double transmission = 0;
 
-            SendCommand(PediatricSensorData.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdCellHeat)));
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdCellHeat)));
 
-            while (transmission < PediatricSensorData.SensorTargetLaserTransmissionSweep)
+            while (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
             {
-                Thread.Sleep(PediatricSensorData.SensorLaserHeatStepSleepTime);
+                Thread.Sleep(PediatricSoftConstants.SensorLaserHeatStepSleepTime);
                 lock (dataLock)
                 {
                     transmission = (double)LastValue / sensorADCColdValueRaw;
                 }
             }
 
-            SendCommand(PediatricSensorData.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorRunCellHeat)));
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorRunCellHeat)));
         }
 
         private void SendCommandsZeroFields()
@@ -980,121 +980,121 @@ namespace PediatricSoft
             double plusValue = 0;
             double minusValue = 0;
 
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
 
-            SendCommand(PediatricSensorData.SensorCommandDigitalDataSelector);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataSelectorADC)));
+            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorADC)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorColdFieldZAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZAmplitude)));
 
-            for (int i = 0; i < (PediatricSensorData.NumberOfFieldZeroingSteps * 3); i++)
+            for (int i = 0; i < (PediatricSoftConstants.NumberOfFieldZeroingSteps * 3); i++)
             {
                 Math.DivRem(i, 3, out reminder);
                 switch (reminder)
                 {
                     case -1:
-                        SendCommand(PediatricSensorData.SensorCommandFieldXOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-                        plusField = UShortSafeInc(zeroXField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
-                        minusField = UShortSafeDec(zeroXField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);
+                        SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset, PediatricSoftConstants.IsLaserLockDebugEnabled);
+                        plusField = UShortSafeInc(zeroXField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MaxValue);
+                        minusField = UShortSafeDec(zeroXField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MinValue);
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             plusValue = (double)LastValue;
                         }
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             minusValue = (double)LastValue;
                         }
 
                         if (plusValue > minusValue)
-                            zeroXField = UShortSafeInc(zeroXField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+                            zeroXField = UShortSafeInc(zeroXField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
 
                         if (plusValue < minusValue)
-                            zeroXField = UShortSafeDec(zeroXField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+                            zeroXField = UShortSafeDec(zeroXField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
 
                         break;
 
                     case 1:
-                        SendCommand(PediatricSensorData.SensorCommandFieldYOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-                        plusField = UShortSafeInc(zeroYField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
-                        minusField = UShortSafeDec(zeroYField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);
+                        SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset, PediatricSoftConstants.IsLaserLockDebugEnabled);
+                        plusField = UShortSafeInc(zeroYField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MaxValue);
+                        minusField = UShortSafeDec(zeroYField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MinValue);
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             plusValue = (double)LastValue;
                         }
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             minusValue = (double)LastValue;
                         }
 
                         if (plusValue > minusValue)
-                            zeroYField = UShortSafeInc(zeroYField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+                            zeroYField = UShortSafeInc(zeroYField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
 
                         if (plusValue < minusValue)
-                            zeroYField = UShortSafeDec(zeroYField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+                            zeroYField = UShortSafeDec(zeroYField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
 
                         break;
 
                     case 2:
-                        SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
-                        plusField = UShortSafeInc(zeroZField, PediatricSensorData.SensorFieldCheckRange, ushort.MaxValue);
-                        minusField = UShortSafeDec(zeroZField, PediatricSensorData.SensorFieldCheckRange, ushort.MinValue);
+                        SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset, PediatricSoftConstants.IsLaserLockDebugEnabled);
+                        plusField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MaxValue);
+                        minusField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MinValue);
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             plusValue = (double)LastValue;
                         }
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                         lock (dataLock)
                         {
                             wasDataUpdated = false;
                         }
-                        while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                        while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                         lock (dataLock)
                         {
                             minusValue = (double)LastValue;
                         }
 
                         if (plusValue > minusValue)
-                            zeroZField = UShortSafeInc(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
+                            zeroZField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
 
                         if (plusValue < minusValue)
-                            zeroZField = UShortSafeDec(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+                            zeroZField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
 
                         break;
 
@@ -1103,46 +1103,46 @@ namespace PediatricSoft
                 }
             }
 
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
         }
 
         private void SendCommandsCalibrateMagnetometer()
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin calibration");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin calibration");
 
-            ushort plusField = UShortSafeInc(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MaxValue);
-            ushort minusField = UShortSafeDec(zeroZField, PediatricSensorData.SensorFieldStep, ushort.MinValue);
+            ushort plusField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
+            ushort minusField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
 
             double plusSum = 0;
             double minusSum = 0;
 
-            SendCommand(PediatricSensorData.SensorCommandFieldZAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZAmplitude);
             SendCommand(String.Concat("#", optimalBzModString));
 
-            SendCommand(PediatricSensorData.SensorCommandDigitalDataSelector);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataSelectorZDemod)));
+            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorZDemod)));
 
-            SendCommand(PediatricSensorData.SensorCommandFieldZOffset, PediatricSensorData.IsLaserLockDebugEnabled);
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset, PediatricSoftConstants.IsLaserLockDebugEnabled);
 
-            for (int i = 0; i < PediatricSensorData.NumberOfMagnetometerCalibrationSteps; i++)
+            for (int i = 0; i < PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps; i++)
             {
-                SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                SendCommand(String.Concat("#", UInt16ToStringBE(plusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                 lock (dataLock)
                 {
                     wasDataUpdated = false;
                 }
-                while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                 lock (dataLock)
                 {
                     plusSum += (double)LastValue;
                 }
 
-                SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSensorData.IsLaserLockDebugEnabled);
+                SendCommand(String.Concat("#", UInt16ToStringBE(minusField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
                 lock (dataLock)
                 {
                     wasDataUpdated = false;
                 }
-                while (!wasDataUpdated) Thread.Sleep(PediatricSensorData.SerialPortStreamSleepMin);
+                while (!wasDataUpdated) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
                 lock (dataLock)
                 {
                     minusSum += (double)LastValue;
@@ -1150,16 +1150,16 @@ namespace PediatricSoft
 
             }
 
-            SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)), PediatricSensorData.IsLaserLockDebugEnabled);
-            sensorZDemodCalibration = PediatricSensorData.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSensorData.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSensorData.SensorFieldStep);
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)), PediatricSoftConstants.IsLaserLockDebugEnabled);
+            sensorZDemodCalibration = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep);
 
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta sum {(plusSum - minusSum)}");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of averages {PediatricSensorData.NumberOfMagnetometerCalibrationSteps}");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta {(plusSum - minusSum) / PediatricSensorData.NumberOfMagnetometerCalibrationSteps}");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of hex steps {2 * PediatricSensorData.SensorFieldStep}");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response per hex step {(plusSum - minusSum) / PediatricSensorData.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSensorData.SensorFieldStep}");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: ZDemod calibration {sensorZDemodCalibration}");
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Calibration done");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta sum {(plusSum - minusSum)}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of averages {PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of hex steps {2 * PediatricSoftConstants.SensorFieldStep}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response per hex step {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: ZDemod calibration {sensorZDemodCalibration}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Calibration done");
         }
 
         private void StateHandler(CancellationToken stateHandlerCancellationToken)
@@ -1170,107 +1170,107 @@ namespace PediatricSoft
                 switch (state)
                 {
 
-                    case PediatricSensorData.SensorStateValid:
+                    case PediatricSoftConstants.SensorStateValid:
                         break;
 
-                    case PediatricSensorData.SensorStateGetOptimalParameters:
+                    case PediatricSoftConstants.SensorStateGetOptimalParameters:
 
                         SendCommandsGetOptimalParameters();
-                        if (state == PediatricSensorData.SensorStateGetOptimalParameters)
+                        if (state == PediatricSoftConstants.SensorStateGetOptimalParameters)
                         {
                             state++;
                             RaisePropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
 
-                    case PediatricSensorData.SensorStateMakeCold:
+                    case PediatricSoftConstants.SensorStateMakeCold:
 
                         SendCommandsColdSensor();
-                        if (state == PediatricSensorData.SensorStateMakeCold)
+                        if (state == PediatricSoftConstants.SensorStateMakeCold)
                         {
                             state++;
                             RaisePropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
 
-                    case PediatricSensorData.SensorStateCold:
+                    case PediatricSoftConstants.SensorStateCold:
 
                         state++;
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
-                    case PediatricSensorData.SensorStateLockStart:
+                    case PediatricSoftConstants.SensorStateLockStart:
 
-                        if (state == PediatricSensorData.SensorStateLockStart)
+                        if (state == PediatricSoftConstants.SensorStateLockStart)
                         {
                             state++;
                             RaisePropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
 
-                    case PediatricSensorData.SensorStateLaserLockSweep:
+                    case PediatricSoftConstants.SensorStateLaserLockSweep:
 
                         SendCommandsLaserLockSweep();
-                        if (state == PediatricSensorData.SensorStateLaserLockSweep)
+                        if (state == PediatricSoftConstants.SensorStateLaserLockSweep)
                         {
                             state++;
                             RaisePropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
 
-                    case PediatricSensorData.SensorStateLaserLockStep:
+                    case PediatricSoftConstants.SensorStateLaserLockStep:
 
                         SendCommandsLaserLockStep();
-                        if (state == PediatricSensorData.SensorStateLaserLockStep)
+                        if (state == PediatricSoftConstants.SensorStateLaserLockStep)
                         {
                             state++;
                             RaisePropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
 
-                    case PediatricSensorData.SensorStateLaserLockPID:
+                    case PediatricSoftConstants.SensorStateLaserLockPID:
 
                         SendCommandsLaserLockPID();
                         state++;
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
-                    case PediatricSensorData.SensorStateStabilizeCellHeat:
+                    case PediatricSoftConstants.SensorStateStabilizeCellHeat:
 
                         SendCommandsStabilizeCellHeat();
                         state++;
-                        state = PediatricSensorData.SensorStateIdle;
+                        state = PediatricSoftConstants.SensorStateIdle;
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
-                    case PediatricSensorData.SensorStateZeroFields:
+                    case PediatricSoftConstants.SensorStateZeroFields:
 
                         SendCommandsZeroFields();
                         state++;
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
-                    case PediatricSensorData.SensorStateCalibrateMagnetometer:
+                    case PediatricSoftConstants.SensorStateCalibrateMagnetometer:
 
                         SendCommandsCalibrateMagnetometer();
                         state++;
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
-                    case PediatricSensorData.SensorStateIdle:
+                    case PediatricSoftConstants.SensorStateIdle:
                         break;
 
-                    case PediatricSensorData.SensorStateStart:
+                    case PediatricSoftConstants.SensorStateStart:
 
                         if (PediatricSensorData.SaveDataEnabled)
                         {
@@ -1285,13 +1285,13 @@ namespace PediatricSoft
 
                         state++;
                         RaisePropertyChanged("State");
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         break;
 
-                    case PediatricSensorData.SensorStateRun:
+                    case PediatricSoftConstants.SensorStateRun:
                         break;
 
-                    case PediatricSensorData.SensorStateStop:
+                    case PediatricSoftConstants.SensorStateStop:
 
                         if (PediatricSensorData.SaveDataEnabled)
                         {
@@ -1307,32 +1307,32 @@ namespace PediatricSoft
                             dataSaveTask = null;
                         }
 
-                        if (state == PediatricSensorData.SensorStateStop)
+                        if (state == PediatricSoftConstants.SensorStateStop)
                         {
-                            state = PediatricSensorData.SensorStateIdle;
+                            state = PediatricSoftConstants.SensorStateIdle;
                             RaisePropertyChanged("State");
-                            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {state}");
                         }
                         break;
 
-                    case PediatricSensorData.SensorStateFailed:
+                    case PediatricSoftConstants.SensorStateFailed:
                         break;
 
-                    case PediatricSensorData.SensorStateShutDown:
+                    case PediatricSoftConstants.SensorStateShutDown:
                         break;
 
                     default:
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Unknown state. We shouldn't be here.");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Unknown state. We shouldn't be here.");
                         break;
                 }
 
-                Thread.Sleep(PediatricSensorData.StateHandlerSleepTime);
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
             }
 
             if (!PediatricSensorData.DebugMode)
                 SendCommandsColdSensor();
 
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: State Handler exiting.");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: State Handler exiting.");
         }
 
         public void SendCommand(string command)
@@ -1350,52 +1350,52 @@ namespace PediatricSoft
 
             command = Regex.Replace(command, @"[^\w@#?+-]", "");
 
-            if (state > PediatricSensorData.SensorStateInit && state < PediatricSensorData.SensorStateShutDown)
+            if (state > PediatricSoftConstants.SensorStateInit && state < PediatricSoftConstants.SensorStateShutDown)
             {
                 if (!String.IsNullOrEmpty(command))
                 {
                     try
                     {
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled && debug, $"Sensor {SN} on port {Port}: sending command \"{command}\"");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled && debug, $"Sensor {SN} on port {Port}: sending command \"{command}\"");
                         FTDIWriteString($"{command}\n");
                     }
-                    catch (Exception e) { Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, e.Message); }
+                    catch (Exception e) { Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, e.Message); }
 
 
                 }
             }
             else
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Can't send commands - sensor not running");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Can't send commands - sensor not running");
 
         }
 
         public void Dispose()
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Dispose() was called");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Dispose() was called");
 
             lock (stateLock)
             {
-                if (state > PediatricSensorData.SensorStateInit)
+                if (state > PediatricSoftConstants.SensorStateInit)
                 {
-                    //state = PediatricSensorData.SensorStateShutDown;
+                    //state = PediatricSoftConstants.SensorStateShutDown;
                 }
             }
 
             if (stateTask != null)
             {
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Cancelling the state handler task");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Cancelling the state handler task");
                 stateHandlerCancellationTokenSource.Cancel();
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Waiting for the state handler task to finish");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Waiting for the state handler task to finish");
                 stateTask.Wait();
                 stateTask.Dispose();
                 stateTask = null;
                 stateHandlerCancellationTokenSource.Dispose();
                 stateHandlerCancellationTokenSource = null;
-                Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: State handler cleanup done");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: State handler cleanup done");
 
                 if (uiUpdateTimer != null)
                 {
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Sensor {SN} on port {Port}: Disposing the UI timer");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Disposing the UI timer");
                     uiUpdateTimer.Enabled = false;
                     uiUpdateTimer.Elapsed -= OnUIUpdateTimerEvent;
                     uiUpdateTimer.Dispose();

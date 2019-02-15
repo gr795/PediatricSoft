@@ -110,7 +110,7 @@ namespace PediatricSoft
 
         private void CheckBoxSaveDataOnToggle()
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Save Data checkbox toggled");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Save Data checkbox toggled");
 
             if (string.IsNullOrEmpty(TextBlockSaveFolderText))
                 ChooseSaveDataFolder();
@@ -135,7 +135,7 @@ namespace PediatricSoft
                 if (result == DialogResult.OK)
                 {
                     TextBlockSaveFolderText = dialog.SelectedPath;
-                    Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Main Window View Model: Save Data Folder: {TextBlockSaveFolderText}");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Main Window View Model: Save Data Folder: {TextBlockSaveFolderText}");
                 }
                 else CheckBoxSaveDataIsChecked = false;
             }
@@ -143,7 +143,7 @@ namespace PediatricSoft
 
         private void ButtonSendCommandsOnClick()
         {
-            Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
             eventAggregator.GetEvent<EventWindowManager>().Publish("ShowSendCommandsWindow");
         }
 

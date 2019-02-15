@@ -68,7 +68,7 @@ namespace PediatricSoft
                     if (CurrentSensor != null)
                         CurrentSensor.SendCommand(TextBoxCommandStringText);
                     else
-                        Debug.WriteLineIf(PediatricSensorData.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
 
                     PediatricSensorData.CommandHistory = String.Concat(TextBoxCommandStringText, "\n", PediatricSensorData.CommandHistory);
                     TextBoxCommandStringText = String.Empty;
