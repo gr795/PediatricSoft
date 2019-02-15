@@ -24,7 +24,8 @@ namespace PediatricSoft
     public sealed class PediatricSensor : BindableBase, IDisposable
     {
 
-        PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
+        private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
+        //private PediatricSensorConfig PediatricSensorConfig;
 
         private FTDI _FTDIPort;
         private Task streamingTask;

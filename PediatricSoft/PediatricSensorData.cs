@@ -45,7 +45,7 @@ namespace PediatricSoft
 
         public static PediatricSensorData GetInstance() { return instance; }
 
-        
+
 
         // Globals
         public bool DebugMode { get; set; } = false;
@@ -347,10 +347,35 @@ namespace PediatricSoft
 
 
 
+        private void ClearAllPlotCheckBox()
+        {
+
+            Parallel.ForEach(Sensors, sensor =>
+            {
+                if (sensor.IsPlotted)
+                    sensor.IsPlotted = false;
+            });
+
+        }
 
         private void DataLayerEventHandler(string eventString)
         {
-            ClearAll();
+
+            switch (eventString)
+            {
+                case "Shutdown":
+                    ClearAll();
+                    break;
+
+                case "ClearAllPlotCheckBox":
+                    ClearAllPlotCheckBox();
+                    break;
+
+                default:
+                    break;
+            }
+
+
         }
 
         public void ClearAll()
@@ -379,10 +404,7 @@ namespace PediatricSoft
 
         public void Dispose()
         {
-            Parallel.ForEach(Sensors, sensor =>
-            {
-                sensor.Dispose();
-            });
+            ClearAll();
         }
 
     }
