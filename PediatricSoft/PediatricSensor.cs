@@ -44,15 +44,14 @@ namespace PediatricSoft
 
         private readonly Object stateLock = new Object();
         private PediatricSoftConstants.SensorState state = PediatricSoftConstants.SensorState.Init;
-        public PediatricSoftConstants.SensorState State {
+        public PediatricSoftConstants.SensorState State
+        {
             get { return state; }
             private set
             {
-                lock (stateLock)
-                {
-                    state = value;
-                }
+                state = value;
                 RaisePropertyChanged();
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Entering state {State}");
             }
         }
         //public string StateDescription { get { return } }
@@ -120,7 +119,7 @@ namespace PediatricSoft
                 else return false;
             }
         }
-        
+
 
         private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
         {
@@ -1371,7 +1370,7 @@ namespace PediatricSoft
                 if (reader != null)
                     reader.Close();
             }
-            
+
             PediatricSensorConfigOnLoad = PediatricSensorConfig.GetValueCopy();
         }
 
