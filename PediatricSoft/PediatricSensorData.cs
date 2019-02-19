@@ -102,7 +102,7 @@ namespace PediatricSoft
 
                     Parallel.ForEach(Sensors, sensor =>
                     {
-                        if (sensor.State == PediatricSoftConstants.SensorStateFailed)
+                        if (sensor.State == (byte)PediatricSoftConstants.SensorState.Failed)
                             App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
                     });
 

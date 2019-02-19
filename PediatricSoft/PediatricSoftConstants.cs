@@ -115,24 +115,26 @@ namespace PediatricSoft
         public const ushort SensorDigitalDataSelectorADC = 0x0000;
         public const ushort SensorDigitalDataSelectorZDemod = 0x0005;
 
-        public const byte SensorStateInit = 0;
-        public const byte SensorStateValid = 1;
-        public const byte SensorStateGetOptimalParameters = 2;
-        public const byte SensorStateMakeCold = 3;
-        public const byte SensorStateCold = 4;
-        public const byte SensorStateLockStart = 5;
-        public const byte SensorStateLaserLockSweep = 6;
-        public const byte SensorStateLaserLockStep = 7;
-        public const byte SensorStateLaserLockPID = 8;
-        public const byte SensorStateStabilizeCellHeat = 9;
-        public const byte SensorStateZeroFields = 10;
-        public const byte SensorStateCalibrateMagnetometer = 11;
-        public const byte SensorStateIdle = 12;
-        public const byte SensorStateStart = 13;
-        public const byte SensorStateRun = 14;
-        public const byte SensorStateStop = 15;
-        public const byte SensorStateFailed = 254;
-        public const byte SensorStateShutDown = 255;
+        public enum SensorState : byte
+        {
+            Init,
+            Valid,
+            MakeCold,
+            Cold,
+            LockStart,
+            LaserLockSweep,
+            LaserLockStep,
+            LaserLockPID,
+            StabilizeCellHeat,
+            ZeroFields,
+            CalibrateMagnetometer,
+            Idle,
+            Start,
+            Run,
+            Stop,
+            Failed,
+            ShutDown
+        };
 
     }
 }
