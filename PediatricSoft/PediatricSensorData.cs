@@ -33,6 +33,8 @@ namespace PediatricSoft
         private PediatricSensorData()
         {
             eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
+
+            System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
         }
 
         public static PediatricSensorData Instance
@@ -55,6 +57,7 @@ namespace PediatricSoft
         public string SaveFolderCurrentRun { get; set; } = String.Empty;
         public string SaveSuffix { get; set; } = String.Empty;
         public string CommandHistory { get; set; } = String.Empty;
+        public string SensorConfigFolderAbsolute = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), PediatricSoftConstants.SensorConfigFolderRelative);
 
         public ObservableCollection<PediatricSensor> Sensors { get; private set; } = new ObservableCollection<PediatricSensor>();
         public SeriesCollection SeriesCollection { get; private set; } = new SeriesCollection();

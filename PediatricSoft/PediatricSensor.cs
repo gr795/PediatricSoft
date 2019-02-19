@@ -18,6 +18,7 @@ using System.Windows;
 using Prism.Commands;
 using FTD2XX_NET;
 using Prism.Mvvm;
+using System.Xml.Serialization;
 
 namespace PediatricSoft
 {
@@ -25,7 +26,10 @@ namespace PediatricSoft
     {
 
         private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
-        //private PediatricSensorConfig PediatricSensorConfig;
+
+        private PediatricSensorConfig PediatricSensorConfig;
+        private PediatricSensorConfig PediatricSensorConfigOnLoad;
+        private readonly string configPath;
 
         private FTDI _FTDIPort;
         private Task streamingTask;
@@ -47,11 +51,6 @@ namespace PediatricSoft
         private ushort zeroXField = PediatricSoftConstants.SensorColdFieldXOffset;
         private ushort zeroYField = PediatricSoftConstants.SensorColdFieldYOffset;
         private ushort zeroZField = PediatricSoftConstants.SensorColdFieldZOffset;
-
-        private string optimalLaserCurrentString = string.Empty;
-        private string optimalBzModString = string.Empty;
-        private string optimalCellHeatLockPointString = string.Empty;
-        private string optimalMaxCellHeatString = string.Empty;
 
         private readonly byte[] buffer = new byte[PediatricSoftConstants.ProcessingBufferSize];
         private UInt32 bufferIndex = 0;
@@ -341,6 +340,9 @@ namespace PediatricSoft
             }
 
             FTDIPurgeBuffers();
+
+            configPath = System.IO.Path.Combine(PediatricSensorData.Instance.SensorConfigFolderAbsolute, SN) + ".xml";
+            LoadConfig();
 
         }
 
@@ -701,53 +703,6 @@ namespace PediatricSoft
 
         }
 
-        private void SendCommandsGetOptimalParameters()
-        {
-            // Get optimal laser current
-            lock (dataLock)
-            {
-                infoRequested = true;
-            }
-            SendCommand(PediatricSoftConstants.SensorCommandGetOptimalLaserCurrent);
-            SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Laser Current: {requestedInfoString}");
-            optimalLaserCurrentString = requestedInfoString;
-
-            // Get optimal Bz modulation amplitude
-            lock (dataLock)
-            {
-                infoRequested = true;
-            }
-            SendCommand(PediatricSoftConstants.SensorCommandGetOptimalBzMod);
-            SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Bz modulation amplitude: {requestedInfoString}");
-            optimalBzModString = requestedInfoString;
-
-            // Get Optimal Cell Heat Lock Point
-            lock (dataLock)
-            {
-                infoRequested = true;
-            }
-            SendCommand(PediatricSoftConstants.SensorCommandGetOptimalCellHeatLockPoint);
-            SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Optimal Cell Heat Lock Point: {requestedInfoString}");
-            optimalCellHeatLockPointString = requestedInfoString;
-
-            // Get Max Cell Heat
-            lock (dataLock)
-            {
-                infoRequested = true;
-            }
-            SendCommand(PediatricSoftConstants.SensorCommandGetMaxCellHeat);
-            SendCommand("?");
-            while (infoRequested) Thread.Sleep(PediatricSoftConstants.SerialPortStreamSleepMin);
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Max Cell Heat: {requestedInfoString}");
-            optimalMaxCellHeatString = requestedInfoString;
-        }
-
         private void SendCommandsColdSensor()
         {
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
@@ -756,11 +711,11 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndGain);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOnGainLow)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandLaserlock);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserlockDisable)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockDisable)));
 
-            //SendCommand(PediatricSoftConstants.SensorCommandLaserCurrentMod);
-            //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorLaserCurrentModValue)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserCurrentMod);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserCurrentModValue)));
 
             SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdLaserCurrent)));
@@ -774,20 +729,20 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldXAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldXModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXModulationAmplitude)));
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYModulationAmplitude)));
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZModulationAmplitude)));
 
         }
 
@@ -801,7 +756,7 @@ namespace PediatricSoft
 
             // Turn on the laser
             SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
-            SendCommand(String.Concat("#", optimalLaserCurrentString));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserCurrent)));
 
             // Wait a bit and record the ADC value
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Waiting for {PediatricSoftConstants.StateHandlerADCColdDelay} ms");
@@ -824,7 +779,7 @@ namespace PediatricSoft
             {
                 // Set the cell heater to the max value, wait for the cell to warm up
                 SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-                SendCommand(String.Concat("#", optimalMaxCellHeatString));
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMaxCellHeat)));
                 Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
             }
 
@@ -946,8 +901,8 @@ namespace PediatricSoft
 
             //sensorADCColdValueRaw = sensorADCColdValueRaw * 50 / 15;
 
-            SendCommand(PediatricSoftConstants.SensorCommandLaserlock);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserlockEnable)));
+            SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable)));
 
             SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
@@ -970,7 +925,7 @@ namespace PediatricSoft
             }
 
             SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorRunCellHeat)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultCellHeat)));
         }
 
         private void SendCommandsZeroFields()
@@ -986,8 +941,8 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorADC)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZModulationAmplitude)));
 
             for (int i = 0; i < (PediatricSoftConstants.NumberOfFieldZeroingSteps * 3); i++)
             {
@@ -1117,8 +1072,8 @@ namespace PediatricSoft
             double plusSum = 0;
             double minusSum = 0;
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZAmplitude);
-            SendCommand(String.Concat("#", optimalBzModString));
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldZModulationAmplitude)));
 
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorZDemod)));
@@ -1176,7 +1131,7 @@ namespace PediatricSoft
 
                     case PediatricSoftConstants.SensorStateGetOptimalParameters:
 
-                        SendCommandsGetOptimalParameters();
+                        //SendCommandsGetOptimalParameters();
                         if (state == PediatricSoftConstants.SensorStateGetOptimalParameters)
                         {
                             state++;
@@ -1370,9 +1325,62 @@ namespace PediatricSoft
 
         }
 
+        private void SaveConfig()
+        {
+            if (PediatricSensorConfig.Equals(PediatricSensorConfigOnLoad))
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Configuration not changed - not saving");
+            else
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Saving configuration");
+
+                TextWriter writer = null;
+                try
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
+                    writer = new StreamWriter(configPath);
+                    serializer.Serialize(writer, PediatricSensorConfig);
+                }
+                finally
+                {
+                    if (writer != null)
+                        writer.Close();
+                }
+
+            }
+        }
+
+        private void LoadConfig()
+        {
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Loading configuration");
+
+            TextReader reader = null;
+            try
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
+                reader = new StreamReader(configPath);
+                PediatricSensorConfig = (PediatricSensorConfig)serializer.Deserialize(reader);
+            }
+            catch (Exception)
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Failed to load configuration - using defaults");
+                PediatricSensorConfig = new PediatricSensorConfig();
+            }
+            finally
+            {
+                if (reader != null)
+                    reader.Close();
+            }
+            
+            PediatricSensorConfigOnLoad = PediatricSensorConfig.GetValueCopy();
+        }
+
+
+
         public void Dispose()
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Dispose() was called");
+
+            SaveConfig();
 
             lock (stateLock)
             {

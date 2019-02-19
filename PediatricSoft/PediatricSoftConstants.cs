@@ -14,6 +14,7 @@ namespace PediatricSoft
         public const int PlotQueueLength = 500;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string ValidIDN = "Arrow USB Blaster B";
+        public const string SensorConfigFolderRelative = "SensorConfig";
 
         public const UInt32 SerialPortBaudRate = 115200;
         public const UInt32 SerialPortWriteTimeout = 250;
@@ -55,9 +56,10 @@ namespace PediatricSoft
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
 
-        public const string SensorCommandLaserlock = "@0";
-        public const ushort SensorLaserlockDisable = 0x0000;
-        public const ushort SensorLaserlockEnable = 0x0005;
+        public const string SensorCommandLaserLock = "@0";
+        public const ushort SensorLaserLockDisable = 0x0000;
+        public const ushort SensorLaserLockEnable = 0x0005;
+        public const ushort SensorDefaultCellHeatLockPoint = 0x8000;
 
         public const string SensorCommandLaserCurrent = "@3";
         public const ushort SensorColdLaserCurrent = 0x0000;
@@ -76,22 +78,22 @@ namespace PediatricSoft
         public const string SensorCommandFieldXOffset = "@7";
         public const ushort SensorColdFieldXOffset = 0x8000;
 
-        public const string SensorCommandFieldXAmplitude = "@8";
-        public const ushort SensorColdFieldXAmplitude = 0x0000;
+        public const string SensorCommandFieldXModulationAmplitude = "@8";
+        public const ushort SensorColdFieldXModulationAmplitude = 0x0000;
 
         public const string SensorCommandFieldYOffset = "@9";
         public const ushort SensorColdFieldYOffset = 0x8000;
 
-        public const string SensorCommandFieldYAmplitude = "@A";
-        public const ushort SensorColdFieldYAmplitude = 0x0000;
+        public const string SensorCommandFieldYModulationAmplitude = "@A";
+        public const ushort SensorColdFieldYModulationAmplitude = 0x0000;
 
         public const string SensorCommandFieldZOffset = "@B";
         public const ushort SensorColdFieldZOffset = 0x8000;
         public const ushort SensorLaserLockFieldZOffset = 0x0000;
 
-        public const string SensorCommandFieldZAmplitude = "@C";
-        public const ushort SensorColdFieldZAmplitude = 0x0000;
-        public const ushort SensorRunFieldZAmplitude = 0x07C0;
+        public const string SensorCommandFieldZModulationAmplitude = "@C";
+        public const ushort SensorColdFieldZModulationAmplitude = 0x0000;
+        public const ushort SensorDefaultFieldZModulationAmplitude = 0x07C0;
 
         public const ushort SensorFieldCheckRange = 0x00EE; // about 5 nT assuming 21 pT per hex step
         public const ushort SensorFieldStep = 0x0018; // about 0.5 nT assuming 21 pT per hex step
@@ -104,7 +106,7 @@ namespace PediatricSoft
 
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorColdCellHeat = 0x0000;
-        public const ushort SensorRunCellHeat = 0x5000;
+        public const ushort SensorDefaultCellHeat = 0x5000;
         public const ushort SensorMinCellHeat = 0x0000;
         public const ushort SensorMaxCellHeat = 0x9000;
         public const ushort SensorCellHeatStep = 10;
@@ -112,11 +114,6 @@ namespace PediatricSoft
         public const string SensorCommandDigitalDataSelector = "@22";
         public const ushort SensorDigitalDataSelectorADC = 0x0000;
         public const ushort SensorDigitalDataSelectorZDemod = 0x0005;
-
-        public const string SensorCommandGetOptimalLaserCurrent = "@2C";
-        public const string SensorCommandGetOptimalBzMod = "@2D";
-        public const string SensorCommandGetOptimalCellHeatLockPoint = "@2E";
-        public const string SensorCommandGetMaxCellHeat = "@2F"; // Not used. Set to 9000
 
         public const byte SensorStateInit = 0;
         public const byte SensorStateValid = 1;
