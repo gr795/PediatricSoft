@@ -135,9 +135,9 @@
 
                     <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
 
-                    <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValue}"/>
+                    <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValueRAW}"/>
 
-                    <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Voltage}"/>
+                    <GridViewColumn Header="Value" DisplayMemberBinding="{Binding LastValue}"/>
 
                     <GridViewColumn Header="Plot">
                         <GridViewColumn.CellTemplate>

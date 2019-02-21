@@ -12,7 +12,7 @@ namespace PediatricSoft
 
         public App()
         {
-            ThreadPool.SetMinThreads(128, 128);
+            //ThreadPool.SetMinThreads(128, 128);
             eventAggregator = PediatricSoftEventGlue.eventAggregator;
             PediatricSensorData = PediatricSensorData.Instance;
             PediatricSoftWindowManager = PediatricSoftWindowManager.Instance;

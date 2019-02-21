@@ -1,21 +1,16 @@
-﻿using System;
-using System.IO.Ports;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text.RegularExpressions;
+﻿using FTD2XX_NET;
 using LiveCharts;
 using LiveCharts.Wpf;
-using System.Diagnostics;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using Prism.Mvvm;
-using Prism.Commands;
-using System.Windows.Media;
-using System.Windows;
 using Prism.Events;
-using FTD2XX_NET;
+using Prism.Mvvm;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace PediatricSoft
 {
@@ -154,7 +149,6 @@ namespace PediatricSoft
                     CanStartStop = false;
                     CanZeroFields = false;
                     CanSendCommands = false;
-
 
                     Parallel.ForEach(Sensors, sensor =>
                     {

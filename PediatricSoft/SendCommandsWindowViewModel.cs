@@ -38,28 +38,28 @@ namespace PediatricSoft
             {
                 case Key.Add:
                     if (CurrentSensor != null)
-                        CurrentSensor.SendCommand("+", false);
+                        CurrentSensor.SendCommand("+");
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 case Key.Subtract:
                     if (CurrentSensor != null)
-                        CurrentSensor.SendCommand("-", false);
+                        CurrentSensor.SendCommand("-");
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 case Key.OemPlus:
                     if (CurrentSensor != null)
-                        CurrentSensor.SendCommand("+", false);
+                        CurrentSensor.SendCommand("+");
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 case Key.OemMinus:
                     if (CurrentSensor != null)
-                        CurrentSensor.SendCommand("-", false);
+                        CurrentSensor.SendCommand("-");
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     break;
