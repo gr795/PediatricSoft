@@ -34,15 +34,15 @@ namespace PediatricSoft
         public const int StateHandlerADCColdDelay = 1000; // 1 second
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
-        public const double SensorTargetLaserTransmissionStep = 0.2;
+        public const double SensorTargetLaserTransmissionStep = 0.5;
 
         public const double SensorADCRawToVolts = (double)5 / 125 / 16777215;
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
 
         public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
 
-        public const int MaxNumberOfLaserLockSweepCycles = 10;
-        public const int MaxNumberOfLaserLockStepCycles = 2;
+        public const int MaxNumberOfLaserLockSweepCycles = 30; // About 1 minute
+        public const int MaxNumberOfLaserLockStepCycles = 3; // We really should need more than 1
         public const int NumberOfFieldZeroingSteps = 100;
         public const int NumberOfMagnetometerCalibrationSteps = 100;
 
@@ -146,6 +146,7 @@ namespace PediatricSoft
             LaserLockStep,
             LaserLockPID,
             StabilizeCellHeat,
+            LaserLockDone,
             ZeroFields,
             CalibrateMagnetometer,
             Idle,

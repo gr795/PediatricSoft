@@ -984,7 +984,7 @@ namespace PediatricSoft
                 currentState = State;
                 if (currentState == correctState)
                 {
-                    State = PediatricSoftConstants.SensorState.Idle;
+                    State++;
                 }
                 else
                     Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Lock was aborted or something failed. Returning.");
@@ -1288,6 +1288,11 @@ namespace PediatricSoft
                             if (!PediatricSensorData.DebugMode)
                             {
                                 SendCommandsSetup();
+
+                                // Disable streaming
+                                SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
+                                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOffGainLow)));
+
                                 while (commandQueue.TryPeek(out string dummy)) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                             }
                             lock (stateLock)
