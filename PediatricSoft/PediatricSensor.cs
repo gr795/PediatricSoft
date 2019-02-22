@@ -437,6 +437,7 @@ namespace PediatricSoft
                 FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
 
                 byte[] streamingBuffer = new byte[PediatricSoftConstants.StreamingBufferSize];
+                UInt32 bytesToRead = 0;
                 UInt32 bytesRead = 0;
                 UInt32 bytesWritten = 0;
 
@@ -480,12 +481,29 @@ namespace PediatricSoft
                         }
                     }
 
+                    // Query if we have bytes in the Rx buffer
+                    if (ftStatus == FTDI.FT_STATUS.FT_OK)
+                        ftStatus = _FTDI.GetRxBytesAvailable(ref bytesToRead);
+                    if (ftStatus != FTDI.FT_STATUS.FT_OK)
+                    {
+                        lock (stateLock)
+                        {
+                            State = PediatricSoftConstants.SensorState.Failed;
+                        }
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                        break;
+                    }
+
+                    // We read up to a maximum of the streaming buffer
+                    if (bytesToRead > PediatricSoftConstants.StreamingBufferSize)
+                        bytesToRead = PediatricSoftConstants.StreamingBufferSize;
+
                     // Read bytes from the COM port.
                     // This thing blocks!
                     // It will return when either it has read the requested number of bytes or after the ReadTimeout time.
                     // It will update the bytesRead value with the actual number of bytes read.
-                    if (ftStatus == FTDI.FT_STATUS.FT_OK)
-                        ftStatus = _FTDI.Read(streamingBuffer, PediatricSoftConstants.StreamingBufferSize, ref bytesRead);
+                    if (ftStatus == FTDI.FT_STATUS.FT_OK && bytesToRead > 0)
+                        ftStatus = _FTDI.Read(streamingBuffer, bytesToRead, ref bytesRead);
                     if (ftStatus != FTDI.FT_STATUS.FT_OK)
                     {
                         lock (stateLock)
@@ -659,6 +677,9 @@ namespace PediatricSoft
                         bytesRead = 0;
 
                     }
+
+                    // Sleep a bit
+                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
 
                     // Update the current State
                     lock (stateLock)
