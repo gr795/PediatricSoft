@@ -7,16 +7,16 @@
         xmlns:prism="http://prismlibrary.com/"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="SendCommandsWindow" Height="500" Width="300"
+        Title="SendCommandsWindow" Height="500" Width="600"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
         <local:SendCommandsWindowViewModel/>
     </Window.DataContext>
 
-    <Grid>
+    <DockPanel HorizontalAlignment="Left">
 
-        <DockPanel LastChildFill="False">
+        <DockPanel Width="300">
 
             <StackPanel Margin="10,10,10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
@@ -24,16 +24,27 @@
                     Sensor:
                 </TextBlock>
 
-                <ComboBox Margin="10,0,0,0" VerticalAlignment="Center"
+                <ComboBox Margin="10,0,0,0"
+                          VerticalAlignment="Center"
                           ItemsSource="{Binding Path=Sensors}"
                           DisplayMemberPath="PortSN"
                           SelectedItem="{Binding Path=CurrentSensor}">
+
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Selected">
+                            <prism:InvokeCommandAction Command="{Binding ComboBoxCommandSelectionChangedCommand}"/>
+                        </i:EventTrigger>
+                        <i:EventTrigger EventName="SelectionChanged">
+                            <prism:InvokeCommandAction Command="{Binding ComboBoxCommandSelectionChangedCommand}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+
                 </ComboBox>
 
             </StackPanel>
 
             <TextBox Name="TextBoxCommandString"
-                     Margin="10,5"
+                     Margin="10,0"
                      DockPanel.Dock="Top"
                      Text="{Binding TextBoxCommandStringText, UpdateSourceTrigger=PropertyChanged}">
 
@@ -54,5 +65,94 @@
 
         </DockPanel>
 
-    </Grid>
+        <StackPanel Orientation="Vertical">
+
+            <TextBlock Margin="10,15,10,5"
+                       Text="Sensor configuration">
+            </TextBlock>
+
+            <Grid Margin="10,5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="75" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="0"
+                           Grid.Column="0">
+                    Laser Current
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxLaserCurrentText}"
+                         Foreground="{Binding TextBoxLaserCurrentColor}">
+                </TextBox>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="1"
+                           Grid.Column="0">
+                    Field Z Modulation Amplitude
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="1"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxFieldZModulationAmplitudeText}"
+                         Foreground="{Binding TextBoxFieldZModulationAmplitudeColor}">
+                </TextBox>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="2"
+                           Grid.Column="0">
+                    Default Cell Heat
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="2"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxDefaultCellHeatText}"
+                         Foreground="{Binding TextBoxDefaultCellHeatColor}">
+                </TextBox>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="3"
+                           Grid.Column="0">
+                    Max Cell Heat
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="3"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxMaxCellHeatText}"
+                         Foreground="{Binding TextBoxMaxCellHeatColor}">
+                </TextBox>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="4"
+                           Grid.Column="0">
+                    Field Z Modulation Amplitude
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="4"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxCellHeatLockPointText}"
+                         Foreground="{Binding TextBoxCellHeatLockPointColor}">
+                </TextBox>
+
+            </Grid>
+
+        </StackPanel>
+
+    </DockPanel>
+        
 </Window>

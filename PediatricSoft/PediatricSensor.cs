@@ -21,8 +21,13 @@ namespace PediatricSoft
 
         private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
 
-        private PediatricSensorConfig PediatricSensorConfig;
-        private PediatricSensorConfig PediatricSensorConfigOnLoad;
+        private PediatricSensorConfig pediatricSensorConfig;
+        public PediatricSensorConfig PediatricSensorConfig
+        {
+            get { return pediatricSensorConfig; }
+            set { pediatricSensorConfig = value; }
+        }
+        private PediatricSensorConfig pediatricSensorConfigOnLoad;
         private readonly string configPath;
 
         private FTDI _FTDI;
@@ -94,7 +99,7 @@ namespace PediatricSoft
             RaisePropertyChanged("LastValue");
         }
 
-        private ushort UShortSafeInc(ushort value, ushort step, ushort max)
+        private static ushort UShortSafeInc(ushort value, ushort step, ushort max)
         {
             int newValue = value + step;
             if (newValue < max)
@@ -102,7 +107,7 @@ namespace PediatricSoft
             else return max;
         }
 
-        private ushort UShortSafeDec(ushort value, ushort step, ushort min)
+        private static ushort UShortSafeDec(ushort value, ushort step, ushort min)
         {
             int newValue = value - step;
             if (newValue > min)
@@ -110,7 +115,7 @@ namespace PediatricSoft
             else return min;
         }
 
-        private string UInt16ToStringBE(ushort value)
+        public static string UInt16ToStringBE(ushort value)
         {
             byte[] t = BitConverter.GetBytes(value);
             Array.Reverse(t);
@@ -787,7 +792,7 @@ namespace PediatricSoft
             lock (dataLock)
             {
                 SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorConfig.LaserCurrent)));
+                SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserCurrent)));
                 dataUpdated = false;
             }
 
@@ -808,7 +813,7 @@ namespace PediatricSoft
 
             // Set the cell heater to the max value
             SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorConfig.MaxCellHeat)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.MaxCellHeat)));
 
             // Wait for the cell to warm up
             Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
@@ -1341,7 +1346,7 @@ namespace PediatricSoft
 
         private void SaveConfig()
         {
-            if (PediatricSensorConfig.Equals(PediatricSensorConfigOnLoad))
+            if (pediatricSensorConfig.Equals(pediatricSensorConfigOnLoad))
                 Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Configuration not changed - not saving");
             else
             {
@@ -1352,7 +1357,7 @@ namespace PediatricSoft
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
                     writer = new StreamWriter(configPath);
-                    serializer.Serialize(writer, PediatricSensorConfig);
+                    serializer.Serialize(writer, pediatricSensorConfig);
                 }
                 finally
                 {
@@ -1372,12 +1377,12 @@ namespace PediatricSoft
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
                 reader = new StreamReader(configPath);
-                PediatricSensorConfig = (PediatricSensorConfig)serializer.Deserialize(reader);
+                pediatricSensorConfig = (PediatricSensorConfig)serializer.Deserialize(reader);
             }
             catch (Exception)
             {
                 Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Failed to load configuration - using defaults");
-                PediatricSensorConfig = new PediatricSensorConfig();
+                pediatricSensorConfig = new PediatricSensorConfig();
             }
             finally
             {
@@ -1385,7 +1390,7 @@ namespace PediatricSoft
                     reader.Close();
             }
 
-            PediatricSensorConfigOnLoad = PediatricSensorConfig.GetValueCopy();
+            pediatricSensorConfigOnLoad = pediatricSensorConfig.GetValueCopy();
         }
 
 
