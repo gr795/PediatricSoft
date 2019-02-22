@@ -260,7 +260,6 @@ namespace PediatricSoft
             ftStatus = _FTDI.GetRxBytesAvailable(ref numBytes);
             if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
                 lock (stateLock)
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
@@ -295,7 +294,7 @@ namespace PediatricSoft
             }
             else
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Not valid");
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't get a response from the board: not valid");
                 Dispose();
             }
 
@@ -461,6 +460,8 @@ namespace PediatricSoft
 
                 int plotCounter = 0;
                 const int plotCounterMax = PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength;
+
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Streaming starting");
 
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
                 {
@@ -666,6 +667,9 @@ namespace PediatricSoft
                     }
 
                 }
+
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Streaming stoping");
+
             });
         }
 
@@ -1240,13 +1244,6 @@ namespace PediatricSoft
                     {
                         case PediatricSoftConstants.SensorState.Setup:
                             SendCommandsSetup();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.LaserLockStart:
-                            lock (stateLock)
-                            {
-                                State++;
-                            }
                             break;
 
                         case PediatricSoftConstants.SensorState.LaserLockSweep:
