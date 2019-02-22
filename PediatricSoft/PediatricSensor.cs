@@ -514,26 +514,26 @@ namespace PediatricSoft
                         break;
                     }
 
+                    // Check if we need to save data
+                    lock (stateLock)
+                    {
+                        if (State == PediatricSoftConstants.SensorState.Start)
+                        {
+                            filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, SN);
+                            filePath += ".txt";
+
+                            dataSaveBuffer.Clear();
+
+                            dataSaveEnable = PediatricSensorData.SaveDataEnabled;
+                            dataSaveRAW = PediatricSensorData.SaveRAWValues;
+
+                            State++;
+                        }
+                    }
+
                     // If we read more than 0 bytes, we run the processing logic on the buffer and reset the bytesRead at the end.
                     if (bytesRead > 0)
                     {
-                        // Check if we need to save data
-                        lock (stateLock)
-                        {
-                            if (State == PediatricSoftConstants.SensorState.Start)
-                            {
-                                filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, SN);
-                                filePath += ".txt";
-
-                                dataSaveBuffer.Clear();
-
-                                dataSaveEnable = PediatricSensorData.SaveDataEnabled;
-                                dataSaveRAW = PediatricSensorData.SaveRAWValues;
-
-                                State++;
-                            }
-                        }
-
                         // This loop sorts bytes into appropriate buffers
                         for (int i = 0; i < (int)bytesRead; i++)
                         {
@@ -654,28 +654,28 @@ namespace PediatricSoft
 
                         }
 
-                        // Check if we need to stop saving
-                        lock (stateLock)
-                        {
-                            if (State > PediatricSoftConstants.SensorState.Run)
-                            {
-                                if (!string.IsNullOrEmpty(filePath))
-                                    File.AppendAllLines(filePath, dataSaveBuffer);
-
-                                filePath = string.Empty;
-                                dataSaveBuffer.Clear();
-
-                                dataSaveEnable = false;
-                                dataSaveRAW = true;
-
-                                if (State == PediatricSoftConstants.SensorState.Stop)
-                                    State = PediatricSoftConstants.SensorState.Idle;
-                            }
-                        }
-
                         // Reset bytesRead to 0
                         bytesRead = 0;
 
+                    }
+
+                    // Check if we need to stop saving
+                    lock (stateLock)
+                    {
+                        if (State > PediatricSoftConstants.SensorState.Run)
+                        {
+                            if (!string.IsNullOrEmpty(filePath))
+                                File.AppendAllLines(filePath, dataSaveBuffer);
+
+                            filePath = string.Empty;
+                            dataSaveBuffer.Clear();
+
+                            dataSaveEnable = false;
+                            dataSaveRAW = true;
+
+                            if (State == PediatricSoftConstants.SensorState.Stop)
+                                State = PediatricSoftConstants.SensorState.Idle;
+                        }
                     }
 
                     // Sleep a bit
