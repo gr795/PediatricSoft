@@ -1380,7 +1380,7 @@ namespace PediatricSoft
 
             lock (stateLock)
             {
-                if (State > PediatricSoftConstants.SensorState.Init)
+                if (State > PediatricSoftConstants.SensorState.Init && State < PediatricSoftConstants.SensorState.ShutDownRequested)
                 {
                     State = PediatricSoftConstants.SensorState.ShutDownRequested;
                 }
@@ -1399,6 +1399,12 @@ namespace PediatricSoft
             {
                 streamingTask.Wait();
                 streamingTask.Dispose();
+            };
+
+            if (stateHandlerTask != null)
+            {
+                stateHandlerTask.Wait();
+                stateHandlerTask.Dispose();
             };
 
             if (_FTDI != null)
