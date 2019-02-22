@@ -141,7 +141,7 @@ namespace PediatricSoft
             Init,
             Valid,
             Setup,
-            LockStart,
+            LaserLockStart,
             LaserLockSweep,
             LaserLockStep,
             LaserLockPID,

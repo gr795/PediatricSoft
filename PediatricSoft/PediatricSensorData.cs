@@ -157,7 +157,7 @@ namespace PediatricSoft
 
                     CanScan = true;
                     CanLock = true;
-                    CanStartStop = true;
+                    CanStartStop = false;
                     CanZeroFields = true;
                     CanSendCommands = true;
 
