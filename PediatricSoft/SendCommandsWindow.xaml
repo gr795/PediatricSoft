@@ -139,7 +139,7 @@
                 <TextBlock VerticalAlignment="Center"
                            Grid.Row="4"
                            Grid.Column="0">
-                    Field Z Modulation Amplitude
+                    Cell Heat Lock Point
                 </TextBlock>
 
                 <TextBox Margin="10,5"
