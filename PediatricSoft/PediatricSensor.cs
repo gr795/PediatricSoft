@@ -61,6 +61,12 @@ namespace PediatricSoft
         //private bool commandSent = false;
         private ConcurrentQueue<string> commandQueue = new ConcurrentQueue<string>();
 
+        private readonly ConcurrentQueue<string> commandHistory = new ConcurrentQueue<string>();
+        public ConcurrentQueue<string> CommandHistory
+        {
+            get { return commandHistory; }
+        }
+
         private readonly Object dataLock = new Object();
         private Queue<int> dataTimeRaw = new Queue<int>(PediatricSoftConstants.DataQueueLength);
         private Queue<int> dataValueRaw = new Queue<int>(PediatricSoftConstants.DataQueueLength);
@@ -605,7 +611,8 @@ namespace PediatricSoft
                             {
                                 string infoMessage = System.Text.Encoding.ASCII.GetString(info);
                                 Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Info message: {infoMessage}");
-                                PediatricSensorData.CommandHistory = String.Concat(infoMessage, "\n", PediatricSensorData.CommandHistory);
+                                CommandHistory.Enqueue(infoMessage);
+                                RaisePropertyChanged("CommandHistory");
                                 lock (dataLock)
                                 {
                                     if (infoRequested)
@@ -1341,6 +1348,8 @@ namespace PediatricSoft
             {
                 Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sending command \"{command}\"");
                 commandQueue.Enqueue(command + "\n");
+                CommandHistory.Enqueue(command);
+                RaisePropertyChanged("CommandHistory");
             }
         }
 

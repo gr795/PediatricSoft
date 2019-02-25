@@ -20,9 +20,19 @@ namespace PediatricSoft
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
 
         public string TextBoxCommandStringText { get; set; } = String.Empty;
-        public string CommandHistory
+        public string[] CommandHistory
         {
-            get { return PediatricSensorData.CommandHistory; }
+            get
+            {
+                if (CurrentSensor != null)
+                {
+                    string[] result = CurrentSensor.CommandHistory.ToArray();
+                    Array.Reverse(result);
+                    return result;
+                }   
+                else
+                    return new string[] { string.Empty };
+            }
         }
 
         private Brush textBoxLaserCurrentColor = new SolidColorBrush(Colors.Black);
@@ -206,6 +216,8 @@ namespace PediatricSoft
 
         private void ComboBoxCommandOnSelectionChanged()
         {
+            RaisePropertyChanged("CommandHistory");
+
             TextBoxLaserCurrentColor = new SolidColorBrush(Colors.Black);
             RaisePropertyChanged("TextBoxLaserCurrentText");
             RaisePropertyChanged("TextBoxLaserCurrentColor");
@@ -266,8 +278,6 @@ namespace PediatricSoft
                         CurrentSensor.SendCommand(TextBoxCommandStringText);
                     else
                         Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
-
-                    PediatricSensorData.CommandHistory = String.Concat(TextBoxCommandStringText, "\n", PediatricSensorData.CommandHistory);
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     RaisePropertyChanged("CommandHistory");

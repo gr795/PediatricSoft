@@ -59,9 +59,10 @@
 
             </TextBox>
 
-            <TextBlock Margin="10,5" DockPanel.Dock="Top"
-                       Text="{Binding Path=CommandHistory}">
-            </TextBlock>
+            <ListView Margin="10,5"
+                     DockPanel.Dock="Top"
+                     ItemsSource="{Binding CommandHistory}">
+            </ListView>
 
         </DockPanel>
 
