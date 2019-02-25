@@ -11,149 +11,150 @@
         <local:MainWindowViewModel/>
     </Window.DataContext>
 
-    <Grid>
+    <DockPanel>
 
-        <DockPanel Width="200"
-                   HorizontalAlignment="Right"
-                   LastChildFill="False">
+        <TextBox
+            Margin="10"
+            Height="96"
+            DockPanel.Dock="Bottom"
+            IsReadOnly="True">
+        </TextBox>
 
-            <Button Name="ButtonScanPorts"
-                    Margin="10,10,10,5"
+        <DockPanel
+            DockPanel.Dock="Top">
+
+            <StackPanel
+                Width="200"
+                Margin="10"
+                DockPanel.Dock="Right"
+                Orientation="Vertical">
+
+                <Button
+                    Name="ButtonScanPorts"
+                    Margin="0,0,0,10"
                     Height="20"
-                    DockPanel.Dock="Top"
                     Command="{Binding ButtonScanPortsCommand}"
                     Content="Scan Ports">
-            </Button>
+                </Button>
 
-            <StackPanel Margin="10,5"
-                        DockPanel.Dock="Top"
-                        Orientation="Horizontal">
-
-                <TextBlock VerticalAlignment="Center">
-                    Debug Mode
-                </TextBlock>
-
-                <CheckBox Margin="5,0,0,0"
-                          VerticalAlignment="Center"
-                          IsEnabled="False">
+                <CheckBox
+                    Margin="0,0,0,10"
+                    VerticalAlignment="Center"
+                    IsEnabled="False"
+                    Content="Debug Mode">
                 </CheckBox>
 
-            </StackPanel>
-
-            <TextBlock Name="TextBlockSensorCount"
-                       Margin="10,5"
-                       Height="20"
-                       DockPanel.Dock="Top"
-                       Text="{Binding TextBlockSensorCountText}">
-            </TextBlock>
-
-            <Button Name="ButtonLockSensors"
-                    Margin="10,5"
+                <TextBlock
+                    Name="TextBlockSensorCount"
+                    Margin="0,0,0,10"
                     Height="20"
-                    DockPanel.Dock="Top"
+                    Text="{Binding TextBlockSensorCountText}">
+                </TextBlock>
+
+                <Button
+                    Name="ButtonLockSensors"
+                    Margin="0,0,0,10"
+                    Height="20"
                     Command="{Binding ButtonLockSensorsCommand}"
                     Content="Lock Sensors">
-            </Button>
+                </Button>
 
-            <Button Name="ButtonStartStopSensors"
-                    Margin="10,5"
+                <Button
+                    Name="ButtonStartStopSensors"
+                    Margin="0,0,0,10"
                     Height="20"
-                    DockPanel.Dock="Top"
                     Command="{Binding ButtonStartStopSensorsCommand}"
                     Content="{Binding ButtonStartStopSensorsContent}">
-            </Button>
+                </Button>
 
-            <Button Name="ButtonZeroFields"
-                    Margin="10,5"
+                <Button
+                    Name="ButtonZeroFields"
+                    Margin="0,0,0,10"
                     Height="20"
-                    DockPanel.Dock="Top"
                     Command="{Binding ButtonZeroFieldsCommand}"
                     Content="Zero Fields">
-            </Button>
+                </Button>
 
-            <Button Name="ButtonSendCommands"
-                    Margin="10,5"
+                <Button
+                    Name="ButtonSendCommands"
+                    Margin="0,0,0,10"
                     Height="20"
-                    DockPanel.Dock="Top"
                     IsEnabled="{Binding ButtonSendCommandsIsEnabled}"
                     Command="{Binding ButtonSendCommandsCommand}"
                     Content="Send Commands">
-            </Button>
+                </Button>
 
-            <CheckBox Name="CheckBoxSaveData"
-                      Margin="10,5"
-                      DockPanel.Dock="Top"
-                      IsEnabled="{Binding CheckBoxSaveDataIsEnabled}"
-                      IsChecked="{Binding CheckBoxSaveDataIsChecked}"
-                      Command="{Binding CheckBoxSaveDataCommand}"
-                      Content="Save Data">
-            </CheckBox>
+                <CheckBox
+                    Name="CheckBoxSaveData"
+                    Margin="0,0,0,10"
+                    IsChecked="{Binding CheckBoxSaveDataIsChecked}"
+                    Command="{Binding CheckBoxSaveDataCommand}"
+                    Content="Save Data">
+                </CheckBox>
 
-            <TextBlock Name="TextBlockSaveFolder"
-                       Margin="10,5"
-                       DockPanel.Dock="Top"
-                       Text="{Binding TextBlockSaveFolderText}">
-            </TextBlock>
+                <TextBlock
+                    Name="TextBlockSaveFolder"
+                    Margin="20,0,0,10"
+                    Text="{Binding TextBlockSaveFolderText}">
+                </TextBlock>
 
-            <CheckBox Name="CheckBoxSaveRAWValues"
-                      Margin="30,5"
-                      DockPanel.Dock="Top"
-                      IsEnabled="{Binding CheckBoxSaveRAWValuesIsEnabled}"
-                      IsChecked="{Binding CheckBoxSaveRAWValuesIsChecked}"
-                      Content="RAW Data">
-            </CheckBox>
+                <CheckBox
+                    Name="CheckBoxSaveRAWValues"
+                    Margin="20,0,0,10"
+                    IsEnabled="{Binding CheckBoxSaveRAWValuesIsEnabled}"
+                    IsChecked="{Binding CheckBoxSaveRAWValuesIsChecked}"
+                    Content="RAW Data">
+                </CheckBox>
 
-            <TextBlock Margin="30,5"
-                       DockPanel.Dock="Top"
-                       Text="Optional Suffix:">
-            </TextBlock>
+                <TextBlock
+                    Margin="20,0,0,10"
+                    Text="Optional Suffix:">
+                </TextBlock>
 
-            <TextBox Name="TextBlockSaveSuffix"
-                     Margin="30,5,10,5"
-                     DockPanel.Dock="Top"
-                     IsEnabled="{Binding TextBlockSaveSuffixIsEnabled}"
-                     Text="{Binding TextBlockSaveSuffixText}">
-            </TextBox>
+                <TextBox
+                    Name="TextBlockSaveSuffix"
+                    Margin="20,0,0,10"
+                    IsEnabled="{Binding TextBlockSaveSuffixIsEnabled}"
+                    Text="{Binding TextBlockSaveSuffixText}">
+                </TextBox>
 
-            
+            </StackPanel>
+
+            <ListView
+                Margin="10"
+                ItemsSource="{Binding Path=Sensors}">
+
+                <ListView.View>
+
+                    <GridView>
+
+                        <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
+
+                        <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
+
+                        <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
+
+                        <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValueRAW}"/>
+
+                        <GridViewColumn Header="Value" DisplayMemberBinding="{Binding LastValue}"/>
+
+                        <GridViewColumn Header="Plot">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsPlotted}">
+                                    </CheckBox>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                    </GridView>
+
+                </ListView.View>
+
+            </ListView>
 
         </DockPanel>
 
-        <TextBox Margin="10" Height="96"
-                         VerticalAlignment="Bottom" IsReadOnly="True"/>
-
-        <ListView Margin="10,10,200,120"
-                  ItemsSource="{Binding Path=Sensors}">
-
-            <ListView.View>
-
-                <GridView>
-
-                    <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
-
-                    <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
-
-                    <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
-
-                    <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValueRAW}"/>
-
-                    <GridViewColumn Header="Value" DisplayMemberBinding="{Binding LastValue}"/>
-
-                    <GridViewColumn Header="Plot">
-                        <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsPlotted}">
-                                </CheckBox>
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
-                    </GridViewColumn>
-                    
-                </GridView>
-                
-            </ListView.View>
-
-        </ListView>
-
-    </Grid>
+    </DockPanel>
 
 </Window>
