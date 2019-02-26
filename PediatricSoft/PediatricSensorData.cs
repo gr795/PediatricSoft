@@ -19,15 +19,13 @@ namespace PediatricSoft
 
         private static readonly PediatricSensorData instance = new PediatricSensorData();
 
-        private readonly IEventAggregator eventAggregator = PediatricSoftEventGlue.eventAggregator;
-
         static PediatricSensorData()
         {
         }
 
         private PediatricSensorData()
         {
-            eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
+            PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
 
             System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
         }
@@ -278,9 +276,9 @@ namespace PediatricSoft
             });
 
             if (count > 0)
-                eventAggregator.GetEvent<EventWindowManager>().Publish("ShowPlotWindow");
+                PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ShowPlotWindow");
             else
-                eventAggregator.GetEvent<EventWindowManager>().Publish("ClosePlotWindow");
+                PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ClosePlotWindow");
 
         }
 

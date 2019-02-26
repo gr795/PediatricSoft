@@ -4,12 +4,6 @@ namespace PediatricSoft
 {
     public static class PediatricSoftEventGlue
     {
-        public static readonly IEventAggregator eventAggregator;
-
-        static PediatricSoftEventGlue()
-        {
-            eventAggregator = new EventAggregator();
-        }
-
+        public static readonly IEventAggregator eventAggregator = new EventAggregator();
     }
 }

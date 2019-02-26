@@ -14,14 +14,12 @@ namespace PediatricSoft
         // Fields
         
         private PediatricSensorData PediatricSensorData;
-        private readonly IEventAggregator eventAggregator;
 
         // Constructors
 
         public MainWindowViewModel()
         {
             PediatricSensorData = PediatricSensorData.Instance;
-            eventAggregator = PediatricSoftEventGlue.eventAggregator;
 
             ButtonScanPortsCommand = new DelegateCommand(PediatricSensorData.ScanPortsAsync, PediatricSensorData.ScanPortsAsyncCanExecute);
             ButtonLockSensorsCommand = new DelegateCommand(PediatricSensorData.LockAllAsync, PediatricSensorData.LockAllAsyncCanExecute);
@@ -144,7 +142,7 @@ namespace PediatricSoft
         private void ButtonSendCommandsOnClick()
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
-            eventAggregator.GetEvent<EventWindowManager>().Publish("ShowSendCommandsWindow");
+            PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ShowSendCommandsWindow");
         }
 
 
