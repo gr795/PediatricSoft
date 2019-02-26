@@ -16,17 +16,10 @@ namespace PediatricSoft
 {
     public sealed class PediatricSensor : BindableBase, IDisposable
     {
-
+        // Fields
         private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
-
-        private PediatricSensorConfig pediatricSensorConfig;
-        public PediatricSensorConfig PediatricSensorConfig
-        {
-            get { return pediatricSensorConfig; }
-            set { pediatricSensorConfig = value; }
-        }
         private PediatricSensorConfig pediatricSensorConfigOnLoad;
-        private readonly string configPath;
+        private string configPath;
 
         private FTDI _FTDI;
         private Task streamingTask;
@@ -34,6 +27,40 @@ namespace PediatricSoft
         private System.Timers.Timer uiUpdateTimer;
 
         private readonly Object stateLock = new Object();
+        private readonly Object dataLock = new Object();
+
+        private int sensorADCColdValueRaw;
+        private double sensorZDemodCalibration = 1;
+        private ushort zeroXField = PediatricSoftConstants.SensorColdFieldXOffset;
+        private ushort zeroYField = PediatricSoftConstants.SensorColdFieldYOffset;
+        private ushort zeroZField = PediatricSoftConstants.SensorColdFieldZOffset;
+
+        private bool infoRequested = false;
+        private string requestedInfoString = string.Empty;
+
+        private ConcurrentQueue<string> commandQueue = new ConcurrentQueue<string>();
+
+        private DataPoint lastDataPoint;
+
+        private bool dataUpdated = false;
+
+        // Constructors
+        private PediatricSensor() { }
+        public PediatricSensor(string serial)
+        {
+            PediatricSensorConstructorMethod(serial);
+        }
+
+        // Properties
+        public ConcurrentQueue<DataPoint> DataQueue { get; private set; } = new ConcurrentQueue<DataPoint>();
+
+        private PediatricSensorConfig pediatricSensorConfig;
+        public PediatricSensorConfig PediatricSensorConfig
+        {
+            get { return pediatricSensorConfig; }
+            set { pediatricSensorConfig = value; }
+        }
+
         private PediatricSoftConstants.SensorState state = PediatricSoftConstants.SensorState.Init;
         public PediatricSoftConstants.SensorState State
         {
@@ -46,33 +73,14 @@ namespace PediatricSoft
             }
         }
 
-        private int sensorADCColdValueRaw;
-        private double sensorZDemodCalibration = 1;
-        private ushort zeroXField = PediatricSoftConstants.SensorColdFieldXOffset;
-        private ushort zeroYField = PediatricSoftConstants.SensorColdFieldYOffset;
-        private ushort zeroZField = PediatricSoftConstants.SensorColdFieldZOffset;
-
-        private bool infoRequested = false;
-        private string requestedInfoString = string.Empty;
-
-        //private readonly Object commandLock = new Object();
-        //private bool commandSent = false;
-        private ConcurrentQueue<string> commandQueue = new ConcurrentQueue<string>();
-
         private readonly ConcurrentQueue<string> commandHistory = new ConcurrentQueue<string>();
         public ConcurrentQueue<string> CommandHistory
         {
             get { return commandHistory; }
         }
 
-        private readonly Object dataLock = new Object();
-        public ConcurrentQueue<DataPoint> DataQueue { get; private set; } = new ConcurrentQueue<DataPoint>();
-
-        private DataPoint lastDataPoint;
         public int LastValueRAW { get { return lastDataPoint.ADCRAW; } }
         public double LastValue { get { return lastDataPoint.ADC; } }
-
-        private volatile bool dataUpdated = false;
 
         public string Port { get; private set; } = String.Empty;
         public string SN { get; private set; } = String.Empty;
@@ -90,218 +98,7 @@ namespace PediatricSoft
             set { isPlotted = value; RaisePropertyChanged(); PediatricSensorData.UpdateSeriesCollection(); }
         }
 
-        private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
-        {
-            RaisePropertyChanged("LastValueRAW");
-            RaisePropertyChanged("LastValue");
-        }
-
-        private static ushort UShortSafeInc(ushort value, ushort step, ushort max)
-        {
-            int newValue = value + step;
-            if (newValue < max)
-                return (ushort)newValue;
-            else return max;
-        }
-
-        private static ushort UShortSafeDec(ushort value, ushort step, ushort min)
-        {
-            int newValue = value - step;
-            if (newValue > min)
-                return (ushort)newValue;
-            else return min;
-        }
-
-        public static string UInt16ToStringBE(ushort value)
-        {
-            byte[] t = BitConverter.GetBytes(value);
-            Array.Reverse(t);
-            string s = BitConverter.ToString(t);
-            s = Regex.Replace(s, @"[^\w]", "");
-            return s;
-        }
-
-        private PediatricSensor() { }
-        public PediatricSensor(string serial)
-        {
-            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
-
-            _FTDI = new FTDI();
-
-            SN = serial;
-
-            configPath = System.IO.Path.Combine(PediatricSensorData.Instance.SensorConfigFolderAbsolute, SN) + ".xml";
-            LoadConfig();
-
-            // Open the device by serial number
-            ftStatus = _FTDI.OpenBySerialNumber(serial);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Set Baud rate
-            ftStatus = _FTDI.SetBaudRate(PediatricSoftConstants.SerialPortBaudRate);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Set data characteristics - Data bits, Stop bits, Parity
-            ftStatus = _FTDI.SetDataCharacteristics(FTDI.FT_DATA_BITS.FT_BITS_8, FTDI.FT_STOP_BITS.FT_STOP_BITS_1, FTDI.FT_PARITY.FT_PARITY_NONE);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Set flow control - set RTS/CTS flow control - we don't have flow control
-            ftStatus = _FTDI.SetFlowControl(FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0x11, 0x13);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Set timeouts
-            ftStatus = _FTDI.SetTimeouts(PediatricSoftConstants.SerialPortReadTimeout, PediatricSoftConstants.SerialPortWriteTimeout);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Set latency
-            ftStatus = _FTDI.SetLatency(PediatricSoftConstants.SerialPortLatency);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set latency on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Get COM Port Name
-            ftStatus = _FTDI.GetCOMPort(out string port);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get the COM Port Name on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-            Port = port;
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Opened Port {port} on FTDI device with S/N {SN}");
-
-            // Purge port buffers
-            ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            const string checkString = "?\n";
-            UInt32 numBytes = 0;
-
-            // Write ? into the port to see if we have a working board
-            ftStatus = _FTDI.Write(checkString, checkString.Length, ref numBytes);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Wait a bit
-            Thread.Sleep((int)PediatricSoftConstants.SerialPortWriteTimeout);
-
-            // Check if the board responded
-            ftStatus = _FTDI.GetRxBytesAvailable(ref numBytes);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            // Purge port buffers
-            ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
-            if (ftStatus != FTDI.FT_STATUS.FT_OK)
-            {
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
-                Dispose();
-                return;
-            }
-
-            if (numBytes > 0)
-            {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Valid");
-                lock (stateLock)
-                {
-                    State = PediatricSoftConstants.SensorState.Valid;
-                }
-
-                IsValid = true;
-            }
-            else
-            {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't get a response from the board: not valid");
-                Dispose();
-            }
-
-        }
-
+        // Methods
         public void KickOffTasks()
         {
             streamingTask = StreamDataAsync();
@@ -424,6 +221,44 @@ namespace PediatricSoft
                         currentState = State;
                     }
                 }
+        }
+
+        public void SendCommand(string command)
+        {
+            command = Regex.Replace(command, @"[^\w@#?+-]", "");
+
+            if (!String.IsNullOrEmpty(command))
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sending command \"{command}\"");
+                commandQueue.Enqueue(command + "\n");
+                CommandHistory.Enqueue(command);
+                RaisePropertyChanged("CommandHistory");
+            }
+        }
+
+        public static string UInt16ToStringBE(ushort value)
+        {
+            byte[] t = BitConverter.GetBytes(value);
+            Array.Reverse(t);
+            string s = BitConverter.ToString(t);
+            s = Regex.Replace(s, @"[^\w]", "");
+            return s;
+        }
+
+        private static ushort UShortSafeInc(ushort value, ushort step, ushort max)
+        {
+            int newValue = value + step;
+            if (newValue < max)
+                return (ushort)newValue;
+            else return max;
+        }
+
+        private static ushort UShortSafeDec(ushort value, ushort step, ushort min)
+        {
+            int newValue = value - step;
+            if (newValue > min)
+                return (ushort)newValue;
+            else return min;
         }
 
         private Task StreamDataAsync()
@@ -689,6 +524,316 @@ namespace PediatricSoft
             });
         }
 
+        private Task StateHandlerAsync()
+        {
+            return Task.Run(() =>
+            {
+                PediatricSoftConstants.SensorState currentState;
+
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: State handler: started");
+
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+
+                while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
+                {
+                    switch (currentState)
+                    {
+                        case PediatricSoftConstants.SensorState.Setup:
+                            SendCommandsSetup();
+                            break;
+
+                        case PediatricSoftConstants.SensorState.LaserLockSweep:
+                            SendCommandsLaserLockSweep();
+                            break;
+
+                        case PediatricSoftConstants.SensorState.LaserLockStep:
+                            SendCommandsLaserLockStep();
+                            break;
+
+                        case PediatricSoftConstants.SensorState.LaserLockPID:
+                            SendCommandsLaserLockPID();
+                            break;
+
+                        case PediatricSoftConstants.SensorState.StabilizeCellHeat:
+                            SendCommandsStabilizeCellHeat();
+                            break;
+
+                        case PediatricSoftConstants.SensorState.ZeroFields:
+                            //SendCommandsZeroFields();
+                            lock (stateLock)
+                            {
+                                State = PediatricSoftConstants.SensorState.Idle;
+                            }
+                            break;
+
+                        case PediatricSoftConstants.SensorState.CalibrateMagnetometer:
+                            //SendCommandsCalibrateMagnetometer();
+                            break;
+
+                        case PediatricSoftConstants.SensorState.ShutDownRequested:
+                            if (!PediatricSensorData.DebugMode)
+                            {
+                                SendCommandsSetup();
+
+                                // Disable streaming
+                                SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
+                                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOffGainLow)));
+
+                                while (commandQueue.TryPeek(out string dummy)) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                            }
+                            lock (stateLock)
+                            {
+                                State++;
+                            }
+                            break;
+
+                        default:
+                            Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                            break;
+                    }
+
+                    lock (stateLock)
+                    {
+                        currentState = State;
+                    }
+                }
+
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: State handler: exiting");
+
+            });
+        }
+
+        private void PediatricSensorConstructorMethod(string serial)
+        {
+            FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
+
+            _FTDI = new FTDI();
+
+            SN = serial;
+
+            configPath = System.IO.Path.Combine(PediatricSensorData.Instance.SensorConfigFolderAbsolute, SN) + ".xml";
+            LoadConfig();
+
+            // Open the device by serial number
+            ftStatus = _FTDI.OpenBySerialNumber(serial);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Set Baud rate
+            ftStatus = _FTDI.SetBaudRate(PediatricSoftConstants.SerialPortBaudRate);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Set data characteristics - Data bits, Stop bits, Parity
+            ftStatus = _FTDI.SetDataCharacteristics(FTDI.FT_DATA_BITS.FT_BITS_8, FTDI.FT_STOP_BITS.FT_STOP_BITS_1, FTDI.FT_PARITY.FT_PARITY_NONE);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Set flow control - set RTS/CTS flow control - we don't have flow control
+            ftStatus = _FTDI.SetFlowControl(FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0x11, 0x13);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Set timeouts
+            ftStatus = _FTDI.SetTimeouts(PediatricSoftConstants.SerialPortReadTimeout, PediatricSoftConstants.SerialPortWriteTimeout);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Set latency
+            ftStatus = _FTDI.SetLatency(PediatricSoftConstants.SerialPortLatency);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set latency on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Get COM Port Name
+            ftStatus = _FTDI.GetCOMPort(out string port);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get the COM Port Name on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+            Port = port;
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Opened Port {port} on FTDI device with S/N {SN}");
+
+            // Purge port buffers
+            ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            const string checkString = "?\n";
+            UInt32 numBytes = 0;
+
+            // Write ? into the port to see if we have a working board
+            ftStatus = _FTDI.Write(checkString, checkString.Length, ref numBytes);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Wait a bit
+            Thread.Sleep((int)PediatricSoftConstants.SerialPortWriteTimeout);
+
+            // Check if the board responded
+            ftStatus = _FTDI.GetRxBytesAvailable(ref numBytes);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            // Purge port buffers
+            ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN} on Port {Port}. Error: {ftStatus.ToString()}");
+                Dispose();
+                return;
+            }
+
+            if (numBytes > 0)
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Valid");
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Valid;
+                }
+
+                IsValid = true;
+            }
+            else
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Didn't get a response from the board: not valid");
+                Dispose();
+            }
+        }
+
+        private void SaveConfig()
+        {
+            if (pediatricSensorConfig.Equals(pediatricSensorConfigOnLoad))
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Configuration not changed - not saving");
+            else
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Saving configuration");
+
+                TextWriter writer = null;
+                try
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
+                    writer = new StreamWriter(configPath);
+                    serializer.Serialize(writer, pediatricSensorConfig);
+                }
+                finally
+                {
+                    if (writer != null)
+                        writer.Close();
+                }
+
+            }
+        }
+
+        private void LoadConfig()
+        {
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Loading configuration");
+
+            TextReader reader = null;
+            try
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
+                reader = new StreamReader(configPath);
+                pediatricSensorConfig = (PediatricSensorConfig)serializer.Deserialize(reader);
+            }
+            catch (Exception)
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Failed to load configuration - using defaults");
+                pediatricSensorConfig = new PediatricSensorConfig();
+            }
+            finally
+            {
+                if (reader != null)
+                    reader.Close();
+            }
+
+            pediatricSensorConfigOnLoad = pediatricSensorConfig.GetValueCopy();
+        }
+
         private void SendCommandsSetup()
         {
             SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
@@ -774,7 +919,7 @@ namespace PediatricSoft
                 currentState = State;
                 correctState = State;
             }
-            
+
             double transmission = double.MaxValue;
 
             // Turn on the laser
@@ -1239,152 +1384,6 @@ namespace PediatricSoft
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Calibration done");
         }
 
-        private Task StateHandlerAsync()
-        {
-            return Task.Run(() =>
-            {
-                PediatricSoftConstants.SensorState currentState;
-
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: State handler: started");
-
-                lock (stateLock)
-                {
-                    currentState = State;
-                }
-
-                while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
-                {
-                    switch (currentState)
-                    {
-                        case PediatricSoftConstants.SensorState.Setup:
-                            SendCommandsSetup();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.LaserLockSweep:
-                            SendCommandsLaserLockSweep();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.LaserLockStep:
-                            SendCommandsLaserLockStep();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.LaserLockPID:
-                            SendCommandsLaserLockPID();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.StabilizeCellHeat:
-                            SendCommandsStabilizeCellHeat();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.ZeroFields:
-                            //SendCommandsZeroFields();
-                            lock (stateLock)
-                            {
-                                State = PediatricSoftConstants.SensorState.Idle;
-                            }
-                            break;
-
-                        case PediatricSoftConstants.SensorState.CalibrateMagnetometer:
-                            //SendCommandsCalibrateMagnetometer();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.ShutDownRequested:
-                            if (!PediatricSensorData.DebugMode)
-                            {
-                                SendCommandsSetup();
-
-                                // Disable streaming
-                                SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
-                                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOffGainLow)));
-
-                                while (commandQueue.TryPeek(out string dummy)) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                            }
-                            lock (stateLock)
-                            {
-                                State++;
-                            }
-                            break;
-
-                        default:
-                            Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                            break;
-                    }
-
-                    lock (stateLock)
-                    {
-                        currentState = State;
-                    }
-                }
-
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: State handler: exiting");
-
-            });
-        }
-
-        public void SendCommand(string command)
-        {
-            command = Regex.Replace(command, @"[^\w@#?+-]", "");
-
-            if (!String.IsNullOrEmpty(command))
-            {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Sending command \"{command}\"");
-                commandQueue.Enqueue(command + "\n");
-                CommandHistory.Enqueue(command);
-                RaisePropertyChanged("CommandHistory");
-            }
-        }
-
-        private void SaveConfig()
-        {
-            if (pediatricSensorConfig.Equals(pediatricSensorConfigOnLoad))
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Configuration not changed - not saving");
-            else
-            {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Saving configuration");
-
-                TextWriter writer = null;
-                try
-                {
-                    XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
-                    writer = new StreamWriter(configPath);
-                    serializer.Serialize(writer, pediatricSensorConfig);
-                }
-                finally
-                {
-                    if (writer != null)
-                        writer.Close();
-                }
-
-            }
-        }
-
-        private void LoadConfig()
-        {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Loading configuration");
-
-            TextReader reader = null;
-            try
-            {
-                XmlSerializer serializer = new XmlSerializer(typeof(PediatricSensorConfig));
-                reader = new StreamReader(configPath);
-                pediatricSensorConfig = (PediatricSensorConfig)serializer.Deserialize(reader);
-            }
-            catch (Exception)
-            {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Failed to load configuration - using defaults");
-                pediatricSensorConfig = new PediatricSensorConfig();
-            }
-            finally
-            {
-                if (reader != null)
-                    reader.Close();
-            }
-
-            pediatricSensorConfigOnLoad = pediatricSensorConfig.GetValueCopy();
-        }
-
-
-
         public void Dispose()
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Dispose() was called");
@@ -1431,6 +1430,13 @@ namespace PediatricSoft
         ~PediatricSensor()
         {
             if (!IsDisposed) Dispose();
+        }
+
+        // Event Handlers
+        private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
+        {
+            RaisePropertyChanged("LastValueRAW");
+            RaisePropertyChanged("LastValue");
         }
 
     }

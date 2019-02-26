@@ -12,9 +12,10 @@ namespace PediatricSoft
 {
     public sealed class PediatricSensorData : BindableBase, IDisposable
     {
-
+        // Fields
         private static readonly PediatricSensorData instance = new PediatricSensorData();
 
+        // Constructors
         static PediatricSensorData()
         {
         }
@@ -26,6 +27,7 @@ namespace PediatricSoft
             System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
         }
 
+        // Properties
         public static PediatricSensorData Instance
         {
             get
@@ -34,18 +36,13 @@ namespace PediatricSoft
             }
         }
 
-        public static PediatricSensorData GetInstance() { return instance; }
-
-
-
-        // Globals
         public bool DebugMode { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
         public bool SaveRAWValues { get; set; } = false;
         public string SaveFolder { get; set; } = String.Empty;
         public string SaveFolderCurrentRun { get; set; } = String.Empty;
         public string SaveSuffix { get; set; } = String.Empty;
-        public string SensorConfigFolderAbsolute = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), PediatricSoftConstants.SensorConfigFolderRelative);
+        public string SensorConfigFolderAbsolute { get; private set; } = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), PediatricSoftConstants.SensorConfigFolderRelative);
 
         public ObservableCollection<PediatricSensor> Sensors { get; private set; } = new ObservableCollection<PediatricSensor>();
 
@@ -71,7 +68,37 @@ namespace PediatricSoft
             get { return canScan; }
             private set { canScan = value; RaisePropertyChanged(); }
         }
+
         public bool ScanPortsAsyncCanExecute() { return CanScan; }
+
+        private bool canLock = false;
+        public bool CanLock
+        {
+            get { return canLock; }
+            set { canLock = value; RaisePropertyChanged(); }
+        }
+
+        public bool LockAllAsyncCanExecute() { return CanLock; }
+
+        private bool canStartStop = false;
+        public bool CanStartStop
+        {
+            get { return canStartStop; }
+            set { canStartStop = value; RaisePropertyChanged(); }
+        }
+
+        public bool StartStopAsyncCanExecute() { return CanStartStop; }
+
+        private bool canZeroFields = false;
+        public bool CanZeroFields
+        {
+            get { return canZeroFields; }
+            set { canZeroFields = value; RaisePropertyChanged(); }
+        }
+        public bool ZeroFieldsAsyncCanExecute() { return CanZeroFields; }
+
+        // Methods
+        public static PediatricSensorData GetInstance() { return instance; }
 
         public void ScanPortsAsync()
         {
@@ -120,14 +147,6 @@ namespace PediatricSoft
             });
         }
 
-        private bool canLock = false;
-        public bool CanLock
-        {
-            get { return canLock; }
-            set { canLock = value; RaisePropertyChanged(); }
-        }
-        public bool LockAllAsyncCanExecute() { return CanLock; }
-
         public void LockAllAsync()
         {
             Task.Run(() =>
@@ -157,14 +176,6 @@ namespace PediatricSoft
                 }
             });
         }
-
-        private bool canStartStop = false;
-        public bool CanStartStop
-        {
-            get { return canStartStop; }
-            set { canStartStop = value; RaisePropertyChanged(); }
-        }
-        public bool StartStopAsyncCanExecute() { return CanStartStop; }
 
         public void StartStopAsync()
         {
@@ -211,14 +222,6 @@ namespace PediatricSoft
                 }
             });
         }
-
-        private bool canZeroFields = false;
-        public bool CanZeroFields
-        {
-            get { return canZeroFields; }
-            set { canZeroFields = value; RaisePropertyChanged(); }
-        }
-        public bool ZeroFieldsAsyncCanExecute() { return CanZeroFields; }
 
         public void ZeroFieldsAsync()
         {
@@ -267,6 +270,17 @@ namespace PediatricSoft
             else
                 PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ClosePlotWindow");
 
+        }
+
+        public void ClearAll()
+        {
+            Parallel.ForEach(Sensors, _PediatricSensor =>
+            {
+                _PediatricSensor.Dispose();
+                while (!_PediatricSensor.IsDisposed) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+            });
+            Sensors.Clear();
+            RaisePropertyChanged("SensorCount");
         }
 
         private string[] GetPotentialSensorSerialNumbers()
@@ -322,8 +336,6 @@ namespace PediatricSoft
             return SerialNumbers.ToArray();
         }
 
-
-
         private void ClearAllPlotCheckBox()
         {
 
@@ -353,17 +365,6 @@ namespace PediatricSoft
             }
 
 
-        }
-
-        public void ClearAll()
-        {
-            Parallel.ForEach(Sensors, _PediatricSensor =>
-            {
-                _PediatricSensor.Dispose();
-                while (!_PediatricSensor.IsDisposed) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-            });
-            Sensors.Clear();
-            RaisePropertyChanged("SensorCount");
         }
 
         private void CreateDataFolder()
