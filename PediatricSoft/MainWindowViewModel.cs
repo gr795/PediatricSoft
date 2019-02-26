@@ -159,15 +159,15 @@ namespace PediatricSoft
                     break;
 
                 case "CanScan":
-                    App.Current.Dispatcher.Invoke(() => ButtonScanPortsCommand.RaiseCanExecuteChanged() );
+                    ButtonScanPortsCommand.RaiseCanExecuteChanged();
                     break;
 
                 case "CanLock":
-                    App.Current.Dispatcher.Invoke(() => ButtonLockSensorsCommand.RaiseCanExecuteChanged());
+                    ButtonLockSensorsCommand.RaiseCanExecuteChanged();
                     break;
 
                 case "CanStartStop":
-                    App.Current.Dispatcher.Invoke(() => ButtonStartStopSensorsCommand.RaiseCanExecuteChanged());
+                    ButtonStartStopSensorsCommand.RaiseCanExecuteChanged();
                     if (PediatricSensorData.CanStartStop)
                         if (PediatricSensorData.IsRunning)
                         {
@@ -200,7 +200,7 @@ namespace PediatricSoft
                     break;
 
                 case "CanZeroFields":
-                    App.Current.Dispatcher.Invoke(() => ButtonZeroFieldsCommand.RaiseCanExecuteChanged());
+                    ButtonZeroFieldsCommand.RaiseCanExecuteChanged();
                     break;
 
                 case "CanSendCommands":

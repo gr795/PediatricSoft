@@ -272,13 +272,9 @@ namespace PediatricSoft
                             Fill = Brushes.Transparent,
                             PointGeometry = DefaultGeometries.None
                         });
-                    });
-                    App.Current.Dispatcher.Invoke(() =>
-                    {
                         count++;
                     });
                 }
-
             });
 
             if (count > 0)

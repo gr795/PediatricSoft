@@ -12,7 +12,7 @@ namespace PediatricSoft
 
         private static readonly PediatricSoftWindowManager instance = new PediatricSoftWindowManager();
 
-        private readonly IEventAggregator eventAggregator;
+        private readonly IEventAggregator eventAggregator = PediatricSoftEventGlue.eventAggregator;
         private MainWindow MainWindow;
         private SendCommandsWindow SendCommandsWindow;
         private PlotWindow PlotWindow;
@@ -25,13 +25,6 @@ namespace PediatricSoft
 
         private PediatricSoftWindowManager()
         {
-            eventAggregator = PediatricSoftEventGlue.eventAggregator;
-            eventAggregator.GetEvent<EventWindowManager>().Subscribe(WindowManagerEventHandler);
-
-            MainWindow = new MainWindow();
-            MainWindow.Show();
-            MainWindow.Closing += MainWindowOnClosing;
-            //MainWindow.Activated += WindowOnActivated;
         }
 
         // Properties
@@ -47,6 +40,16 @@ namespace PediatricSoft
         // Methods
 
         public static PediatricSoftWindowManager GetInstance() { return instance; }
+
+        public void Start()
+        {
+            eventAggregator.GetEvent<EventWindowManager>().Subscribe(WindowManagerEventHandler);
+
+            MainWindow = new MainWindow();
+            MainWindow.Show();
+            MainWindow.Closing += MainWindowOnClosing;
+            //MainWindow.Activated += WindowOnActivated;
+        }
 
         private void WindowManagerEventHandler(string eventString)
         {
@@ -104,7 +107,7 @@ namespace PediatricSoft
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Closing Main Window");
             SendCommandsWindow?.Close();
             PlotWindow?.Close();
-            App.Current.Dispatcher.Invoke(() => eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown"));
+            eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown");
             MainWindow = null;
         }
 
@@ -118,7 +121,7 @@ namespace PediatricSoft
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Window Manager: Closing Plot Window");
             PlotWindow = null;
-            App.Current.Dispatcher.Invoke(() => eventAggregator.GetEvent<EventDataLayer>().Publish("ClearAllPlotCheckBox"));
+            eventAggregator.GetEvent<EventDataLayer>().Publish("ClearAllPlotCheckBox");
         }
 
         private void WindowOnActivated(object sender, System.EventArgs e)
