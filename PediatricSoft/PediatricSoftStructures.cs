@@ -1,23 +1,29 @@
 ﻿namespace PediatricSoft
 {
-    public struct SensorScanItem
-    {
-        public bool isValid;
-        public string port;
-        public string idn;
-        public string sn;
-    }
-
     public struct DataPoint
     {
-        public double X;
-        public double Y;
+        public int TimeRAW;
+        public int ADCRAW;
+        public int BzDemodRAW;
+        public int BzErrorRAW;
 
-        public DataPoint(double _x, double _y)
+        public double Time;
+        public double ADC;
+        public double BzDemod;
+        public double BzError;
+
+        public DataPoint(int _TimeRAW, int _ADCRAW, int _BzDemodRAW, int _BzErrorRAW,
+                         double _Time, double _ADC, double _BzDemod, double _BzError)
         {
-            X = _x;
-            Y = _y;
+            TimeRAW = _TimeRAW;
+            ADCRAW = _ADCRAW;
+            BzDemodRAW = _BzDemodRAW;
+            BzErrorRAW = _BzErrorRAW;
+
+            Time = _Time;
+            ADC = _ADC;
+            BzDemod = _BzDemod;
+            BzError = _BzError;
         }
     }
-
 }

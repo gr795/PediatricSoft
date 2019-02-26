@@ -1,6 +1,4 @@
 ﻿using FTD2XX_NET;
-using LiveCharts;
-using LiveCharts.Defaults;
 using Prism.Mvvm;
 using System;
 using System.Collections.Concurrent;
@@ -68,25 +66,12 @@ namespace PediatricSoft
         }
 
         private readonly Object dataLock = new Object();
-        private Queue<int> dataTimeRaw = new Queue<int>(PediatricSoftConstants.DataQueueLength);
-        private Queue<int> dataValueRaw = new Queue<int>(PediatricSoftConstants.DataQueueLength);
+        public ConcurrentQueue<DataPoint> DataQueue { get; private set; } = new ConcurrentQueue<DataPoint>();
 
-        public ChartValues<ObservableValue> ChartValues = new ChartValues<ObservableValue>();
+        private DataPoint lastDataPoint;
+        public int LastValueRAW { get { return lastDataPoint.ADCRAW; } }
+        public double LastValue { get { return lastDataPoint.ADC; } }
 
-        private bool isPlotted = false;
-        public bool IsPlotted
-        {
-            get { return isPlotted; }
-            set { isPlotted = value; RaisePropertyChanged(); PediatricSensorData.UpdateSeriesCollection(); }
-        }
-
-        private volatile int lastTimeRAW = 0;
-        public int LastTimeRAW { get { return lastTimeRAW; } }
-
-        private volatile int lastValueRAW = 0;
-        public int LastValueRAW { get { return lastValueRAW; } }
-
-        public double LastValue { get; private set; } = 0;
         private volatile bool dataUpdated = false;
 
         public string Port { get; private set; } = String.Empty;
@@ -98,6 +83,12 @@ namespace PediatricSoft
         public bool IsRunning { get; private set; } = false;
         public bool IsValid { get; private set; } = false;
 
+        private bool isPlotted = false;
+        public bool IsPlotted
+        {
+            get { return isPlotted; }
+            set { isPlotted = value; RaisePropertyChanged(); PediatricSensorData.UpdateSeriesCollection(); }
+        }
 
         private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
         {
@@ -470,9 +461,6 @@ namespace PediatricSoft
                 List<string> dataSaveBuffer = new List<string>();
                 string filePath = string.Empty;
 
-                int plotCounter = 0;
-                const int plotCounterMax = PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength;
-
                 Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Streaming starting");
 
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
@@ -631,34 +619,29 @@ namespace PediatricSoft
                                 lock (dataLock)
                                 {
                                     Array.Reverse(data); // switch from MSB to LSB
-                                    lastTimeRAW = BitConverter.ToInt32(data, 4);
-                                    lastValueRAW = BitConverter.ToInt32(data, 0);
-                                    LastValue = lastValueRAW * PediatricSoftConstants.SensorADCRawToVolts;
 
-                                    dataTimeRaw.Enqueue(lastTimeRAW);
-                                    if (dataTimeRaw.Count > PediatricSoftConstants.DataQueueLength) dataTimeRaw.Dequeue();
+                                    lastDataPoint = new DataPoint
+                                    (
+                                        BitConverter.ToInt32(data, 4), // TimeRAW
+                                        BitConverter.ToInt32(data, 0), // ADCRAW
+                                        0,
+                                        0,
+                                        PediatricSoftConstants.ConversionTime * BitConverter.ToInt32(data, 4),
+                                        PediatricSoftConstants.ConversionADC * BitConverter.ToInt32(data, 0),
+                                        0,
+                                        0
+                                    );
 
-                                    dataValueRaw.Enqueue(lastValueRAW);
-                                    if (dataValueRaw.Count > PediatricSoftConstants.DataQueueLength) dataValueRaw.Dequeue();
+                                    DataQueue.Enqueue(lastDataPoint);
+                                    while (DataQueue.Count > PediatricSoftConstants.DataQueueLength) DataQueue.TryDequeue(out DataPoint dummy);
 
                                     if (dataSaveEnable)
                                         if (dataSaveRAW)
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastTimeRAW), "\t", Convert.ToString(lastValueRAW)));
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(lastDataPoint.ADCRAW)));
                                         else
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastTimeRAW * 0.001), "\t", Convert.ToString(lastValueRAW * sensorZDemodCalibration)));
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(lastDataPoint.ADC)));
 
                                     if (!dataUpdated) dataUpdated = true;
-                                }
-
-                                if (IsPlotted)
-                                {
-                                    plotCounter++;
-                                    if (plotCounter == plotCounterMax)
-                                    {
-                                        ChartValues.Add(new ObservableValue(LastValue));
-                                        if (ChartValues.Count > PediatricSoftConstants.PlotQueueLength) ChartValues.RemoveAt(0);
-                                        plotCounter = 0;
-                                    }
                                 }
 
                                 dataIndex = 0;
@@ -791,8 +774,7 @@ namespace PediatricSoft
                 currentState = State;
                 correctState = State;
             }
-
-            int[] data = new int[PediatricSoftConstants.DataQueueLength];
+            
             double transmission = double.MaxValue;
 
             // Turn on the laser
@@ -808,7 +790,7 @@ namespace PediatricSoft
 
             // Record the ADC value
             while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-            sensorADCColdValueRaw = lastValueRAW;
+            sensorADCColdValueRaw = lastDataPoint.ADCRAW;
 
             // Here we check if we received non-zero value.
             // If it is zero (default) - something is wrong and we fail.
@@ -854,9 +836,8 @@ namespace PediatricSoft
                 // See if the threshold was reached
                 lock (dataLock)
                 {
-                    data = dataValueRaw.ToArray();
+                    transmission = (double)DataQueue.Select(x => x.ADCRAW).ToArray().Min() / sensorADCColdValueRaw;
                 }
-                transmission = (double)data.Min() / sensorADCColdValueRaw;
 
                 if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
                 {
@@ -935,7 +916,7 @@ namespace PediatricSoft
                 while (laserHeat < PediatricSoftConstants.SensorMaxLaserHeat)
                 {
                     while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    transmission = (double)lastValueRAW / sensorADCColdValueRaw;
+                    transmission = (double)lastDataPoint.ADCRAW / sensorADCColdValueRaw;
 
                     if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionStep)
                     {
@@ -1045,7 +1026,7 @@ namespace PediatricSoft
                 Thread.Sleep(PediatricSoftConstants.SensorLaserHeatStepSleepTime);
                 lock (dataLock)
                 {
-                    transmission = (double)lastValueRAW / sensorADCColdValueRaw;
+                    transmission = (double)lastDataPoint.ADCRAW / sensorADCColdValueRaw;
                 }
                 lock (stateLock)
                 {
@@ -1102,7 +1083,7 @@ namespace PediatricSoft
                         while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         lock (dataLock)
                         {
-                            plusValue = (double)lastValueRAW;
+                            plusValue = (double)lastDataPoint.ADCRAW;
                         }
 
                         SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
@@ -1113,7 +1094,7 @@ namespace PediatricSoft
                         while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         lock (dataLock)
                         {
-                            minusValue = (double)lastValueRAW;
+                            minusValue = (double)lastDataPoint.ADCRAW;
                         }
 
                         if (plusValue > minusValue)
@@ -1137,7 +1118,7 @@ namespace PediatricSoft
                         while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         lock (dataLock)
                         {
-                            plusValue = (double)lastValueRAW;
+                            plusValue = (double)lastDataPoint.ADCRAW;
                         }
 
                         SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
@@ -1148,7 +1129,7 @@ namespace PediatricSoft
                         while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         lock (dataLock)
                         {
-                            minusValue = (double)lastValueRAW;
+                            minusValue = (double)lastDataPoint.ADCRAW;
                         }
 
                         if (plusValue > minusValue)
@@ -1172,7 +1153,7 @@ namespace PediatricSoft
                         while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         lock (dataLock)
                         {
-                            plusValue = (double)lastValueRAW;
+                            plusValue = (double)lastDataPoint.ADCRAW;
                         }
 
                         SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
@@ -1183,7 +1164,7 @@ namespace PediatricSoft
                         while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         lock (dataLock)
                         {
-                            minusValue = (double)lastValueRAW;
+                            minusValue = (double)lastDataPoint.ADCRAW;
                         }
 
                         if (plusValue > minusValue)
@@ -1230,7 +1211,7 @@ namespace PediatricSoft
                 while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                 lock (dataLock)
                 {
-                    plusSum += (double)lastValueRAW;
+                    plusSum += (double)lastDataPoint.ADCRAW;
                 }
 
                 SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
@@ -1241,7 +1222,7 @@ namespace PediatricSoft
                 while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                 lock (dataLock)
                 {
-                    minusSum += (double)lastValueRAW;
+                    minusSum += (double)lastDataPoint.ADCRAW;
                 }
 
             }

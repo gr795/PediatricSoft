@@ -1,5 +1,4 @@
 ﻿using Prism.Commands;
-using Prism.Events;
 using Prism.Mvvm;
 using System.Collections.ObjectModel;
 using System.ComponentModel;

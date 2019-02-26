@@ -36,7 +36,10 @@ namespace PediatricSoft
         public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.5;
 
-        public const double SensorADCRawToVolts = (double)5 / 125 / 16777215;
+        public const double ConversionTime = 0.001;
+        public const double ConversionADC = (double)5 / 125 / 16777215;
+
+
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
 
         public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step

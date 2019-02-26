@@ -1,5 +1,4 @@
-﻿using Prism.Events;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 

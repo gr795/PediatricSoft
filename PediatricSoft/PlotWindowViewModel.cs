@@ -19,7 +19,7 @@ namespace PediatricSoft
 
         // Properties
 
-        public SeriesCollection SeriesCollection { get { return PediatricSensorData.SeriesCollection; } }
+        public SeriesCollection SeriesCollection { get { return  new SeriesCollection(); } }
         
         // Methods
 

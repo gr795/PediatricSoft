@@ -1,7 +1,4 @@
 ﻿using FTD2XX_NET;
-using LiveCharts;
-using LiveCharts.Wpf;
-using Prism.Events;
 using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
@@ -10,7 +7,6 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Media;
 
 namespace PediatricSoft
 {
@@ -52,7 +48,6 @@ namespace PediatricSoft
         public string SensorConfigFolderAbsolute = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), PediatricSoftConstants.SensorConfigFolderRelative);
 
         public ObservableCollection<PediatricSensor> Sensors { get; private set; } = new ObservableCollection<PediatricSensor>();
-        public SeriesCollection SeriesCollection { get; private set; } = new SeriesCollection();
 
         public int SensorCount { get { return Sensors.Count; } }
 
@@ -253,8 +248,6 @@ namespace PediatricSoft
 
         public void UpdateSeriesCollection()
         {
-            try { SeriesCollection.Clear(); }
-            catch (Exception) { }
 
             int count = 0;
 
@@ -264,12 +257,6 @@ namespace PediatricSoft
                 {
                     App.Current.Dispatcher.Invoke(() =>
                     {
-                        SeriesCollection.Add(new LineSeries
-                        {
-                            Values = sensor.ChartValues,
-                            Fill = Brushes.Transparent,
-                            PointGeometry = DefaultGeometries.None
-                        });
                         count++;
                     });
                 }
