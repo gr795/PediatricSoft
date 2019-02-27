@@ -141,7 +141,7 @@ namespace PediatricSoft
         private void ButtonSendCommandsOnClick()
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
-            PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ShowSendCommandsWindow");
+            PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ShowSendCommandsWindow");
         }
 
 

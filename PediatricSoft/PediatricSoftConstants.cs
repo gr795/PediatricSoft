@@ -9,7 +9,7 @@ namespace PediatricSoft
         public const bool IsDebugEnabled = true;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
-        public const int PlotQueueLength = 500;
+        public const int PlotQueueLength = 250;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string ValidIDN = "Arrow USB Blaster B";
         public const string SensorConfigFolderRelative = "SensorConfig";
@@ -24,7 +24,7 @@ namespace PediatricSoft
         public const byte StartInfoFrameByte = 0x3F;
         public const byte FrameEscapeByte = 0x10;
 
-        public const UInt32 StreamingBufferSize = 1024;
+        public const UInt32 StreamingBufferSize = 1048576;
         public const UInt32 DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
         public const UInt32 InfoBlockSize = 4;
 

@@ -41,7 +41,7 @@ namespace PediatricSoft
 
         public void Start()
         {
-            PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Subscribe(WindowManagerEventHandler);
+            PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Subscribe(WindowManagerEventHandler);
 
             MainWindow = new MainWindow();
             MainWindow.Show();

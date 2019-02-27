@@ -95,6 +95,7 @@ namespace PediatricSoft
             get { return canZeroFields; }
             set { canZeroFields = value; RaisePropertyChanged(); }
         }
+
         public bool ZeroFieldsAsyncCanExecute() { return CanZeroFields; }
 
         // Methods
@@ -251,25 +252,23 @@ namespace PediatricSoft
 
         public void UpdateSeriesCollection()
         {
-
             int count = 0;
 
-            Parallel.ForEach(Sensors, sensor =>
+            foreach(PediatricSensor sensor in Sensors)
             {
                 if (sensor.IsPlotted)
                 {
-                    App.Current.Dispatcher.Invoke(() =>
-                    {
                         count++;
-                    });
                 }
-            });
+            }
 
             if (count > 0)
-                PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ShowPlotWindow");
+            {
+                PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ShowPlotWindow");
+                PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("UpdateSeriesCollection");
+            }
             else
-                PediatricSoftEventGlue.eventAggregator.GetEvent<EventWindowManager>().Publish("ClosePlotWindow");
-
+                PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ClosePlotWindow");
         }
 
         public void ClearAll()
@@ -349,7 +348,6 @@ namespace PediatricSoft
 
         private void DataLayerEventHandler(string eventString)
         {
-
             switch (eventString)
             {
                 case "Shutdown":
@@ -363,8 +361,6 @@ namespace PediatricSoft
                 default:
                     break;
             }
-
-
         }
 
         private void CreateDataFolder()

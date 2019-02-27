@@ -1,4 +1,5 @@
 ﻿using FTD2XX_NET;
+using LiveCharts;
 using Prism.Mvvm;
 using System;
 using System.Collections.Concurrent;
@@ -95,8 +96,16 @@ namespace PediatricSoft
         public bool IsPlotted
         {
             get { return isPlotted; }
-            set { isPlotted = value; RaisePropertyChanged(); PediatricSensorData.UpdateSeriesCollection(); }
+            set
+            {
+                ChartValues.Clear();
+                isPlotted = value;
+                RaisePropertyChanged();
+                PediatricSensorData.UpdateSeriesCollection();
+            }
         }
+
+        public ChartValues<double> ChartValues { get; private set; } = new ChartValues<double>();
 
         // Methods
         public void KickOffTasks()
@@ -296,6 +305,8 @@ namespace PediatricSoft
                 List<string> dataSaveBuffer = new List<string>();
                 string filePath = string.Empty;
 
+                int plotCounter = 0;
+
                 Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Streaming starting");
 
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
@@ -469,6 +480,17 @@ namespace PediatricSoft
 
                                     DataQueue.Enqueue(lastDataPoint);
                                     while (DataQueue.Count > PediatricSoftConstants.DataQueueLength) DataQueue.TryDequeue(out DataPoint dummy);
+
+                                    if (isPlotted)
+                                    {
+                                        plotCounter++;
+                                        if (plotCounter == PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength)
+                                        {
+                                            ChartValues.Add(lastDataPoint.ADC);
+                                            if (ChartValues.Count > PediatricSoftConstants.PlotQueueLength) ChartValues.RemoveAt(0);
+                                            plotCounter = 0;
+                                        }
+                                    }
 
                                     if (dataSaveEnable)
                                         if (dataSaveRAW)

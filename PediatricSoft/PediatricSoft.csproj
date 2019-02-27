@@ -97,7 +97,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="EventDataLayer.cs" />
-    <Compile Include="EventWindowManager.cs" />
+    <Compile Include="EventUILayer.cs" />
     <Compile Include="MainWindowViewModel.cs" />
     <Compile Include="PediatricSensorConfig.cs" />
     <Compile Include="PediatricSoftConstants.cs" />
