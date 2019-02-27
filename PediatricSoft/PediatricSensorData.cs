@@ -23,8 +23,13 @@ namespace PediatricSoft
         private PediatricSensorData()
         {
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
-
-            System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
+            if (System.IO.Directory.Exists(SensorConfigFolderAbsolute))
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Sensor config directory exists");
+            else
+            {
+                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Sensor config directory doesn't exist - creating");
+                System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
+            }
         }
 
         // Properties
@@ -97,6 +102,13 @@ namespace PediatricSoft
         }
 
         public bool ZeroFieldsAsyncCanExecute() { return CanZeroFields; }
+
+        private PediatricSoftConstants.DataSelect dataSelect = PediatricSoftConstants.DataSelect.ADC;
+        public PediatricSoftConstants.DataSelect DataSelect
+        {
+            get { return dataSelect; }
+            set { dataSelect = value; }
+        }
 
         // Methods
         public static PediatricSensorData GetInstance() { return instance; }
@@ -254,11 +266,11 @@ namespace PediatricSoft
         {
             int count = 0;
 
-            foreach(PediatricSensor sensor in Sensors)
+            foreach (PediatricSensor sensor in Sensors)
             {
                 if (sensor.IsPlotted)
                 {
-                        count++;
+                    count++;
                 }
             }
 

@@ -103,6 +103,54 @@ namespace PediatricSoft
             private set { buttonStartStopSensorsContent = value; RaisePropertyChanged(); }
         }
 
+        public bool RadioButtonDataSelectADCIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ADC)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.ADC;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
+        public bool RadioButtonDataSelectOpenLoopIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.OpenLoop)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.OpenLoop;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
+        public bool RadioButtonDataSelectClosedLoopIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ClosedLoop)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.ClosedLoop;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
         // Methods
 
         private void CheckBoxSaveDataOnToggle()
@@ -142,6 +190,13 @@ namespace PediatricSoft
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ShowSendCommandsWindow");
+        }
+
+        private void RadioButtonsRaisePropertyChanged()
+        {
+            RaisePropertyChanged("RadioButtonDataSelectADCIsChecked");
+            RaisePropertyChanged("RadioButtonDataSelectOpenLoopIsChecked");
+            RaisePropertyChanged("RadioButtonDataSelectClosedLoopIsChecked");
         }
 
 

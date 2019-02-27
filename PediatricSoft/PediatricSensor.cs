@@ -80,8 +80,47 @@ namespace PediatricSoft
             get { return commandHistory; }
         }
 
-        public int LastValueRAW { get { return lastDataPoint.ADCRAW; } }
-        public double LastValue { get { return lastDataPoint.ADC; } }
+        public int LastValueRAW
+        {
+            get
+            {
+                switch (PediatricSensorData.DataSelect)
+                {
+                    case PediatricSoftConstants.DataSelect.ADC:
+                        return lastDataPoint.ADCRAW;
+
+                    case PediatricSoftConstants.DataSelect.OpenLoop:
+                        return lastDataPoint.BzDemodRAW;
+
+                    case PediatricSoftConstants.DataSelect.ClosedLoop:
+                        return lastDataPoint.BzErrorRAW;
+
+                    default:
+                        return 0;
+                }
+            }
+        }
+
+        public double LastValue
+        {
+            get
+            {
+                switch (PediatricSensorData.DataSelect)
+                {
+                    case PediatricSoftConstants.DataSelect.ADC:
+                        return lastDataPoint.ADC;
+
+                    case PediatricSoftConstants.DataSelect.OpenLoop:
+                        return lastDataPoint.BzDemod;
+
+                    case PediatricSoftConstants.DataSelect.ClosedLoop:
+                        return lastDataPoint.BzError;
+
+                    default:
+                        return 0;
+                }
+            }
+        }
 
         public string Port { get; private set; } = String.Empty;
         public string SN { get; private set; } = String.Empty;
@@ -468,14 +507,14 @@ namespace PediatricSoft
 
                                     lastDataPoint = new DataPoint
                                     (
-                                        BitConverter.ToInt32(data, 4), // TimeRAW
-                                        BitConverter.ToInt32(data, 0), // ADCRAW
-                                        0,
-                                        0,
-                                        PediatricSoftConstants.ConversionTime * BitConverter.ToInt32(data, 4),
-                                        PediatricSoftConstants.ConversionADC * BitConverter.ToInt32(data, 0),
-                                        0,
-                                        0
+                                        BitConverter.ToInt32(data, 12), // TimeRAW
+                                        BitConverter.ToInt32(data, 8), // ADCRAW
+                                        BitConverter.ToInt32(data, 4), // BzDemod
+                                        BitConverter.ToInt32(data, 0), // BzError
+                                        PediatricSoftConstants.ConversionTime * BitConverter.ToInt32(data, 12),
+                                        PediatricSoftConstants.ConversionADC * BitConverter.ToInt32(data, 8),
+                                        BitConverter.ToInt32(data, 4),
+                                        BitConverter.ToInt32(data, 0)
                                     );
 
                                     DataQueue.Enqueue(lastDataPoint);
@@ -486,7 +525,7 @@ namespace PediatricSoft
                                         plotCounter++;
                                         if (plotCounter == PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength)
                                         {
-                                            ChartValues.Add(lastDataPoint.ADC);
+                                            ChartValues.Add(LastValue);
                                             if (ChartValues.Count > PediatricSoftConstants.PlotQueueLength) ChartValues.RemoveAt(0);
                                             plotCounter = 0;
                                         }
@@ -494,9 +533,9 @@ namespace PediatricSoft
 
                                     if (dataSaveEnable)
                                         if (dataSaveRAW)
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(lastDataPoint.ADCRAW)));
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW)));
                                         else
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(lastDataPoint.ADC)));
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(LastValue)));
 
                                     if (!dataUpdated) dataUpdated = true;
                                 }
@@ -913,7 +952,7 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdCellHeat)));
 
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorADC)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultDigitalDataSelector)));
 
             SendCommand(PediatricSoftConstants.SensorCommandADCDisplayGain);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultADCDisplayGain)));

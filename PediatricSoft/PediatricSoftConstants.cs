@@ -25,7 +25,7 @@ namespace PediatricSoft
         public const byte FrameEscapeByte = 0x10;
 
         public const UInt32 StreamingBufferSize = 1048576;
-        public const UInt32 DataBlockSize = 8; // Size of the data block in bytes. 8 bytes = 2 x 32 bit
+        public const UInt32 DataBlockSize = 16; // Size of the data block in bytes.
         public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
@@ -125,6 +125,7 @@ namespace PediatricSoft
         public const ushort SensorCellHeatStep = 10;
 
         public const string SensorCommandDigitalDataSelector = "@22";
+        public const ushort SensorDefaultDigitalDataSelector = 0x0050;
         public const ushort SensorDigitalDataSelectorADC = 0x0000;
         public const ushort SensorDigitalDataSelectorZDemod = 0x0005;
 
@@ -159,6 +160,13 @@ namespace PediatricSoft
             ShutDownComplete,
             Failed
         };
+
+        public enum DataSelect
+        {
+            ADC,
+            OpenLoop,
+            ClosedLoop
+        }
 
     }
 }
