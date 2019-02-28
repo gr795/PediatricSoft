@@ -623,15 +623,11 @@ namespace PediatricSoft
                             break;
 
                         case PediatricSoftConstants.SensorState.ZeroFields:
-                            //SendCommandsZeroFields();
-                            lock (stateLock)
-                            {
-                                State = PediatricSoftConstants.SensorState.Idle;
-                            }
+                            SendCommandsZeroFields();
                             break;
 
                         case PediatricSoftConstants.SensorState.CalibrateMagnetometer:
-                            //SendCommandsCalibrateMagnetometer();
+                            SendCommandsCalibrateMagnetometer();
                             break;
 
                         case PediatricSoftConstants.SensorState.ShutDownRequested:
@@ -1241,7 +1237,7 @@ namespace PediatricSoft
             }
 
             SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultCellHeat)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorConfig.DefaultCellHeat)));
 
             lock (stateLock)
             {
@@ -1257,133 +1253,111 @@ namespace PediatricSoft
 
         private void SendCommandsZeroFields()
         {
-            int reminder = 0;
-            ushort plusField = ushort.MaxValue;
-            ushort minusField = ushort.MinValue;
-            double plusValue = 0;
-            double minusValue = 0;
-
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin field zeroing");
 
-            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorADC)));
+            PediatricSoftConstants.SensorState currentState;
+            PediatricSoftConstants.SensorState correctState;
+
+            lock (stateLock)
+            {
+                currentState = State;
+                correctState = State;
+            }
+
+            ushort fieldStep = ushort.MaxValue / PediatricSoftConstants.NumberOfFieldZeroingIntervalsOneAxis - 1;
+            int maxADCRAWValue = int.MinValue;
+            int currentADCRAWValue = int.MinValue;
+
+            // Reset fields
+
+            SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXOffset)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandFieldXModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldXModulationAmplitude)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYOffset)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldYModulationAmplitude)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZOffset)));
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdFieldZModulationAmplitude)));
 
-            for (int i = 0; i < (PediatricSoftConstants.NumberOfFieldZeroingSteps * 3); i++)
+            for (ushort yField = ushort.MinValue; yField < ushort.MaxValue; yField = UShortSafeInc(yField, fieldStep, ushort.MaxValue))
             {
-                Math.DivRem(i, 3, out reminder);
-                switch (reminder)
+                for (ushort zField = ushort.MinValue; zField < ushort.MaxValue; zField = UShortSafeInc(zField, fieldStep, ushort.MaxValue))
                 {
-                    case -1:
-                        SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset);
-                        plusField = UShortSafeInc(zeroXField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MaxValue);
-                        minusField = UShortSafeDec(zeroXField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MinValue);
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Current Y-Field = {yField}");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Current Z-Field = {zField}");
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)));
-                        lock (dataLock)
+                    SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+                    SendCommand(String.Concat("#", UInt16ToStringBE(yField)));
+
+                    SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+                    SendCommand(String.Concat("#", UInt16ToStringBE(zField)));
+
+                    while (commandQueue.TryPeek(out string dummy))
+                    {
+                        Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                        if (State != correctState)
                         {
-                            dataUpdated = false;
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                            return;
                         }
-                        while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (dataLock)
+                    }
+
+                    lock (dataLock)
+                    {
+                        dataUpdated = false;
+                    }
+
+                    while (!dataUpdated)
+                    {
+                        Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                        if (State != correctState)
                         {
-                            plusValue = (double)lastDataPoint.ADCRAW;
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                            return;
                         }
+                    }
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
-                        lock (dataLock)
-                        {
-                            dataUpdated = false;
-                        }
-                        while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (dataLock)
-                        {
-                            minusValue = (double)lastDataPoint.ADCRAW;
-                        }
+                    currentADCRAWValue = lastDataPoint.ADCRAW;
 
-                        if (plusValue > minusValue)
-                            zeroXField = UShortSafeInc(zeroXField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
+                    if (currentADCRAWValue > maxADCRAWValue)
+                    {
+                        maxADCRAWValue = currentADCRAWValue;
 
-                        if (plusValue < minusValue)
-                            zeroXField = UShortSafeDec(zeroXField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
+                        zeroYField = yField;
+                        zeroZField = zField;
 
-                        break;
+                    }
+                    
+                } 
 
-                    case 1:
-                        SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
-                        plusField = UShortSafeInc(zeroYField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MaxValue);
-                        minusField = UShortSafeDec(zeroYField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MinValue);
+            }
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)));
-                        lock (dataLock)
-                        {
-                            dataUpdated = false;
-                        }
-                        while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (dataLock)
-                        {
-                            plusValue = (double)lastDataPoint.ADCRAW;
-                        }
+            SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroYField)));
 
-                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
-                        lock (dataLock)
-                        {
-                            dataUpdated = false;
-                        }
-                        while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (dataLock)
-                        {
-                            minusValue = (double)lastDataPoint.ADCRAW;
-                        }
+            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)));
 
-                        if (plusValue > minusValue)
-                            zeroYField = UShortSafeInc(zeroYField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
+            while (commandQueue.TryPeek(out string dummy)) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
 
-                        if (plusValue < minusValue)
-                            zeroYField = UShortSafeDec(zeroYField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
-
-                        break;
-
-                    case 2:
-                        SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
-                        plusField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MaxValue);
-                        minusField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldCheckRange, ushort.MinValue);
-
-                        SendCommand(String.Concat("#", UInt16ToStringBE(plusField)));
-                        lock (dataLock)
-                        {
-                            dataUpdated = false;
-                        }
-                        while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (dataLock)
-                        {
-                            plusValue = (double)lastDataPoint.ADCRAW;
-                        }
-
-                        SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
-                        lock (dataLock)
-                        {
-                            dataUpdated = false;
-                        }
-                        while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (dataLock)
-                        {
-                            minusValue = (double)lastDataPoint.ADCRAW;
-                        }
-
-                        if (plusValue > minusValue)
-                            zeroZField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
-
-                        if (plusValue < minusValue)
-                            zeroZField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
-
-                        break;
-
-                    default:
-                        break;
+            lock (stateLock)
+            {
+                currentState = State;
+                if (currentState == correctState)
+                {
+                    State = PediatricSoftConstants.SensorState.Idle;
                 }
+                else
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing was aborted or something failed. Returning.");
             }
 
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
@@ -1400,10 +1374,7 @@ namespace PediatricSoft
             double minusSum = 0;
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldZModulationAmplitude)));
-
-            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataSelector);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataSelectorZDemod)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorConfig.FieldZModulationAmplitude)));
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
 
