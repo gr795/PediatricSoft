@@ -20,10 +20,10 @@ namespace PediatricSoft
         {
             PediatricSensorData = PediatricSensorData.Instance;
 
-            ButtonScanPortsCommand = new DelegateCommand(PediatricSensorData.ScanPortsAsync, PediatricSensorData.ScanPortsAsyncCanExecute);
-            ButtonLockSensorsCommand = new DelegateCommand(PediatricSensorData.LockAllAsync, PediatricSensorData.LockAllAsyncCanExecute);
-            ButtonStartStopSensorsCommand = new DelegateCommand(PediatricSensorData.StartStopAsync, PediatricSensorData.StartStopAsyncCanExecute);
-            ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, PediatricSensorData.ZeroFieldsAsyncCanExecute);
+            ButtonScanPortsCommand = new DelegateCommand(PediatricSensorData.ScanPortsAsync, () => PediatricSensorData.CanScan);
+            ButtonLockSensorsCommand = new DelegateCommand(PediatricSensorData.LockAllAsync, () => PediatricSensorData.CanLock);
+            ButtonStartStopSensorsCommand = new DelegateCommand(PediatricSensorData.StartStopAsync, () => PediatricSensorData.CanStartStop);
+            ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, () => PediatricSensorData.CanZeroFields);
             CheckBoxSaveDataCommand = new DelegateCommand(CheckBoxSaveDataOnToggle);
             ButtonSendCommandsCommand = new DelegateCommand(ButtonSendCommandsOnClick);
 

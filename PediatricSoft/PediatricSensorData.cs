@@ -74,16 +74,12 @@ namespace PediatricSoft
             private set { canScan = value; RaisePropertyChanged(); }
         }
 
-        public bool ScanPortsAsyncCanExecute() { return CanScan; }
-
         private bool canLock = false;
         public bool CanLock
         {
             get { return DebugMode || canLock; }
             set { canLock = value; RaisePropertyChanged(); }
         }
-
-        public bool LockAllAsyncCanExecute() { return CanLock; }
 
         private bool canStartStop = false;
         public bool CanStartStop
@@ -92,16 +88,12 @@ namespace PediatricSoft
             set { canStartStop = value; RaisePropertyChanged(); }
         }
 
-        public bool StartStopAsyncCanExecute() { return CanStartStop; }
-
         private bool canZeroFields = false;
         public bool CanZeroFields
         {
             get { return DebugMode || canZeroFields; }
             set { canZeroFields = value; RaisePropertyChanged(); }
         }
-
-        public bool ZeroFieldsAsyncCanExecute() { return CanZeroFields; }
 
         private PediatricSoftConstants.DataSelect dataSelect = PediatricSoftConstants.DataSelect.ADC;
         public PediatricSoftConstants.DataSelect DataSelect
