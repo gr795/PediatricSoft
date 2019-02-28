@@ -205,6 +205,15 @@ namespace PediatricSoft
                     currentState = State;
                     canRun = true;
                 }
+                else
+                {
+                    if (PediatricSensorData.DebugMode)
+                    {
+                        State = PediatricSoftConstants.SensorState.Start;
+                        currentState = State;
+                        canRun = true;
+                    }
+                }
             }
 
             if (canRun)
@@ -514,7 +523,7 @@ namespace PediatricSoft
                                         PediatricSoftConstants.ConversionTime * BitConverter.ToInt32(data, 12),
                                         PediatricSoftConstants.ConversionADC * BitConverter.ToInt32(data, 8),
                                         CalibrationBzDemod * BitConverter.ToInt32(data, 4),
-                                        PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex * ( 0x8000 - BitConverter.ToInt32(data, 0) )
+                                        PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex * (0x8000 - BitConverter.ToInt32(data, 0))
                                     );
 
                                     DataQueue.Enqueue(lastDataPoint);
@@ -1336,8 +1345,8 @@ namespace PediatricSoft
                         zeroZField = zField;
 
                     }
-                    
-                } 
+
+                }
 
             }
 
