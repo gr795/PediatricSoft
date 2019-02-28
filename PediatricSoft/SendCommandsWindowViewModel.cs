@@ -18,6 +18,7 @@ namespace PediatricSoft
         public DelegateCommand<object> TextBoxCommandStringKeyDownCommand { get; private set; }
         public DelegateCommand<object> TextBoxCommandStringKeyUpCommand { get; private set; }
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
+        public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
 
         public string TextBoxCommandStringText { get; set; } = String.Empty;
         public string[] CommandHistory
@@ -29,7 +30,7 @@ namespace PediatricSoft
                     string[] result = CurrentSensor.CommandHistory.ToArray();
                     Array.Reverse(result);
                     return result;
-                }   
+                }
                 else
                     return new string[] { string.Empty };
             }
@@ -212,6 +213,7 @@ namespace PediatricSoft
             TextBoxCommandStringKeyDownCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyDown);
             TextBoxCommandStringKeyUpCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyUp);
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
+            ButtonSendSetupCommandsCommand = new DelegateCommand(ButtonSendSetupCommandsOnClick, () => PediatricSensorData.DebugMode);
         }
 
         private void ComboBoxCommandOnSelectionChanged()
@@ -318,6 +320,11 @@ namespace PediatricSoft
                     RaisePropertyChanged("CommandHistory");
                     break;
             }
+        }
+
+        private void ButtonSendSetupCommandsOnClick()
+        {
+            if (CurrentSensor != null) CurrentSensor.SendCommandsSetup();
         }
 
     }

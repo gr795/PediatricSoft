@@ -891,7 +891,7 @@ namespace PediatricSoft
             pediatricSensorConfigOnLoad = pediatricSensorConfig.GetValueCopy();
         }
 
-        private void SendCommandsSetup()
+        public void SendCommandsSetup()
         {
             SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockDisable)));
