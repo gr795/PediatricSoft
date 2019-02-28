@@ -41,6 +41,25 @@ namespace PediatricSoft
 
         public ObservableCollection<PediatricSensor> Sensors { get { return PediatricSensorData.Sensors; } }
 
+        public bool CheckBoxDebugModeIsEnabled { get; private set; } = true;
+
+        public bool CheckBoxDebugModeIsChecked
+        {
+            get { return PediatricSensorData.DebugMode; }
+            set
+            {
+                PediatricSensorData.DebugMode = value;
+                CheckBoxDebugModeIsEnabled = false;
+
+                RaisePropertyChanged("");
+
+                ButtonScanPortsCommand.RaiseCanExecuteChanged();
+                ButtonLockSensorsCommand.RaiseCanExecuteChanged();
+                ButtonStartStopSensorsCommand.RaiseCanExecuteChanged();
+                ButtonZeroFieldsCommand.RaiseCanExecuteChanged();
+            }
+        }
+
         public bool ButtonSendCommandsIsEnabled
         {
             get { return PediatricSensorData.CanSendCommands; }
@@ -49,7 +68,7 @@ namespace PediatricSoft
         private bool checkBoxSaveDataIsEnabled = false;
         public bool CheckBoxSaveDataIsEnabled
         {
-            get { return checkBoxSaveDataIsEnabled; }
+            get { return PediatricSensorData.DebugMode || checkBoxSaveDataIsEnabled; }
             private set { checkBoxSaveDataIsEnabled = value; RaisePropertyChanged(); }
         }
 
@@ -62,7 +81,7 @@ namespace PediatricSoft
         private bool checkBoxSaveRAWValuesIsEnabled = false;
         public bool CheckBoxSaveRAWValuesIsEnabled
         {
-            get { return checkBoxSaveRAWValuesIsEnabled; }
+            get { return PediatricSensorData.DebugMode || checkBoxSaveRAWValuesIsEnabled; }
             private set { checkBoxSaveRAWValuesIsEnabled = value; RaisePropertyChanged(); }
         }
 
@@ -75,7 +94,7 @@ namespace PediatricSoft
         private bool textBlockSaveSuffixIsEnabled = false;
         public bool TextBlockSaveSuffixIsEnabled
         {
-            get { return textBlockSaveSuffixIsEnabled; }
+            get { return PediatricSensorData.DebugMode || textBlockSaveSuffixIsEnabled; }
             private set { textBlockSaveSuffixIsEnabled = value; RaisePropertyChanged(); }
         }
 
@@ -212,6 +231,11 @@ namespace PediatricSoft
 
                 case "CanScan":
                     ButtonScanPortsCommand.RaiseCanExecuteChanged();
+                    if (CheckBoxDebugModeIsEnabled)
+                    {
+                        CheckBoxDebugModeIsEnabled = false;
+                        RaisePropertyChanged("CheckBoxDebugModeIsEnabled");
+                    }
                     break;
 
                 case "CanLock":

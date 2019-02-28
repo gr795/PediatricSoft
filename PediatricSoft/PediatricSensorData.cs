@@ -63,14 +63,14 @@ namespace PediatricSoft
         private bool canSendCommands = false;
         public bool CanSendCommands
         {
-            get { return canSendCommands; }
+            get { return DebugMode || canSendCommands; }
             private set { canSendCommands = value; RaisePropertyChanged(); }
         }
 
         private bool canScan = true;
         public bool CanScan
         {
-            get { return canScan; }
+            get { return DebugMode || canScan; }
             private set { canScan = value; RaisePropertyChanged(); }
         }
 
@@ -79,7 +79,7 @@ namespace PediatricSoft
         private bool canLock = false;
         public bool CanLock
         {
-            get { return canLock; }
+            get { return DebugMode || canLock; }
             set { canLock = value; RaisePropertyChanged(); }
         }
 
@@ -88,7 +88,7 @@ namespace PediatricSoft
         private bool canStartStop = false;
         public bool CanStartStop
         {
-            get { return canStartStop; }
+            get { return DebugMode || canStartStop; }
             set { canStartStop = value; RaisePropertyChanged(); }
         }
 
@@ -97,7 +97,7 @@ namespace PediatricSoft
         private bool canZeroFields = false;
         public bool CanZeroFields
         {
-            get { return canZeroFields; }
+            get { return DebugMode || canZeroFields; }
             set { canZeroFields = value; RaisePropertyChanged(); }
         }
 

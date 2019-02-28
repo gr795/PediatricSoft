@@ -29,6 +29,14 @@
                 DockPanel.Dock="Right"
                 Orientation="Vertical">
 
+                <CheckBox
+                    Margin="0,0,0,10"
+                    VerticalAlignment="Center"
+                    IsEnabled="{Binding CheckBoxDebugModeIsEnabled}"
+                    IsChecked="{Binding CheckBoxDebugModeIsChecked}"
+                    Content="Debug Mode">
+                </CheckBox>
+
                 <Button
                     Name="ButtonScanPorts"
                     Margin="0,0,0,10"
@@ -36,13 +44,6 @@
                     Command="{Binding ButtonScanPortsCommand}"
                     Content="Scan Ports">
                 </Button>
-
-                <CheckBox
-                    Margin="0,0,0,10"
-                    VerticalAlignment="Center"
-                    IsEnabled="False"
-                    Content="Debug Mode">
-                </CheckBox>
 
                 <TextBlock
                     Name="TextBlockSensorCount"
@@ -88,19 +89,19 @@
                     Margin="0,0,0,5"
                     Text="Data select">
                 </TextBlock>
-                
+
                 <RadioButton
                     Margin="20,0,0,5"
                     Content="ADC"
                     IsChecked="{Binding RadioButtonDataSelectADCIsChecked}">
                 </RadioButton>
-                
+
                 <RadioButton
                     Margin="20,0,0,5"
                     Content="Open loop"
                     IsChecked="{Binding RadioButtonDataSelectOpenLoopIsChecked}">
                 </RadioButton>
-                
+
                 <RadioButton
                     Margin="20,0,0,10"
                     Content="Closed loop"
