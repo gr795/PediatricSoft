@@ -130,6 +130,9 @@ namespace PediatricSoft
         public const string SensorCommandADCDisplayGain = "@23";
         public const ushort SensorDefaultADCDisplayGain = 0x0009;
 
+        public const string SensorCommandStepSize = "@24";
+        public const ushort SensorDefaultStepSize = 0x0010;
+
         public const string SensorCommand2fPhase = "@26";
         public const ushort SensorDefault2fPhase = 0x0697;
 

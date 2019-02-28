@@ -31,7 +31,7 @@ namespace PediatricSoft
         private readonly Object dataLock = new Object();
 
         private int sensorADCColdValueRaw;
-        private double sensorZDemodCalibration = 1;
+        private double CalibrationBzDemod = 0;
         private ushort zeroXField = PediatricSoftConstants.SensorColdFieldXOffset;
         private ushort zeroYField = PediatricSoftConstants.SensorColdFieldYOffset;
         private ushort zeroZField = PediatricSoftConstants.SensorColdFieldZOffset;
@@ -513,8 +513,8 @@ namespace PediatricSoft
                                         BitConverter.ToInt32(data, 0), // BzError
                                         PediatricSoftConstants.ConversionTime * BitConverter.ToInt32(data, 12),
                                         PediatricSoftConstants.ConversionADC * BitConverter.ToInt32(data, 8),
-                                        BitConverter.ToInt32(data, 4),
-                                        BitConverter.ToInt32(data, 0)
+                                        CalibrationBzDemod * BitConverter.ToInt32(data, 4),
+                                        PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex * ( 0x8000 - BitConverter.ToInt32(data, 0) )
                                     );
 
                                     DataQueue.Enqueue(lastDataPoint);
@@ -953,6 +953,9 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandADCDisplayGain);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultADCDisplayGain)));
 
+            SendCommand(PediatricSoftConstants.SensorCommandStepSize);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultStepSize)));
+
             SendCommand(PediatricSoftConstants.SensorCommand2fPhase);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefault2fPhase)));
 
@@ -1292,9 +1295,6 @@ namespace PediatricSoft
             {
                 for (ushort zField = ushort.MinValue; zField < ushort.MaxValue; zField = UShortSafeInc(zField, fieldStep, ushort.MaxValue))
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Current Y-Field = {yField}");
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Current Z-Field = {zField}");
-
                     SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
                     SendCommand(String.Concat("#", UInt16ToStringBE(yField)));
 
@@ -1347,17 +1347,25 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)));
 
-            while (commandQueue.TryPeek(out string dummy)) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+            while (commandQueue.TryPeek(out string dummy))
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                if (State != correctState)
+                {
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                    return;
+                }
+            }
 
             lock (stateLock)
             {
                 currentState = State;
                 if (currentState == correctState)
                 {
-                    State = PediatricSoftConstants.SensorState.Idle;
+                    State++;
                 }
                 else
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing was aborted or something failed. Returning.");
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
             }
 
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Field zeroing done");
@@ -1366,6 +1374,15 @@ namespace PediatricSoft
         private void SendCommandsCalibrateMagnetometer()
         {
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Begin calibration");
+
+            PediatricSoftConstants.SensorState currentState;
+            PediatricSoftConstants.SensorState correctState;
+
+            lock (stateLock)
+            {
+                currentState = State;
+                correctState = State;
+            }
 
             ushort plusField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
             ushort minusField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
@@ -1381,39 +1398,103 @@ namespace PediatricSoft
             for (int i = 0; i < PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps; i++)
             {
                 SendCommand(String.Concat("#", UInt16ToStringBE(plusField)));
+
+                while (commandQueue.TryPeek(out string dummy))
+                {
+                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    if (State != correctState)
+                    {
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                        return;
+                    }
+                }
+
                 lock (dataLock)
                 {
                     dataUpdated = false;
                 }
-                while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+
+                while (!dataUpdated)
+                {
+                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    if (State != correctState)
+                    {
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                        return;
+                    }
+                }
+
                 lock (dataLock)
                 {
-                    plusSum += (double)lastDataPoint.ADCRAW;
+                    plusSum += (double)lastDataPoint.BzDemodRAW;
                 }
 
                 SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
+
+                while (commandQueue.TryPeek(out string dummy))
+                {
+                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    if (State != correctState)
+                    {
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                        return;
+                    }
+                }
+
                 lock (dataLock)
                 {
                     dataUpdated = false;
                 }
-                while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+
+                while (!dataUpdated)
+                {
+                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    if (State != correctState)
+                    {
+                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                        return;
+                    }
+                }
+
                 lock (dataLock)
                 {
-                    minusSum += (double)lastDataPoint.ADCRAW;
+                    minusSum += (double)lastDataPoint.BzDemodRAW;
                 }
 
             }
 
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)));
-            sensorZDemodCalibration = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep);
+
+            while (commandQueue.TryPeek(out string dummy))
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                if (State != correctState)
+                {
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+                    return;
+                }
+            }
+
+            CalibrationBzDemod = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep);
 
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta sum {(plusSum - minusSum)}");
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of averages {PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response delta {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Number of hex steps {2 * PediatricSoftConstants.SensorFieldStep}");
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Response per hex step {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: ZDemod calibration {sensorZDemodCalibration}");
+            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: ZDemod calibration {CalibrationBzDemod}");
             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Calibration done");
+
+            lock (stateLock)
+            {
+                currentState = State;
+                if (currentState == correctState)
+                {
+                    State++;
+                }
+                else
+                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN} on port {Port}: Procedure was aborted or something failed. Returning.");
+            }
         }
 
         public void Dispose()
