@@ -11,7 +11,7 @@ namespace PediatricSoft
     {
 
         // Fields
-        
+
         private PediatricSensorData PediatricSensorData;
 
         // Constructors
@@ -170,6 +170,11 @@ namespace PediatricSoft
             }
         }
 
+        public bool RadioButtonDataSelectIsEnabled
+        {
+            get { return PediatricSensorData.DebugMode || (!PediatricSensorData.IsRunning && PediatricSensorData.CanStartStop); }
+        }
+
         // Methods
 
         private void CheckBoxSaveDataOnToggle()
@@ -244,6 +249,7 @@ namespace PediatricSoft
 
                 case "CanStartStop":
                     ButtonStartStopSensorsCommand.RaiseCanExecuteChanged();
+                    RaisePropertyChanged("RadioButtonDataSelectIsEnabled");
                     if (PediatricSensorData.CanStartStop)
                         if (PediatricSensorData.IsRunning)
                         {

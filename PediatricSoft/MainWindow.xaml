@@ -93,18 +93,21 @@
                 <RadioButton
                     Margin="20,0,0,5"
                     Content="ADC"
+                    IsEnabled="{Binding RadioButtonDataSelectIsEnabled}"
                     IsChecked="{Binding RadioButtonDataSelectADCIsChecked}">
                 </RadioButton>
 
                 <RadioButton
                     Margin="20,0,0,5"
                     Content="Open loop"
+                    IsEnabled="{Binding RadioButtonDataSelectIsEnabled}"
                     IsChecked="{Binding RadioButtonDataSelectOpenLoopIsChecked}">
                 </RadioButton>
 
                 <RadioButton
                     Margin="20,0,0,10"
                     Content="Closed loop"
+                    IsEnabled="{Binding RadioButtonDataSelectIsEnabled}"
                     IsChecked="{Binding RadioButtonDataSelectClosedLoopIsChecked}">
                 </RadioButton>
 
