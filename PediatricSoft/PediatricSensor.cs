@@ -30,7 +30,7 @@ namespace PediatricSoft
         private readonly Object stateLock = new Object();
         private readonly Object dataLock = new Object();
 
-        private int sensorADCColdValueRaw;
+        private double coldSensorADCValue = 0;
         private double CalibrationBzDemod = 0;
         private ushort zeroXField = PediatricSoftConstants.SensorColdFieldXOffset;
         private ushort zeroYField = PediatricSoftConstants.SensorColdFieldYOffset;
@@ -78,6 +78,15 @@ namespace PediatricSoft
         public ConcurrentQueue<string> CommandHistory
         {
             get { return commandHistory; }
+        }
+
+        public string Transmission
+        {
+            get
+            {
+                double result = Math.Round(1000 * lastDataPoint.ADC / coldSensorADCValue) / 10;
+                return string.Concat(result.ToString(), "%");
+            }
         }
 
         public int LastValueRAW
@@ -1004,11 +1013,10 @@ namespace PediatricSoft
 
             // Record the ADC value
             while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-            sensorADCColdValueRaw = lastDataPoint.ADCRAW;
+            coldSensorADCValue = lastDataPoint.ADC;
 
-            // Here we check if we received non-zero value.
-            // If it is zero (default) - something is wrong and we fail.
-            if (sensorADCColdValueRaw == 0)
+            // Here we check if the laser is working as expected
+            if (coldSensorADCValue < PediatricSoftConstants.SensorADCColdValueLowGainMinVolts)
             {
                 State = PediatricSoftConstants.SensorState.Failed;
                 return;
@@ -1050,7 +1058,7 @@ namespace PediatricSoft
                 // See if the threshold was reached
                 lock (dataLock)
                 {
-                    transmission = (double)DataQueue.Select(x => x.ADCRAW).ToArray().Min() / sensorADCColdValueRaw;
+                    transmission = DataQueue.Select(x => x.ADC).ToArray().Min() / coldSensorADCValue;
                 }
 
                 if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
@@ -1130,7 +1138,7 @@ namespace PediatricSoft
                 while (laserHeat < PediatricSoftConstants.SensorMaxLaserHeat)
                 {
                     while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    transmission = (double)lastDataPoint.ADCRAW / sensorADCColdValueRaw;
+                    transmission = lastDataPoint.ADC / coldSensorADCValue;
 
                     if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionStep)
                     {
@@ -1198,14 +1206,16 @@ namespace PediatricSoft
                 correctState = State;
             }
 
-            //SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndGain);
-            //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorData.SensorDigitalDataStreamingOnGainHigh)));
+            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOnGainHigh)));
+
+            coldSensorADCValue = coldSensorADCValue * 50 / 15.5;
 
             SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
+            //SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+            //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
 
             lock (stateLock)
             {
@@ -1240,7 +1250,7 @@ namespace PediatricSoft
                 Thread.Sleep(PediatricSoftConstants.SensorLaserHeatStepSleepTime);
                 lock (dataLock)
                 {
-                    transmission = (double)lastDataPoint.ADCRAW / sensorADCColdValueRaw;
+                    transmission = lastDataPoint.ADC / coldSensorADCValue;
                 }
                 lock (stateLock)
                 {
@@ -1559,6 +1569,7 @@ namespace PediatricSoft
         {
             RaisePropertyChanged("LastValueRAW");
             RaisePropertyChanged("LastValue");
+            RaisePropertyChanged("Transmission");
         }
 
     }

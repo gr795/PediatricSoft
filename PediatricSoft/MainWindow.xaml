@@ -162,6 +162,8 @@
 
                         <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
 
+                        <GridViewColumn Header="Transmission" DisplayMemberBinding="{Binding Transmission}"/>
+
                         <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValueRAW}"/>
 
                         <GridViewColumn Header="Value" DisplayMemberBinding="{Binding LastValue}"/>
