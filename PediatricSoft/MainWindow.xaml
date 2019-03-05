@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800" MinHeight="600" MinWidth="800">
+        Title="MainWindow" Height="600" Width="810" MinHeight="600" MinWidth="810">
 
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -171,17 +171,35 @@
 
                     <GridView>
 
-                        <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}"/>
+                        <GridViewColumn
+                            Header="Port"
+                            Width="60"
+                            DisplayMemberBinding="{Binding Port}"/>
 
-                        <GridViewColumn Header="S/N" DisplayMemberBinding="{Binding SN}"/>
+                        <GridViewColumn
+                            Width="80"
+                            Header="S/N"
+                            DisplayMemberBinding="{Binding SN}"/>
 
-                        <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
+                        <GridViewColumn
+                            Header="State"
+                            Width="150"
+                            DisplayMemberBinding="{Binding State}"/>
 
-                        <GridViewColumn Header="Transmission" DisplayMemberBinding="{Binding Transmission}"/>
+                        <GridViewColumn
+                            Header="Transmission"
+                            Width="75"
+                            DisplayMemberBinding="{Binding Transmission}"/>
 
-                        <GridViewColumn Header="Value RAW" DisplayMemberBinding="{Binding LastValueRAW}"/>
+                        <GridViewColumn
+                            Header="Value RAW"
+                            Width="100"
+                            DisplayMemberBinding="{Binding LastValueRAW}"/>
 
-                        <GridViewColumn Header="Value" DisplayMemberBinding="{Binding LastValue}"/>
+                        <GridViewColumn
+                            Header="Value"
+                            Width="50"
+                            DisplayMemberBinding="{Binding LastValueDisplay}"/>
 
                         <GridViewColumn Header="Plot">
                             <GridViewColumn.CellTemplate>

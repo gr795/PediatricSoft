@@ -128,7 +128,7 @@ namespace PediatricSoft
                             sensor.Dispose();
                             while (!sensor.IsDisposed)
                                 Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                            Sensors.Remove(sensor);
+                            App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
                         }
                     };
 

@@ -110,6 +110,11 @@ namespace PediatricSoft
             }
         }
 
+        public double LastValueDisplay
+        {
+            get { return Math.Round(LastValue, 3, MidpointRounding.AwayFromZero); }
+        }
+
         public double LastValue
         {
             get
@@ -1571,7 +1576,7 @@ namespace PediatricSoft
         private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
         {
             RaisePropertyChanged("LastValueRAW");
-            RaisePropertyChanged("LastValue");
+            RaisePropertyChanged("LastValueDisplay");
             RaisePropertyChanged("Transmission");
         }
 
