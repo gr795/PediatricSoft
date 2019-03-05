@@ -111,14 +111,29 @@
                     IsChecked="{Binding RadioButtonDataSelectClosedLoopIsChecked}">
                 </RadioButton>
 
-                <CheckBox
+                <StackPanel
+                    Orientation="Horizontal"
+                    Margin="0,0,0,10">
+
+                    <CheckBox
                     Name="CheckBoxSaveData"
-                    Margin="0,0,0,10"
                     IsEnabled="{Binding CheckBoxSaveDataIsEnabled}"
                     IsChecked="{Binding CheckBoxSaveDataIsChecked}"
                     Command="{Binding CheckBoxSaveDataCommand}"
-                    Content="Save Data">
-                </CheckBox>
+                    Content="Save Data"
+                    VerticalAlignment="Center">
+                    </CheckBox>
+
+                    <Button
+                        Margin="10,0"
+                        Content="Folder.."
+                        Width="50"
+                        IsEnabled="{Binding CheckBoxSaveDataIsEnabled}"
+                        Command="{Binding ButtonChooseSaveDataFolderCommand}">
+                    </Button>
+
+
+                </StackPanel>
 
                 <TextBlock
                     Name="TextBlockSaveFolder"

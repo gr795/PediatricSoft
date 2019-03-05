@@ -26,6 +26,7 @@ namespace PediatricSoft
             ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, () => PediatricSensorData.CanZeroFields);
             CheckBoxSaveDataCommand = new DelegateCommand(CheckBoxSaveDataOnToggle);
             ButtonSendCommandsCommand = new DelegateCommand(ButtonSendCommandsOnClick);
+            ButtonChooseSaveDataFolderCommand = new DelegateCommand(ChooseSaveDataFolder);
 
             PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
         }
@@ -38,6 +39,7 @@ namespace PediatricSoft
         public DelegateCommand ButtonZeroFieldsCommand { get; private set; }
         public DelegateCommand CheckBoxSaveDataCommand { get; private set; }
         public DelegateCommand ButtonSendCommandsCommand { get; private set; }
+        public DelegateCommand ButtonChooseSaveDataFolderCommand { get; private set; }
 
         public ObservableCollection<PediatricSensor> Sensors { get { return PediatricSensorData.Sensors; } }
 
@@ -206,7 +208,8 @@ namespace PediatricSoft
                     TextBlockSaveFolderText = dialog.SelectedPath;
                     Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Main Window View Model: Save Data Folder: {TextBlockSaveFolderText}");
                 }
-                else CheckBoxSaveDataIsChecked = false;
+                else
+                    if (string.IsNullOrEmpty(TextBlockSaveFolderText)) CheckBoxSaveDataIsChecked = false;
             }
         }
 

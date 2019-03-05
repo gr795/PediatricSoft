@@ -188,8 +188,8 @@ namespace PediatricSoft
             }
 
             if (canRun)
-                while (currentState != PediatricSoftConstants.SensorState.LaserLockDone ||
-                       currentState == PediatricSoftConstants.SensorState.Failed)
+                while (currentState != PediatricSoftConstants.SensorState.LaserLockDone &&
+                       currentState != PediatricSoftConstants.SensorState.Failed)
                 {
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                     lock (stateLock)
@@ -226,7 +226,8 @@ namespace PediatricSoft
             }
 
             if (canRun)
-                while (currentState != PediatricSoftConstants.SensorState.Run || currentState == PediatricSoftConstants.SensorState.Failed)
+                while (currentState != PediatricSoftConstants.SensorState.Run &&
+                       currentState != PediatricSoftConstants.SensorState.Failed)
                 {
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                     lock (stateLock)
@@ -250,7 +251,8 @@ namespace PediatricSoft
             }
 
             if (currentState == PediatricSoftConstants.SensorState.Run)
-                while (currentState != PediatricSoftConstants.SensorState.Idle || currentState == PediatricSoftConstants.SensorState.Failed)
+                while (currentState != PediatricSoftConstants.SensorState.Idle &&
+                       currentState != PediatricSoftConstants.SensorState.Failed)
                 {
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                     lock (stateLock)
@@ -279,7 +281,8 @@ namespace PediatricSoft
             }
 
             if (canRun)
-                while (currentState != PediatricSoftConstants.SensorState.Idle || currentState == PediatricSoftConstants.SensorState.Failed)
+                while (currentState != PediatricSoftConstants.SensorState.Idle &&
+                       currentState != PediatricSoftConstants.SensorState.Failed)
                 {
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                     lock (stateLock)
