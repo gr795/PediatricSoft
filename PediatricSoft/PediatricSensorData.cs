@@ -1,6 +1,7 @@
 ﻿using FTD2XX_NET;
 using Prism.Mvvm;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -119,24 +120,34 @@ namespace PediatricSoft
                     CanZeroFields = false;
                     CanSendCommands = false;
 
-                    Parallel.ForEach(Sensors, sensor =>
+                    // Remove all failed sensors
+                    foreach (PediatricSensor sensor in Sensors)
                     {
                         if (sensor.State == PediatricSoftConstants.SensorState.Failed)
-                            App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
-                    });
+                            Sensors.Remove(sensor);
+                    };
 
-                    Parallel.ForEach(GetPotentialSensorSerialNumbers(), serial =>
+                    string[] potentialSensorSerialNumbers = GetPotentialSensorSerialNumbers();
+                    string[] currentSensorSerialNumbers = Sensors.Select(x => x.SN).ToArray();
+
+                    // Try to add all potential sensors that are not on the list currently
+                    Parallel.ForEach(potentialSensorSerialNumbers, serial =>
                      {
-                         PediatricSensor sensor = new PediatricSensor(serial);
-                         if (sensor.IsValid)
+                         if (!currentSensorSerialNumbers.Contains(serial))
                          {
-                             sensor.KickOffTasks();
-                             App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                             PediatricSensor sensor = new PediatricSensor(serial);
+                             if (sensor.IsValid)
+                             {
+                                 sensor.KickOffTasks();
+                                 App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                             }
+                             else
+                                 while (!sensor.IsDisposed)
+                                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                             RaisePropertyChanged("SensorCount");
                          }
                          else
-                             while (!sensor.IsDisposed)
-                                 Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                         RaisePropertyChanged("SensorCount");
+                             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor with serial number {serial} is already on the list - skipping");
                      });
 
                     if (Sensors.Count > 0)
