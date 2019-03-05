@@ -124,7 +124,12 @@ namespace PediatricSoft
                     foreach (PediatricSensor sensor in Sensors)
                     {
                         if (sensor.State == PediatricSoftConstants.SensorState.Failed)
+                        {
+                            sensor.Dispose();
+                            while (!sensor.IsDisposed)
+                                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                             Sensors.Remove(sensor);
+                        }
                     };
 
                     string[] potentialSensorSerialNumbers = GetPotentialSensorSerialNumbers();
