@@ -4,6 +4,10 @@ namespace PediatricSoft
 {
     public class PediatricSensorConfig
     {
+        public ushort Chassis { get; set; }
+        public ushort Port { get; set; }
+        public ushort Head { get; set; }
+
         public ushort LaserCurrent { get; set; }
         public ushort FieldZModulationAmplitude { get; set; }
         public ushort DefaultCellHeat { get; set; }
@@ -12,6 +16,10 @@ namespace PediatricSoft
 
         public PediatricSensorConfig()
         {
+            Chassis = 0;
+            Port = 0;
+            Head = 0;
+
             LaserCurrent = PediatricSoftConstants.SensorDefaultLaserCurrent;
             FieldZModulationAmplitude = PediatricSoftConstants.SensorDefaultFieldZModulationAmplitude;
             DefaultCellHeat = PediatricSoftConstants.SensorDefaultCellHeat;

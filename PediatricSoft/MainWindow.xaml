@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="860" MinHeight="600" MinWidth="860">
+        Title="MainWindow" Height="600" Width="950" MinHeight="600" MinWidth="950">
 
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -165,36 +165,50 @@
 
             <ListView
                 Margin="10"
-                ItemsSource="{Binding Path=Sensors}">
+                ItemsSource="{Binding Sensors}">
 
                 <ListView.View>
 
                     <GridView>
 
                         <GridViewColumn
-                            Header="Port"
-                            Width="60"
-                            DisplayMemberBinding="{Binding Port}"/>
+                            Header="Chassis #"
+                            DisplayMemberBinding="{Binding Chassis}">
+                        </GridViewColumn>
+
+                        <GridViewColumn
+                            Header="Port #"
+                            DisplayMemberBinding="{Binding Port}">
+                        </GridViewColumn>
+
+                        <GridViewColumn
+                            Header="Head #"
+                            DisplayMemberBinding="{Binding Head}">
+                        </GridViewColumn>
 
                         <GridViewColumn
                             Width="80"
                             Header="S/N"
-                            DisplayMemberBinding="{Binding SN}"/>
+                            DisplayMemberBinding="{Binding SN}">
+                        </GridViewColumn>
 
                         <GridViewColumn
                             Header="State"
                             Width="150"
-                            DisplayMemberBinding="{Binding State}"/>
+                            DisplayMemberBinding="{Binding State}">
+                        </GridViewColumn>
 
                         <GridViewColumn
                             Header="Transmission"
                             Width="75"
-                            DisplayMemberBinding="{Binding Transmission}"/>
+                            DisplayMemberBinding="{Binding Transmission}">
+                        </GridViewColumn>
 
                         <GridViewColumn
                             Header="Value RAW"
                             Width="100"
-                            DisplayMemberBinding="{Binding LastValueRAW}"/>
+                            DisplayMemberBinding="{Binding LastValueRAW}">
+                        </GridViewColumn>
 
                         <GridViewColumn
                             Header="Value"
