@@ -121,39 +121,39 @@ namespace PediatricSoft
                     CanSendCommands = false;
 
                     // Remove all failed sensors
-                    foreach (PediatricSensor sensor in Sensors)
-                    {
-                        if (sensor.State == PediatricSoftConstants.SensorState.Failed)
+                    Parallel.ForEach(Sensors, sensor =>
                         {
-                            sensor.Dispose();
-                            while (!sensor.IsDisposed)
-                                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                            App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
-                        }
-                    };
+                            if (sensor.State == PediatricSoftConstants.SensorState.Failed)
+                            {
+                                sensor.Dispose();
+                                while (!sensor.IsDisposed)
+                                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                                App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
+                            }
+                        });
 
                     string[] potentialSensorSerialNumbers = GetPotentialSensorSerialNumbers();
                     string[] currentSensorSerialNumbers = Sensors.Select(x => x.SN).ToArray();
 
                     // Try to add all potential sensors that are not on the list currently
                     Parallel.ForEach(potentialSensorSerialNumbers, serial =>
-                     {
-                         if (!currentSensorSerialNumbers.Contains(serial))
-                         {
-                             PediatricSensor sensor = new PediatricSensor(serial);
-                             if (sensor.IsValid)
-                             {
-                                 sensor.KickOffTasks();
-                                 App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
-                             }
-                             else
-                                 while (!sensor.IsDisposed)
-                                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                             RaisePropertyChanged("SensorCount");
-                         }
-                         else
-                             Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor with serial number {serial} is already on the list - skipping");
-                     });
+                    {
+                        if (!currentSensorSerialNumbers.Contains(serial))
+                        {
+                            PediatricSensor sensor = new PediatricSensor(serial);
+                            if (sensor.IsValid)
+                            {
+                                sensor.KickOffTasks();
+                                App.Current.Dispatcher.Invoke(() => Sensors.Add(sensor));
+                            }
+                            else
+                                while (!sensor.IsDisposed)
+                                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                            RaisePropertyChanged("SensorCount");
+                        }
+                        else
+                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor with serial number {serial} is already on the list - skipping");
+                    });
 
                     if (Sensors.Count > 0)
                     {
