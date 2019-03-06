@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="810" MinHeight="600" MinWidth="810">
+        Title="MainWindow" Height="600" Width="860" MinHeight="600" MinWidth="860">
 
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -198,8 +198,16 @@
 
                         <GridViewColumn
                             Header="Value"
-                            Width="50"
-                            DisplayMemberBinding="{Binding LastValueDisplay}"/>
+                            Width="100">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        Text="{Binding LastValueDisplay}"
+                                        FontSize="14"
+                                        FontFamily="Courier New"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
 
                         <GridViewColumn Header="Plot">
                             <GridViewColumn.CellTemplate>

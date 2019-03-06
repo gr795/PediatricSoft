@@ -110,9 +110,25 @@ namespace PediatricSoft
             }
         }
 
-        public double LastValueDisplay
+        public string LastValueDisplay
         {
-            get { return Math.Round(LastValue, 3, MidpointRounding.AwayFromZero); }
+            get
+            {
+                switch (PediatricSensorData.DataSelect)
+                {
+                    case PediatricSoftConstants.DataSelect.ADC:
+                        return Math.Round(lastDataPoint.ADC, 3, MidpointRounding.AwayFromZero).ToString();
+
+                    case PediatricSoftConstants.DataSelect.OpenLoop:
+                        return lastDataPoint.BzDemod.ToString("+0.000E+00;-0.000E+00");
+
+                    case PediatricSoftConstants.DataSelect.ClosedLoop:
+                        return lastDataPoint.BzError.ToString("+0.000E+00;-0.000E+00");
+
+                    default:
+                        return "";
+                }
+            }
         }
 
         public double LastValue
