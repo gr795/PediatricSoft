@@ -3,7 +3,6 @@ using Prism.Mvvm;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Timers;
 using System.Windows.Forms;
 
@@ -39,6 +38,16 @@ namespace PediatricSoft
         }
 
         // Properties
+        public string WindowTitle
+        {
+            get
+            {
+                if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+                    return $"PediatricSoft {System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString(4)}";
+                else
+                    return "PediatricSoft";
+            }
+        }
 
         public DelegateCommand ButtonScanPortsCommand { get; private set; }
         public DelegateCommand ButtonLockSensorsCommand { get; private set; }
