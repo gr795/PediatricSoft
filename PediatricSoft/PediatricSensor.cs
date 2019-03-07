@@ -4,7 +4,6 @@ using Prism.Mvvm;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -70,7 +69,7 @@ namespace PediatricSoft
             {
                 state = value;
                 RaisePropertyChanged();
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Entering state {value}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Entering state {value}");
             }
         }
 
@@ -322,7 +321,7 @@ namespace PediatricSoft
 
             if (!String.IsNullOrEmpty(command))
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Sending command \"{command}\"");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Sending command \"{command}\"");
                 commandQueue.Enqueue(command + "\n");
                 CommandHistory.Enqueue(command);
                 RaisePropertyChanged("CommandHistory");
@@ -391,7 +390,7 @@ namespace PediatricSoft
 
                 int plotCounter = 0;
 
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Streaming starting");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Streaming starting");
 
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
                 {
@@ -405,7 +404,7 @@ namespace PediatricSoft
                             {
                                 State = PediatricSoftConstants.SensorState.Failed;
                             }
-                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to write to FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                             break;
                         }
                     }
@@ -419,7 +418,7 @@ namespace PediatricSoft
                         {
                             State = PediatricSoftConstants.SensorState.Failed;
                         }
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                         break;
                     }
 
@@ -439,7 +438,7 @@ namespace PediatricSoft
                         {
                             State = PediatricSoftConstants.SensorState.Failed;
                         }
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to read in the Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to read in the Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                         break;
                     }
 
@@ -528,7 +527,7 @@ namespace PediatricSoft
                             if (infoIndex == PediatricSoftConstants.InfoBlockSize)
                             {
                                 string infoMessage = System.Text.Encoding.ASCII.GetString(info);
-                                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Info message: {infoMessage}");
+                                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Info message: {infoMessage}");
                                 CommandHistory.Enqueue(infoMessage);
                                 RaisePropertyChanged("CommandHistory");
                                 lock (dataLock)
@@ -625,7 +624,7 @@ namespace PediatricSoft
 
                 }
 
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Streaming stoping");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Streaming stoping");
 
             });
         }
@@ -636,7 +635,7 @@ namespace PediatricSoft
             {
                 PediatricSoftConstants.SensorState currentState;
 
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: State handler: started");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: State handler: started");
 
                 lock (stateLock)
                 {
@@ -703,7 +702,7 @@ namespace PediatricSoft
                     }
                 }
 
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: State handler: exiting");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: State handler: exiting");
 
             });
         }
@@ -727,12 +726,12 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
 
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Opened FTDI device with S/N {SN}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Opened FTDI device with S/N {SN}");
 
             // Set Baud rate
             ftStatus = _FTDI.SetBaudRate(PediatricSoftConstants.SerialPortBaudRate);
@@ -742,7 +741,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -755,7 +754,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -768,7 +767,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -781,7 +780,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -794,7 +793,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to set latency on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to set latency on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -807,7 +806,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -823,7 +822,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to write to FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to write to FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -839,7 +838,7 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
@@ -852,14 +851,14 @@ namespace PediatricSoft
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
                 Dispose();
                 return;
             }
 
             if (numBytes > 0)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Valid");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Valid");
                 lock (stateLock)
                 {
                     State = PediatricSoftConstants.SensorState.Valid;
@@ -869,7 +868,7 @@ namespace PediatricSoft
             }
             else
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Didn't get a response from the board: not valid");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Didn't get a response from the board: not valid");
                 Dispose();
             }
         }
@@ -877,10 +876,10 @@ namespace PediatricSoft
         private void SaveConfig()
         {
             if (pediatricSensorConfig.Equals(pediatricSensorConfigOnLoad))
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Configuration not changed - not saving");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Configuration not changed - not saving");
             else
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Saving configuration");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Saving configuration");
 
                 TextWriter writer = null;
                 try
@@ -900,7 +899,7 @@ namespace PediatricSoft
 
         private void LoadConfig()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Loading configuration");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Loading configuration");
 
             TextReader reader = null;
             try
@@ -911,7 +910,7 @@ namespace PediatricSoft
             }
             catch (Exception)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Failed to load configuration - using defaults");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Failed to load configuration - using defaults");
                 pediatricSensorConfig = new PediatricSensorConfig();
             }
             finally
@@ -1051,14 +1050,14 @@ namespace PediatricSoft
 
             for (int i = 0; i < PediatricSoftConstants.MaxNumberOfLaserLockSweepCycles; i++)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Laser lock sweep cycle: {i}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Laser lock sweep cycle: {i}");
 
                 // Set the laser heater to the max value
                 SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
                 SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMaxLaserHeat)));
 
                 // Wait a bit
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
                 Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
 
                 // Set the laser heater to the min value
@@ -1066,7 +1065,7 @@ namespace PediatricSoft
                 SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMinLaserHeat)));
 
                 // Wait a bit
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
                 Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
 
                 // See if the threshold was reached
@@ -1077,8 +1076,8 @@ namespace PediatricSoft
 
                 if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Sweep cycle - found Rb resonance");
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Transmission on resonance: {transmission}");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Sweep cycle - found Rb resonance");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Transmission on resonance: {transmission}");
 
                     lock (stateLock)
                     {
@@ -1098,18 +1097,18 @@ namespace PediatricSoft
                         currentState = State;
                         if (currentState != correctState)
                         {
-                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
                             return;
                         }
                     }
                 }
 
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Didn't find Rb resonance, going to wait more");
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Minimal transmission {transmission} is higher than the target {PediatricSoftConstants.SensorTargetLaserTransmissionSweep}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Didn't find Rb resonance, going to wait more");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Minimal transmission {transmission} is higher than the target {PediatricSoftConstants.SensorTargetLaserTransmissionSweep}");
 
             }
 
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Didn't find Rb resonance, giving up");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Didn't find Rb resonance, giving up");
 
             // Fail
             lock (stateLock)
@@ -1147,7 +1146,7 @@ namespace PediatricSoft
 
             for (int i = 0; i < PediatricSoftConstants.MaxNumberOfLaserLockStepCycles; i++)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Laser lock step cycle: {i}");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Laser lock step cycle: {i}");
 
                 while (laserHeat < PediatricSoftConstants.SensorMaxLaserHeat)
                 {
@@ -1156,8 +1155,8 @@ namespace PediatricSoft
 
                     if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionStep)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Step cycle - found Rb resonance");
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Transmission on resonance: {transmission}");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Step cycle - found Rb resonance");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Transmission on resonance: {transmission}");
 
                         lock (stateLock)
                         {
@@ -1177,7 +1176,7 @@ namespace PediatricSoft
                             currentState = State;
                             if (currentState != correctState)
                             {
-                                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
                                 return;
                             }
                         }
@@ -1202,7 +1201,7 @@ namespace PediatricSoft
                 currentState = State;
                 if (currentState == correctState)
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: We saw Rb resonance, but the step cycle failed. Giving up");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: We saw Rb resonance, but the step cycle failed. Giving up");
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
             }
@@ -1239,7 +1238,7 @@ namespace PediatricSoft
                     State++;
                 }
                 else
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
             }
         }
 
@@ -1283,13 +1282,13 @@ namespace PediatricSoft
                     State++;
                 }
                 else
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
             }
         }
 
         private void SendCommandsZeroFields()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Begin field zeroing");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Begin field zeroing");
 
             PediatricSoftConstants.SensorState currentState;
             PediatricSoftConstants.SensorState correctState;
@@ -1339,7 +1338,7 @@ namespace PediatricSoft
                         Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         if (State != correctState)
                         {
-                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                             return;
                         }
                     }
@@ -1354,7 +1353,7 @@ namespace PediatricSoft
                         Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                         if (State != correctState)
                         {
-                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                             return;
                         }
                     }
@@ -1385,7 +1384,7 @@ namespace PediatricSoft
                 Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                 if (State != correctState)
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                     return;
                 }
             }
@@ -1398,15 +1397,15 @@ namespace PediatricSoft
                     State++;
                 }
                 else
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
             }
 
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Field zeroing done");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Field zeroing done");
         }
 
         private void SendCommandsCalibrateMagnetometer()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Begin calibration");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Begin calibration");
 
             PediatricSoftConstants.SensorState currentState;
             PediatricSoftConstants.SensorState correctState;
@@ -1437,7 +1436,7 @@ namespace PediatricSoft
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                     if (State != correctState)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                         return;
                     }
                 }
@@ -1452,7 +1451,7 @@ namespace PediatricSoft
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                     if (State != correctState)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                         return;
                     }
                 }
@@ -1469,7 +1468,7 @@ namespace PediatricSoft
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                     if (State != correctState)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                         return;
                     }
                 }
@@ -1484,7 +1483,7 @@ namespace PediatricSoft
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                     if (State != correctState)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                         return;
                     }
                 }
@@ -1503,20 +1502,21 @@ namespace PediatricSoft
                 Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                 if (State != correctState)
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                     return;
                 }
             }
 
             CalibrationBzDemod = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep);
 
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Response delta sum {(plusSum - minusSum)}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Number of averages {PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Response delta {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Number of hex steps {2 * PediatricSoftConstants.SensorFieldStep}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Response per hex step {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: ZDemod calibration {CalibrationBzDemod}");
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Calibration done");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Response delta sum {(plusSum - minusSum)}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Number of averages {PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Response delta {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Number of hex steps {2 * PediatricSoftConstants.SensorFieldStep}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Response per hex step {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: ZDemod calibration {CalibrationBzDemod}");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Calibration done");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Calibration done");
 
             lock (stateLock)
             {
@@ -1526,13 +1526,13 @@ namespace PediatricSoft
                     State++;
                 }
                 else
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
             }
         }
 
         public void Dispose()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Dispose() was called");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Dispose() was called");
 
             SaveConfig();
 
@@ -1546,7 +1546,7 @@ namespace PediatricSoft
 
             if (uiUpdateTimer != null)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor {SN}: Disposing the UI timer");
+                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Disposing the UI timer");
                 uiUpdateTimer.Enabled = false;
                 uiUpdateTimer.Elapsed -= OnUIUpdateTimerEvent;
                 uiUpdateTimer.Dispose();

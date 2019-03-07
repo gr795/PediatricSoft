@@ -1,8 +1,10 @@
 ﻿using Prism.Commands;
 using Prism.Mvvm;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Timers;
 using System.Windows.Forms;
 
 namespace PediatricSoft
@@ -13,6 +15,7 @@ namespace PediatricSoft
         // Fields
 
         private PediatricSensorData PediatricSensorData;
+        private System.Timers.Timer uiUpdateTimer;
 
         // Constructors
 
@@ -29,6 +32,10 @@ namespace PediatricSoft
             ButtonChooseSaveDataFolderCommand = new DelegateCommand(ChooseSaveDataFolder);
 
             PediatricSensorData.PropertyChanged += OnPediatricSensorDataPropertyChanged;
+
+            uiUpdateTimer = new System.Timers.Timer(PediatricSoftConstants.UIUpdateInterval);
+            uiUpdateTimer.Elapsed += OnUIUpdateTimerEvent;
+            uiUpdateTimer.Enabled = true;
         }
 
         // Properties
@@ -177,11 +184,21 @@ namespace PediatricSoft
             get { return PediatricSensorData.DebugMode || (!PediatricSensorData.IsRunning && PediatricSensorData.CanStartStop); }
         }
 
+        public string[] DebugLog
+        {
+            get
+            {
+                string[] temp = PediatricSensorData.DebugLogQueue.ToArray();
+                Array.Reverse(temp);
+                return temp;
+            }
+        }
+
         // Methods
 
         private void CheckBoxSaveDataOnToggle()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Save Data checkbox toggled");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Main Window View Model: Save Data checkbox toggled");
 
             if (string.IsNullOrEmpty(TextBlockSaveFolderText))
                 ChooseSaveDataFolder();
@@ -206,7 +223,7 @@ namespace PediatricSoft
                 if (result == DialogResult.OK)
                 {
                     TextBlockSaveFolderText = dialog.SelectedPath;
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Main Window View Model: Save Data Folder: {TextBlockSaveFolderText}");
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Main Window View Model: Save Data Folder: {TextBlockSaveFolderText}");
                 }
                 else
                     if (string.IsNullOrEmpty(TextBlockSaveFolderText)) CheckBoxSaveDataIsChecked = false;
@@ -215,7 +232,7 @@ namespace PediatricSoft
 
         private void ButtonSendCommandsOnClick()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Main Window View Model: Send Commands Button clicked");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Main Window View Model: Send Commands Button clicked");
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ShowSendCommandsWindow");
         }
 
@@ -295,6 +312,13 @@ namespace PediatricSoft
                 default:
                     break;
             }
+        }
+
+        private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
+        {
+            while (PediatricSensorData.DebugLogQueue.Count > PediatricSoftConstants.DebugLogQueueMaxCount)
+                PediatricSensorData.DebugLogQueue.TryDequeue(out string dummy);
+            RaisePropertyChanged("DebugLog");
         }
 
     }

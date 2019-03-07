@@ -6,7 +6,7 @@ namespace PediatricSoft
     {
 
         // Constants
-        public const bool IsDebugEnabled = true;
+        public const int DebugLogQueueMaxCount = 128;
         public const int NumberOfThreads = 128;
         public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
         public const int PlotQueueLength = 250;

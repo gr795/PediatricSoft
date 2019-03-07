@@ -1,16 +1,9 @@
 ﻿using LiveCharts;
-using LiveCharts.Helpers;
 using LiveCharts.Wpf;
-using Prism.Mvvm;
 using Prism.Events;
+using Prism.Mvvm;
 using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Timers;
 using System.Windows.Media;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace PediatricSoft
 {
@@ -59,7 +52,7 @@ namespace PediatricSoft
 
         private void UpdateSeriesCollection()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Plot Window View Model: UpdateSeriesCollection");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot Window View Model: UpdateSeriesCollection");
 
             SeriesCollection = new SeriesCollection();
 
@@ -81,12 +74,12 @@ namespace PediatricSoft
 
         public void Dispose()
         {
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Plot window view model: calling Dispose()");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot window view model: calling Dispose()");
 
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Unsubscribe(SubscriptionTokenEventDataLayer);
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Unsubscribe(SubscriptionTokenEventUILayer);
 
-            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Plot window view model: Dispose() done");
+            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot window view model: Dispose() done");
         }
 
         // Event handlers

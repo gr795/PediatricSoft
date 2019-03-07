@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="950" MinHeight="600" MinWidth="950">
+        Title="MainWindow" Height="650" Width="950" MinHeight="650" MinWidth="950">
 
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -13,12 +13,12 @@
 
     <DockPanel>
 
-        <TextBox
+        <ListView
             Margin="10"
-            Height="96"
+            Height="145"
             DockPanel.Dock="Bottom"
-            IsReadOnly="True">
-        </TextBox>
+            ItemsSource="{Binding DebugLog}">
+        </ListView>
 
         <DockPanel
             DockPanel.Dock="Top">

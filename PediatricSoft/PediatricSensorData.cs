@@ -1,10 +1,10 @@
 ﻿using FTD2XX_NET;
 using Prism.Mvvm;
 using System;
-using System.Linq;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,10 +25,10 @@ namespace PediatricSoft
         {
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
             if (System.IO.Directory.Exists(SensorConfigFolderAbsolute))
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Sensor config directory exists");
+                if (DebugMode) DebugLogQueue.Enqueue("Sensor config directory exists");
             else
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Sensor config directory doesn't exist - creating");
+                if (DebugMode) DebugLogQueue.Enqueue("Sensor config directory doesn't exist - creating");
                 System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
             }
         }
@@ -49,6 +49,8 @@ namespace PediatricSoft
         public string SaveFolderCurrentRun { get; set; } = String.Empty;
         public string SaveSuffix { get; set; } = String.Empty;
         public string SensorConfigFolderAbsolute { get; private set; } = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), PediatricSoftConstants.SensorConfigFolderRelative);
+
+        public ConcurrentQueue<string> DebugLogQueue = new ConcurrentQueue<string>();
 
         public ObservableCollection<PediatricSensor> Sensors { get; private set; } = new ObservableCollection<PediatricSensor>();
 
@@ -112,7 +114,7 @@ namespace PediatricSoft
             {
                 if (CanScan)
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Begin port scan");
+                    if (DebugMode) DebugLogQueue.Enqueue("Begin port scan");
 
                     CanScan = false;
                     CanLock = false;
@@ -152,7 +154,7 @@ namespace PediatricSoft
                             RaisePropertyChanged("SensorCount");
                         }
                         else
-                            Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Sensor with serial number {serial} is already on the list - skipping");
+                            if (DebugMode) DebugLogQueue.Enqueue($"Sensor with serial number {serial} is already on the list - skipping");
                     });
 
                     if (Sensors.Count > 0)
@@ -163,7 +165,7 @@ namespace PediatricSoft
 
                     CanScan = true;
 
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Port scan done");
+                    if (DebugMode) DebugLogQueue.Enqueue("Port scan done");
                 }
             });
         }
@@ -174,7 +176,7 @@ namespace PediatricSoft
             {
                 if (CanLock)
                 {
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Begin sensor lock");
+                    if (DebugMode) DebugLogQueue.Enqueue("Begin sensor lock");
 
                     CanScan = false;
                     CanLock = false;
@@ -193,7 +195,7 @@ namespace PediatricSoft
                     CanZeroFields = true;
                     CanSendCommands = true;
 
-                    Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Sensor lock done");
+                    if (DebugMode) DebugLogQueue.Enqueue("Sensor lock done");
                 }
             });
         }
@@ -212,7 +214,7 @@ namespace PediatricSoft
 
                     if (IsRunning)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Stopping all sensors");
+                        if (DebugMode) DebugLogQueue.Enqueue("Stopping all sensors");
 
                         Parallel.ForEach(Sensors, sensor =>
                         {
@@ -228,7 +230,7 @@ namespace PediatricSoft
                     }
                     else
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Starting all sensors");
+                        if (DebugMode) DebugLogQueue.Enqueue("Starting all sensors");
 
                         IsRunning = true;
 
@@ -318,18 +320,18 @@ namespace PediatricSoft
             // Check status
             if (ftStatus == FTDI.FT_STATUS.FT_OK)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Number of FTDI devices: " + ftdiDeviceCount.ToString());
+                if (DebugMode) DebugLogQueue.Enqueue("Number of FTDI devices: " + ftdiDeviceCount.ToString());
             }
             else
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Failed to get number of devices (error " + ftStatus.ToString() + ")");
+                if (DebugMode) DebugLogQueue.Enqueue("Failed to get number of devices (error " + ftStatus.ToString() + ")");
                 return SerialNumbers.ToArray();
             }
 
             // If no devices available, return
             if (ftdiDeviceCount == 0)
             {
-                Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "FTDI devices found");
+                if (DebugMode) DebugLogQueue.Enqueue("FTDI devices found");
                 return SerialNumbers.ToArray();
             }
 
@@ -346,7 +348,7 @@ namespace PediatricSoft
                 {
                     if (ftdiDeviceList[i].Description.ToString() == PediatricSoftConstants.ValidIDN)
                     {
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, "Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
+                        if (DebugMode) DebugLogQueue.Enqueue("Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
                         SerialNumbers.Add(ftdiDeviceList[i].SerialNumber.ToString());
                     }
                 }

@@ -2,7 +2,6 @@
 using Prism.Mvvm;
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -279,7 +278,7 @@ namespace PediatricSoft
                     if (CurrentSensor != null)
                         CurrentSensor.SendCommand(TextBoxCommandStringText);
                     else
-                        Debug.WriteLineIf(PediatricSoftConstants.IsDebugEnabled, $"Can't send commands - sensor sensor not selected");
+                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Can't send commands - sensor sensor not selected");
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     RaisePropertyChanged("CommandHistory");
