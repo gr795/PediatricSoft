@@ -12,6 +12,7 @@ namespace PediatricSoft
         public const int PlotQueueLength = 250;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string ValidIDN = "Arrow USB Blaster B";
+        public const string PediatricSoftFolderRelative = "PediatricSoft";
         public const string SensorConfigFolderRelative = "SensorConfig";
 
         //public const UInt32 SerialPortBaudRate = 115200;

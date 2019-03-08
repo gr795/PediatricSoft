@@ -24,13 +24,8 @@ namespace PediatricSoft
         private PediatricSensorData()
         {
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Subscribe(DataLayerEventHandler);
-            if (System.IO.Directory.Exists(SensorConfigFolderAbsolute))
-                if (DebugMode) DebugLogQueue.Enqueue("Sensor config directory exists");
-            else
-            {
-                if (DebugMode) DebugLogQueue.Enqueue("Sensor config directory doesn't exist - creating");
+            if (!System.IO.Directory.Exists(SensorConfigFolderAbsolute))
                 System.IO.Directory.CreateDirectory(SensorConfigFolderAbsolute);
-            }
         }
 
         // Properties
@@ -42,13 +37,19 @@ namespace PediatricSoft
             }
         }
 
+        public bool IsDisposed { get; private set; } = false;
+
         public bool DebugMode { get; set; } = false;
         public bool SaveDataEnabled { get; set; } = false;
         public bool SaveRAWValues { get; set; } = false;
         public string SaveFolder { get; set; } = String.Empty;
         public string SaveFolderCurrentRun { get; set; } = String.Empty;
         public string SaveSuffix { get; set; } = String.Empty;
-        public string SensorConfigFolderAbsolute { get; private set; } = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), PediatricSoftConstants.SensorConfigFolderRelative);
+        public string SensorConfigFolderAbsolute { get; private set; } =
+            System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                PediatricSoftConstants.PediatricSoftFolderRelative,
+                PediatricSoftConstants.SensorConfigFolderRelative);
 
         public ConcurrentQueue<string> DebugLogQueue = new ConcurrentQueue<string>();
 
@@ -373,7 +374,7 @@ namespace PediatricSoft
             switch (eventString)
             {
                 case "Shutdown":
-                    ClearAll();
+                    Dispose();
                     break;
 
                 case "ClearAllPlotCheckBox":
@@ -401,6 +402,7 @@ namespace PediatricSoft
         public void Dispose()
         {
             ClearAll();
+            IsDisposed = true;
         }
 
     }

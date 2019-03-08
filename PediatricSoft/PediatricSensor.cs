@@ -876,7 +876,9 @@ namespace PediatricSoft
         private void SaveConfig()
         {
             if (pediatricSensorConfig.Equals(pediatricSensorConfigOnLoad))
+            {
                 if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Configuration not changed - not saving");
+            }
             else
             {
                 if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Saving configuration");

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Threading;
 using System.Windows;
 
 namespace PediatricSoft
@@ -107,6 +108,7 @@ namespace PediatricSoft
             SendCommandsWindow?.Close();
             PlotWindow?.Close();
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown");
+            while (!PediatricSensorData.IsDisposed) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
             MainWindow = null;
         }
 
