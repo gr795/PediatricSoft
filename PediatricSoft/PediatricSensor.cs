@@ -667,7 +667,11 @@ namespace PediatricSoft
                             break;
 
                         case PediatricSoftConstants.SensorState.ZeroFields:
-                            SendCommandsZeroFields();
+                            //SendCommandsZeroFields();
+                            lock (stateLock)
+                            {
+                                State++;
+                            }
                             break;
 
                         case PediatricSoftConstants.SensorState.CalibrateMagnetometer:
