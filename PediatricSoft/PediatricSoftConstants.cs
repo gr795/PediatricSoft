@@ -43,15 +43,15 @@ namespace PediatricSoft
 
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
 
-        public const double SensorCoilsCalibrationTeslaPerHex = 21e-12; // 21 pT per step
+        public const double SensorCoilsCalibrationTeslaPerHex = 4.5e-12; // 4.5 pT per step
 
         public const int MaxNumberOfLaserLockSweepCycles = 30; // About 1 minute
         public const int MaxNumberOfLaserLockStepCycles = 3; // We really should need more than 1
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
         public const int NumberOfMagnetometerCalibrationSteps = 100;
 
-        public const ushort SensorFieldCheckRange = 0x00EE; // about 5 nT assuming 21 pT per hex step
-        public const ushort SensorFieldStep = 0x0018; // about 0.5 nT assuming 21 pT per hex step
+        public const ushort SensorFieldCheckRange = 0x03E8; // about 5 nT 
+        public const ushort SensorFieldStep = 0x0064; // about 0.5 nT 
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
