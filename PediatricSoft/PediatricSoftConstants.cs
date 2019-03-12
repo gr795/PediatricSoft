@@ -50,8 +50,8 @@ namespace PediatricSoft
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
         public const int NumberOfMagnetometerCalibrationSteps = 100;
 
-        public const ushort SensorFieldCheckRange = 0x03E8; // about 5 nT 
-        public const ushort SensorFieldStep = 0x0064; // about 0.5 nT 
+        public const ushort SensorFieldCheckRange = 0x00DE; // about 1 nT 
+        public const ushort SensorFieldStep = 0x0016; // about 0.1 nT 
 
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
@@ -68,7 +68,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultLaserCurrent = 0x9000;
 
         public const string SensorCommandLaserCurrentModulation = "@4";
-        public const ushort SensorDefaultLaserCurrentModulation = 0x0250;
+        public const ushort SensorDefaultLaserCurrentModulation = 0x0200;
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;
@@ -103,11 +103,14 @@ namespace PediatricSoft
         public const string SensorCommandDelayForLaser = "@F";
         public const ushort SensorDefaultDelayForLaser = 0x0590;
 
+        public const string SensorCommandPIDLaserCurrentP = "@10";
+        public const ushort SensorDefaultPIDLaserCurrentP = 0x0010;
+
         public const string SensorCommandPIDLaserCurrentI = "@11";
-        public const ushort SensorDefaultPIDLaserCurrentI = 0x00F6;
+        public const ushort SensorDefaultPIDLaserCurrentI = 0x0100;
 
         public const string SensorCommandPIDLaserHeaterI = "@1D";
-        public const ushort SensorDefaultPIDLaserHeaterI = 0x0200;
+        public const ushort SensorDefaultPIDLaserHeaterI = 0x0300;
 
         public const string SensorCommandPIDCellHeaterI = "@2A";
         public const ushort SensorDefaultPIDCellHeaterI = 0x0006;
@@ -135,7 +138,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultStepSize = 0x0010;
 
         public const string SensorCommand2fPhase = "@26";
-        public const ushort SensorDefault2fPhase = 0x0697;
+        public const ushort SensorDefault2fPhase = 0x05C0;
 
         public const string SensorCommandBzPhase = "@27";
         public const ushort SensorDefaultBzPhase = 0x0460;

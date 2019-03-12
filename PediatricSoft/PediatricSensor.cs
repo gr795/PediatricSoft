@@ -969,6 +969,9 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandDelayForLaser);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultDelayForLaser)));
 
+            SendCommand(PediatricSoftConstants.SensorCommandPIDLaserCurrentP);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDLaserCurrentP)));
+
             SendCommand(PediatricSoftConstants.SensorCommandPIDLaserCurrentI);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDLaserCurrentI)));
 
@@ -1425,80 +1428,49 @@ namespace PediatricSoft
             ushort plusField = UShortSafeInc(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MaxValue);
             ushort minusField = UShortSafeDec(zeroZField, PediatricSoftConstants.SensorFieldStep, ushort.MinValue);
 
-            double plusSum = 0;
-            double minusSum = 0;
+            double plusValue;
+            double minusValue;
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorConfig.FieldZModulationAmplitude)));
 
             SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(plusField)));
 
-            for (int i = 0; i < PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps; i++)
+            while (commandQueue.TryPeek(out string dummy))
             {
-                SendCommand(String.Concat("#", UInt16ToStringBE(plusField)));
-
-                while (commandQueue.TryPeek(out string dummy))
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                if (State != correctState)
                 {
-                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    if (State != correctState)
-                    {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
-                        return;
-                    }
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    return;
                 }
+            }
 
-                lock (dataLock)
+            Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
+
+            lock (dataLock)
+            {
+                plusValue = DataQueue.Select(x => x.BzDemodRAW).ToArray().Average();
+            }
+
+            SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
+
+            while (commandQueue.TryPeek(out string dummy))
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                if (State != correctState)
                 {
-                    dataUpdated = false;
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    return;
                 }
+            }
 
-                while (!dataUpdated)
-                {
-                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    if (State != correctState)
-                    {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
-                        return;
-                    }
-                }
+            Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
 
-                lock (dataLock)
-                {
-                    plusSum += (double)lastDataPoint.BzDemodRAW;
-                }
-
-                SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
-
-                while (commandQueue.TryPeek(out string dummy))
-                {
-                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    if (State != correctState)
-                    {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
-                        return;
-                    }
-                }
-
-                lock (dataLock)
-                {
-                    dataUpdated = false;
-                }
-
-                while (!dataUpdated)
-                {
-                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    if (State != correctState)
-                    {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
-                        return;
-                    }
-                }
-
-                lock (dataLock)
-                {
-                    minusSum += (double)lastDataPoint.BzDemodRAW;
-                }
-
+            lock (dataLock)
+            {
+                minusValue = DataQueue.Select(x => x.BzDemodRAW).ToArray().Average();
             }
 
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)));
@@ -1513,16 +1485,9 @@ namespace PediatricSoft
                 }
             }
 
-            CalibrationBzDemod = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep);
+            CalibrationBzDemod = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusValue - minusValue) / (plusField - minusField));
 
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Response delta sum {(plusSum - minusSum)}");
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Number of averages {PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Response delta {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps}");
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Number of hex steps {2 * PediatricSoftConstants.SensorFieldStep}");
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Response per hex step {(plusSum - minusSum) / PediatricSoftConstants.NumberOfMagnetometerCalibrationSteps / 2 / PediatricSoftConstants.SensorFieldStep}");
             if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: ZDemod calibration {CalibrationBzDemod}");
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Calibration done");
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Calibration done");
 
             lock (stateLock)
             {
