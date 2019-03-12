@@ -15,6 +15,8 @@ namespace PediatricSoft
         public const string PediatricSoftFolderRelative = "PediatricSoft";
         public const string SensorConfigFolderRelative = "SensorConfig";
 
+        public const int SerialPortMaxRetries = 10;
+        public const int SerialPortSleepAfterFail = 1000;
         //public const UInt32 SerialPortBaudRate = 115200;
         public const UInt32 SerialPortBaudRate = 921600;
         public const UInt32 SerialPortWriteTimeout = 100;
@@ -42,6 +44,7 @@ namespace PediatricSoft
 
 
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
+        public const double SensorADCColdValueLowGainMaxVolts = 4.99;
 
         public const double SensorCoilsCalibrationTeslaPerHex = 4.5e-12; // 4.5 pT per step
 
