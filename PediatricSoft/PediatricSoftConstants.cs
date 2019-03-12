@@ -35,9 +35,11 @@ namespace PediatricSoft
         public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
+        public const int StateHandlerCellHeatLockSleepTime = 30000; // 30 seconds
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.5;
+        public const double SensorTargetLaserTransmissionRun = 0.33;
 
         public const double ConversionTime = 0.001;
         public const double ConversionADC = (double)5 / 125 / 16777215;
@@ -59,9 +61,10 @@ namespace PediatricSoft
         public const int SensorLaserHeatStepCycleDelay = 2000;
         public const int SensorLaserHeatStepSleepTime = 100;
 
-        public const string SensorCommandLaserLock = "@0";
-        public const ushort SensorLaserLockDisable = 0x0000;
+        public const string SensorCommandLock = "@0";
+        public const ushort SensorLockDisable = 0x0000;
         public const ushort SensorLaserLockEnable = 0x0005;
+        public const ushort SensorCellLockEnable = 0x0010;
 
         public const string SensorCommandPIDInverse = "@1";
         public const ushort SensorDefaultPIDInverse = 0x0001;
@@ -110,7 +113,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultPIDLaserCurrentP = 0x0010;
 
         public const string SensorCommandPIDLaserCurrentI = "@11";
-        public const ushort SensorDefaultPIDLaserCurrentI = 0x0100;
+        public const ushort SensorDefaultPIDLaserCurrentI = 0x0080;
 
         public const string SensorCommandPIDLaserHeaterI = "@1D";
         public const ushort SensorDefaultPIDLaserHeaterI = 0x0300;
@@ -146,6 +149,7 @@ namespace PediatricSoft
         public const string SensorCommandBzPhase = "@27";
         public const ushort SensorDefaultBzPhase = 0x0460;
 
+        public const string SensorCommandCellHeatLockPoint = "@28";
         public const ushort SensorDefaultCellHeatLockPoint = 0x1000;
 
         public enum SensorState : byte
@@ -160,6 +164,7 @@ namespace PediatricSoft
             LaserLockDone,
             ZeroFields,
             CalibrateMagnetometer,
+            CellHeatLock,
             Idle,
             Start,
             Run,

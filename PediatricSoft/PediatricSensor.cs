@@ -678,6 +678,10 @@ namespace PediatricSoft
                             SendCommandsCalibrateMagnetometer();
                             break;
 
+                        case PediatricSoftConstants.SensorState.CellHeatLock:
+                            SendCommandsCellHeatLock();
+                            break;
+
                         case PediatricSoftConstants.SensorState.ShutDownRequested:
                             if (!PediatricSensorData.DebugMode)
                             {
@@ -950,8 +954,8 @@ namespace PediatricSoft
 
         public void SendCommandsSetup()
         {
-            SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockDisable)));
+            SendCommand(PediatricSoftConstants.SensorCommandLock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockDisable)));
 
             SendCommand(PediatricSoftConstants.SensorCommandPIDInverse);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDInverse)));
@@ -1257,7 +1261,7 @@ namespace PediatricSoft
 
             coldSensorADCValue = coldSensorADCValue * 50 / 15.5;
 
-            SendCommand(PediatricSoftConstants.SensorCommandLaserLock);
+            SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable)));
 
             //SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
@@ -1523,6 +1527,45 @@ namespace PediatricSoft
                 else
                     if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
             }
+        }
+
+        private void SendCommandsCellHeatLock()
+        {
+            PediatricSoftConstants.SensorState currentState;
+            PediatricSoftConstants.SensorState correctState;
+
+            lock (stateLock)
+            {
+                currentState = State;
+                correctState = State;
+            }
+
+            double targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionRun;
+            if (targetADCValue > PediatricSoftConstants.SensorADCColdValueLowGainMaxVolts)
+            {
+                targetADCValue = PediatricSoftConstants.SensorADCColdValueLowGainMaxVolts;
+            }
+            ushort cellHeatLockPoint = (ushort)(ushort.MaxValue * (targetADCValue / 5));
+
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeatLockPoint);
+            SendCommand(String.Concat("#", UInt16ToStringBE(cellHeatLockPoint)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandLock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable | PediatricSoftConstants.SensorCellLockEnable)));
+
+            Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatLockSleepTime);
+
+            lock (stateLock)
+            {
+                currentState = State;
+                if (currentState == correctState)
+                {
+                    State++;
+                }
+                else
+                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+            }
+
         }
 
         public void Dispose()
