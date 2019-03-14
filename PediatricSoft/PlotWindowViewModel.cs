@@ -1,4 +1,5 @@
 ﻿using LiveCharts;
+using LiveCharts.Configurations;
 using LiveCharts.Wpf;
 using Prism.Events;
 using Prism.Mvvm;
@@ -15,6 +16,7 @@ namespace PediatricSoft
         private readonly PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
         private readonly SubscriptionToken SubscriptionTokenEventDataLayer;
         private readonly SubscriptionToken SubscriptionTokenEventUILayer;
+        private readonly CartesianMapper<XYPoint> mapper = Mappers.Xy<XYPoint>().X(v => v.X).Y(v => v.LogYAvg);
 
         // Constructors
 
@@ -24,10 +26,9 @@ namespace PediatricSoft
             SubscriptionTokenEventUILayer = PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Subscribe(WindowManagerEventHandler);
 
             SeriesCollection = new SeriesCollection();
-            SeriesCollectionFFT = new SeriesCollection();
+            SeriesCollectionFFT = new SeriesCollection(mapper);
 
-            Formatter = value => Math.Pow(Base, value).ToString("N");
-            Base = 10;
+            Formatter = value => Math.Pow(Base, value).ToString("+0.00E+00;-0.00E+00");
         }
 
         // Properties
@@ -36,7 +37,7 @@ namespace PediatricSoft
         public SeriesCollection SeriesCollectionFFT { get; private set; }
 
         public Func<double, string> Formatter { get; private set; }
-        public double Base { get; private set; }
+        public double Base { get { return XYPoint.Base; } }
 
         // Methods
 
@@ -63,7 +64,7 @@ namespace PediatricSoft
             if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot Window View Model: UpdateSeriesCollection");
 
             SeriesCollection = new SeriesCollection();
-            SeriesCollectionFFT = new SeriesCollection();
+            SeriesCollectionFFT = new SeriesCollection(mapper);
 
             foreach (PediatricSensor sensor in PediatricSensorData.Sensors)
             {
