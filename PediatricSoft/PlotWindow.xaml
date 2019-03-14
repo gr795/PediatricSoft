@@ -7,27 +7,84 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
         Title="PlotWindow" Height="450" Width="800">
-    
+
     <Window.DataContext>
         <local:PlotWindowViewModel/>
     </Window.DataContext>
 
-    <lvc:CartesianChart DisableAnimations="True"
-                        DataTooltip="{x:Null}"
-                        Hoverable="False"
-                        Series="{Binding SeriesCollection}">
+    <DockPanel>
 
-        <lvc:CartesianChart.AxisX>
-            <lvc:Axis ShowLabels="False"></lvc:Axis>
-        </lvc:CartesianChart.AxisX>
-        <lvc:CartesianChart.AxisY>
-            <lvc:Axis>
-                <lvc:Axis.Sections>
-                    <lvc:AxisSection Value="0" StrokeThickness="3" Stroke="#303030"></lvc:AxisSection>
-                </lvc:Axis.Sections>
-            </lvc:Axis>
-        </lvc:CartesianChart.AxisY>
-    </lvc:CartesianChart>
+        <StackPanel
+            DockPanel.Dock="Top">
+
+            <Button
+                Margin="10,10"
+                IsEnabled="False"
+                Width="60"
+                HorizontalAlignment="Right">
+                Clear FFT
+            </Button>
+
+        </StackPanel>
+
+        <Grid
+            DockPanel.Dock="Bottom">
+
+            <Grid.RowDefinitions>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <lvc:CartesianChart
+                Margin="10,10"
+                Grid.Row="0"
+                Grid.Column="0"
+                DisableAnimations="True"
+                DataTooltip="{x:Null}"
+                Hoverable="False"
+                Series="{Binding SeriesCollection}">
+
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis ShowLabels="False"></lvc:Axis>
+                </lvc:CartesianChart.AxisX>
+                <lvc:CartesianChart.AxisY>
+                    <lvc:Axis>
+                        <lvc:Axis.Sections>
+                            <lvc:AxisSection Value="0" StrokeThickness="1" Stroke="#303030"></lvc:AxisSection>
+                        </lvc:Axis.Sections>
+                    </lvc:Axis>
+                </lvc:CartesianChart.AxisY>
+            </lvc:CartesianChart>
+
+            <lvc:CartesianChart
+                Margin="10,10"
+                Grid.Row="0"
+                Grid.Column="1"
+                DisableAnimations="True"
+                Series="{Binding SeriesCollectionFFT}">
+
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis ShowLabels="False"></lvc:Axis>
+                </lvc:CartesianChart.AxisX>
+                <lvc:CartesianChart.AxisY>
+                    <lvc:LogarithmicAxis
+                        LabelFormatter="{Binding Formatter}"
+                        Base="{Binding Base}">
+                        <lvc:LogarithmicAxis.Separator>
+                            <lvc:Separator StrokeThickness="1" IsEnabled="True"></lvc:Separator>
+                        </lvc:LogarithmicAxis.Separator>
+                    </lvc:LogarithmicAxis>
+                </lvc:CartesianChart.AxisY>
+            </lvc:CartesianChart>
+
+        </Grid>
+
+    </DockPanel>
+
+
 
 
 </Window>

@@ -24,11 +24,19 @@ namespace PediatricSoft
             SubscriptionTokenEventUILayer = PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Subscribe(WindowManagerEventHandler);
 
             SeriesCollection = new SeriesCollection();
+            SeriesCollectionFFT = new SeriesCollection();
+
+            Formatter = value => Math.Pow(Base, value).ToString("N");
+            Base = 10;
         }
 
         // Properties
 
         public SeriesCollection SeriesCollection { get; private set; }
+        public SeriesCollection SeriesCollectionFFT { get; private set; }
+
+        public Func<double, string> Formatter { get; private set; }
+        public double Base { get; private set; }
 
         // Methods
 
@@ -55,6 +63,7 @@ namespace PediatricSoft
             if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot Window View Model: UpdateSeriesCollection");
 
             SeriesCollection = new SeriesCollection();
+            SeriesCollectionFFT = new SeriesCollection();
 
             foreach (PediatricSensor sensor in PediatricSensorData.Sensors)
             {
@@ -66,10 +75,18 @@ namespace PediatricSoft
                         Fill = Brushes.Transparent,
                         PointGeometry = DefaultGeometries.None
                     });
+
+                    SeriesCollectionFFT.Add(new LineSeries
+                    {
+                        Values = sensor.ChartValuesFFT,
+                        Fill = Brushes.Transparent,
+                        PointGeometry = DefaultGeometries.None
+                    });
                 }
             }
 
             RaisePropertyChanged("SeriesCollection");
+            RaisePropertyChanged("SeriesCollectionFFT");
         }
 
         public void Dispose()

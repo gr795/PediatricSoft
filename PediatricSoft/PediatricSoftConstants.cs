@@ -8,8 +8,9 @@ namespace PediatricSoft
         // Constants
         public const int DebugLogQueueMaxCount = 128;
         public const int NumberOfThreads = 128;
-        public const int DataQueueLength = 5000; // number of data points to hold in memory and plot
-        public const int PlotQueueLength = 250;
+        public const int DataQueueLength = 4096; // number of data points to hold in memory and plot
+        public const int PlotQueueLength = 256;
+        public const int FFTLength = 512;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string ValidIDN = "Arrow USB Blaster B";
         public const string PediatricSoftFolderRelative = "PediatricSoft";
@@ -32,7 +33,7 @@ namespace PediatricSoft
         public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
-        public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
+        public const int StateHandlerCellHeatInitialTime = 4000; // 4 seconds
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
         public const int StateHandlerCellHeatLockSleepTime = 30000; // 30 seconds

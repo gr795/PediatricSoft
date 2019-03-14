@@ -11,6 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml.Serialization;
+using System.Numerics;
+using MathNet.Numerics.IntegralTransforms;
+using System.Diagnostics;
 
 namespace PediatricSoft
 {
@@ -44,11 +47,15 @@ namespace PediatricSoft
 
         private bool dataUpdated = false;
 
+        private DataPoint[] dataPoints = new DataPoint[PediatricSoftConstants.DataQueueLength];
+        private double[] dataFFTSingleSidedAvg = new double[PediatricSoftConstants.FFTLength / 2];
+
         // Constructors
         private PediatricSensor() { }
         public PediatricSensor(string serial)
         {
             PediatricSensorConstructorMethod(serial);
+            Debug.WriteLine(System.Runtime.InteropServices.Marshal.SizeOf(typeof(DataPoint)));
         }
 
         // Properties
@@ -171,12 +178,14 @@ namespace PediatricSoft
             {
                 ChartValues.Clear();
                 isPlotted = value;
+                dataFFTSingleSidedAvg = new double[PediatricSoftConstants.FFTLength / 2];
                 RaisePropertyChanged();
                 PediatricSensorData.UpdateSeriesCollection();
             }
         }
 
         public ChartValues<double> ChartValues { get; private set; } = new ChartValues<double>();
+        public ChartValues<double> ChartValuesFFT { get; private set; } = new ChartValues<double>();
 
         // Methods
         public void KickOffTasks()
@@ -389,6 +398,7 @@ namespace PediatricSoft
                 string filePath = string.Empty;
 
                 int plotCounter = 0;
+                int dataCounter = 0;
 
                 if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Streaming starting");
 
@@ -563,6 +573,52 @@ namespace PediatricSoft
 
                                     DataQueue.Enqueue(lastDataPoint);
                                     while (DataQueue.Count > PediatricSoftConstants.DataQueueLength) DataQueue.TryDequeue(out DataPoint dummy);
+
+                                    dataCounter++;
+                                    if (dataCounter == PediatricSoftConstants.FFTLength)
+                                    {
+                                        if (isPlotted)
+                                        {
+                                            Complex[] dataFFTComplex = new Complex[PediatricSoftConstants.FFTLength];
+                                            for (int i_dataFFTComplex = 0; i_dataFFTComplex < PediatricSoftConstants.FFTLength; i_dataFFTComplex++)
+                                            {
+                                                switch (PediatricSensorData.DataSelect)
+                                                {
+                                                    case PediatricSoftConstants.DataSelect.ADC:
+                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(DataQueue.Select(x => x.ADC).ToArray()[i_dataFFTComplex], 0);
+                                                        break;
+
+                                                    case PediatricSoftConstants.DataSelect.OpenLoop:
+                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(DataQueue.Select(x => x.BzDemod).ToArray()[i_dataFFTComplex], 0);
+                                                        break;
+
+                                                    case PediatricSoftConstants.DataSelect.ClosedLoop:
+                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(DataQueue.Select(x => x.BzError).ToArray()[i_dataFFTComplex], 0);
+                                                        break;
+                                                }
+
+                                            }
+
+                                            Fourier.Forward(dataFFTComplex, FourierOptions.Matlab);
+
+                                            double temp;
+                                            double[] dataFFTSingleSided = new double[PediatricSoftConstants.FFTLength / 2];
+                                            dataFFTSingleSided[0] = dataFFTComplex[0].Magnitude / PediatricSoftConstants.FFTLength;
+                                            for (int i_dataFFTSingleSided = 1; i_dataFFTSingleSided < PediatricSoftConstants.FFTLength / 2; i_dataFFTSingleSided++)
+                                            {
+                                                temp = Math.Log10(2 * dataFFTComplex[i_dataFFTSingleSided].Magnitude / PediatricSoftConstants.FFTLength);
+                                                if (!double.IsInfinity(temp))
+                                                {
+                                                    dataFFTSingleSided[i_dataFFTSingleSided] = temp;
+                                                }
+                                            }
+
+                                            ChartValuesFFT.Clear();
+                                            ChartValuesFFT.AddRange(dataFFTSingleSided);
+                                        }
+
+                                        dataCounter = 0;
+                                    }
 
                                     if (isPlotted)
                                     {
