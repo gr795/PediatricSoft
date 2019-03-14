@@ -49,6 +49,7 @@ namespace PediatricSoft
 
         private DataPoint[] dataPoints = new DataPoint[PediatricSoftConstants.DataQueueLength];
         private XYPoint[] dataFFTSingleSided;
+        private int dataFFTSingleSidedLength = 0;
 
         // Constructors
         private PediatricSensor() { }
@@ -602,7 +603,7 @@ namespace PediatricSoft
                                             Fourier.Forward(dataFFTComplex, FourierOptions.Matlab);
                                             
                                             dataFFTSingleSided[0].Y = dataFFTComplex[0].Magnitude / PediatricSoftConstants.FFTLength;
-                                            for (int i_dataFFTSingleSided = 1; i_dataFFTSingleSided < PediatricSoftConstants.FFTLength / 2; i_dataFFTSingleSided++)
+                                            for (int i_dataFFTSingleSided = 1; i_dataFFTSingleSided < dataFFTSingleSidedLength; i_dataFFTSingleSided++)
                                             {
                                                 dataFFTSingleSided[i_dataFFTSingleSided].Y = 2 * dataFFTComplex[i_dataFFTSingleSided].Magnitude / PediatricSoftConstants.FFTLength;
                                             }
@@ -1664,11 +1665,26 @@ namespace PediatricSoft
         public void InitializeDataFFTSingleSided()
         {
             double[] frequencyScale = Fourier.FrequencyScale(PediatricSoftConstants.FFTLength, PediatricSoftConstants.DataSampleRate);
+
+            for (int i = 0; i < PediatricSoftConstants.FFTLength; i++)
+            {
+                if (frequencyScale[i] >= PediatricSoftConstants.FFTMaxFrequency)
+                {
+                    dataFFTSingleSidedLength = i + 1;
+                    break;
+                }
+            }
+
+            if (dataFFTSingleSidedLength == 0)
+            {
+                dataFFTSingleSidedLength = PediatricSoftConstants.FFTLength / 2;
+            }
+
             lock (dataLock)
             {
-                dataFFTSingleSided = new XYPoint[PediatricSoftConstants.FFTLength / 2];
+                dataFFTSingleSided = new XYPoint[dataFFTSingleSidedLength];
 
-                for (int i = 0; i < PediatricSoftConstants.FFTLength / 2; i++)
+                for (int i = 0; i < dataFFTSingleSidedLength; i++)
                 {
                     dataFFTSingleSided[i] = new XYPoint(frequencyScale[i], 0);
                 }

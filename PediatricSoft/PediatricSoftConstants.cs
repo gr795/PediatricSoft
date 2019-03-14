@@ -11,7 +11,8 @@ namespace PediatricSoft
         public const int DataSampleRate = 1000;
         public const int DataQueueLength = 4096; // number of data points to hold in memory and plot
         public const int PlotQueueLength = 256;
-        public const int FFTLength = 512;
+        public const int FFTLength = DataQueueLength / 2;
+        public const double FFTMaxFrequency = 100;
         public const int UIUpdateInterval = 250; // Update UI every X ms
         public const string ValidIDN = "Arrow USB Blaster B";
         public const string PediatricSoftFolderRelative = "PediatricSoft";
