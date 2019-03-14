@@ -19,8 +19,8 @@
 
             <Button
                 Margin="10,10"
-                IsEnabled="False"
                 Width="60"
+                Command="{Binding ButtonClearFFTCommand}"
                 HorizontalAlignment="Right">
                 Clear FFT
             </Button>

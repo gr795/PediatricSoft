@@ -56,7 +56,7 @@ namespace PediatricSoft
         {
             PediatricSensorConstructorMethod(serial);
 
-            dataFFTSingleSided = InitializeDataFFTSingleSided();
+            InitializeDataFFTSingleSided();
         }
 
         // Properties
@@ -178,7 +178,7 @@ namespace PediatricSoft
             {
                 ChartValues.Clear();
                 isPlotted = value;
-                dataFFTSingleSided = InitializeDataFFTSingleSided();
+                InitializeDataFFTSingleSided();
                 RaisePropertyChanged();
                 PediatricSensorData.UpdateSeriesCollection();
             }
@@ -1661,17 +1661,18 @@ namespace PediatricSoft
             IsDisposed = true;
         }
 
-        private XYPoint[] InitializeDataFFTSingleSided()
+        public void InitializeDataFFTSingleSided()
         {
             double[] frequencyScale = Fourier.FrequencyScale(PediatricSoftConstants.FFTLength, PediatricSoftConstants.DataSampleRate);
-            XYPoint[] dataFFTSingleSided = new XYPoint[PediatricSoftConstants.FFTLength / 2];
-
-            for (int i = 0; i < PediatricSoftConstants.FFTLength / 2; i++)
+            lock (dataLock)
             {
-                dataFFTSingleSided[i] = new XYPoint(frequencyScale[i], 0);
-            }
+                dataFFTSingleSided = new XYPoint[PediatricSoftConstants.FFTLength / 2];
 
-            return dataFFTSingleSided;
+                for (int i = 0; i < PediatricSoftConstants.FFTLength / 2; i++)
+                {
+                    dataFFTSingleSided[i] = new XYPoint(frequencyScale[i], 0);
+                }
+            }
         }
 
         ~PediatricSensor()

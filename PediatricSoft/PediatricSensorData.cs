@@ -305,6 +305,17 @@ namespace PediatricSoft
             RaisePropertyChanged("SensorCount");
         }
 
+        public void ClearFFTAll()
+        {
+            foreach(PediatricSensor sensor in Sensors)
+            {
+                if (sensor.IsPlotted)
+                {
+                    sensor.InitializeDataFFTSingleSided();
+                }
+            }
+        }
+
         private string[] GetPotentialSensorSerialNumbers()
         {
             List<string> SerialNumbers = new List<string>();

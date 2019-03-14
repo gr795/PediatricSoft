@@ -1,6 +1,7 @@
 ﻿using LiveCharts;
 using LiveCharts.Configurations;
 using LiveCharts.Wpf;
+using Prism.Commands;
 using Prism.Events;
 using Prism.Mvvm;
 using System;
@@ -29,9 +30,13 @@ namespace PediatricSoft
             SeriesCollectionFFT = new SeriesCollection(mapper);
 
             Formatter = value => Math.Pow(Base, value).ToString("+0.00E+00;-0.00E+00");
+
+            ButtonClearFFTCommand = new DelegateCommand(PediatricSensorData.ClearFFTAll);
         }
 
         // Properties
+
+        public DelegateCommand ButtonClearFFTCommand { get; private set; }
 
         public SeriesCollection SeriesCollection { get; private set; }
         public SeriesCollection SeriesCollectionFFT { get; private set; }
