@@ -50,6 +50,10 @@ namespace PediatricSoft
         private DataPoint[] dataPoints = new DataPoint[PediatricSoftConstants.DataQueueLength];
         private XYPoint[] dataFFTSingleSided;
         private int dataFFTSingleSidedLength = 0;
+        private double dataFFTFrequencyStep;
+        private double[] dataFFTWindow;
+        private double dataFFTWindowAmplitudeFactor;
+        private double dataFFTWindowNoisePowerBandwidth;
 
         // Constructors
         private PediatricSensor() { }
@@ -583,21 +587,22 @@ namespace PediatricSoft
                                             Complex[] dataFFTComplex = new Complex[PediatricSoftConstants.FFTLength];
                                             for (int i_dataFFTComplex = 0; i_dataFFTComplex < PediatricSoftConstants.FFTLength; i_dataFFTComplex++)
                                             {
+                                                double newRealPoint = 0;
                                                 switch (PediatricSensorData.DataSelect)
                                                 {
                                                     case PediatricSoftConstants.DataSelect.ADC:
-                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].ADC, 0);
+                                                        newRealPoint = dataFFTWindow[i_dataFFTComplex] * dataFFTWindowAmplitudeFactor * dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].ADC;
                                                         break;
 
                                                     case PediatricSoftConstants.DataSelect.OpenLoop:
-                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].BzDemod, 0);
+                                                        newRealPoint = dataFFTWindow[i_dataFFTComplex] * dataFFTWindowAmplitudeFactor * dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].BzDemod;
                                                         break;
 
                                                     case PediatricSoftConstants.DataSelect.ClosedLoop:
-                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].BzError, 0);
+                                                        newRealPoint = dataFFTWindow[i_dataFFTComplex] * dataFFTWindowAmplitudeFactor * dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].BzError;
                                                         break;
                                                 }
-
+                                                dataFFTComplex[i_dataFFTComplex] = new Complex(newRealPoint, 0);
                                             }
 
                                             Fourier.Forward(dataFFTComplex, FourierOptions.Matlab);
@@ -605,7 +610,7 @@ namespace PediatricSoft
                                             dataFFTSingleSided[0].Y = dataFFTComplex[0].Magnitude / PediatricSoftConstants.FFTLength;
                                             for (int i_dataFFTSingleSided = 1; i_dataFFTSingleSided < dataFFTSingleSidedLength; i_dataFFTSingleSided++)
                                             {
-                                                dataFFTSingleSided[i_dataFFTSingleSided].Y = 2 * dataFFTComplex[i_dataFFTSingleSided].Magnitude / PediatricSoftConstants.FFTLength;
+                                                dataFFTSingleSided[i_dataFFTSingleSided].Y = 2 * dataFFTComplex[i_dataFFTSingleSided].Magnitude / PediatricSoftConstants.FFTLength / dataFFTWindowNoisePowerBandwidth / Math.Sqrt(dataFFTFrequencyStep);
                                             }
                                             
                                             ChartValuesFFT.Clear();
@@ -1664,7 +1669,12 @@ namespace PediatricSoft
 
         public void InitializeDataFFTSingleSided()
         {
+            dataFFTWindow = MathNet.Numerics.Window.HannPeriodic(PediatricSoftConstants.FFTLength);
+            dataFFTWindowAmplitudeFactor = PediatricSoftConstants.FFTLength / dataFFTWindow.Sum();
+            dataFFTWindowNoisePowerBandwidth = 1.5; // Hann Window
+
             double[] frequencyScale = Fourier.FrequencyScale(PediatricSoftConstants.FFTLength, PediatricSoftConstants.DataSampleRate);
+            dataFFTFrequencyStep = frequencyScale[1];
 
             for (int i = 0; i < PediatricSoftConstants.FFTLength; i++)
             {

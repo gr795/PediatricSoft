@@ -63,8 +63,8 @@ namespace PediatricSoft
 
         public XYPoint(double _x, double _y)
         {
-            X = _x;
-            Y = _y;
+            x = _x;
+            y = _y;
         }
 
 
