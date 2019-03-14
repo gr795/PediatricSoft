@@ -55,11 +55,9 @@ namespace PediatricSoft
         public PediatricSensor(string serial)
         {
             PediatricSensorConstructorMethod(serial);
-            Debug.WriteLine(System.Runtime.InteropServices.Marshal.SizeOf(typeof(DataPoint)));
         }
 
         // Properties
-        public ConcurrentQueue<DataPoint> DataQueue { get; private set; } = new ConcurrentQueue<DataPoint>();
 
         private PediatricSensorConfig pediatricSensorConfig;
         public PediatricSensorConfig PediatricSensorConfig
@@ -400,6 +398,8 @@ namespace PediatricSoft
                 int plotCounter = 0;
                 int dataCounter = 0;
 
+                double[] frequencyScale = Fourier.FrequencyScale(PediatricSoftConstants.FFTLength, PediatricSoftConstants.DataSampleRate);
+
                 if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Streaming starting");
 
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
@@ -571,8 +571,8 @@ namespace PediatricSoft
                                         PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex * (0x8000 - BitConverter.ToInt32(data, 0))
                                     );
 
-                                    DataQueue.Enqueue(lastDataPoint);
-                                    while (DataQueue.Count > PediatricSoftConstants.DataQueueLength) DataQueue.TryDequeue(out DataPoint dummy);
+                                    Array.Copy(dataPoints, 1, dataPoints, 0, PediatricSoftConstants.DataQueueLength - 1);
+                                    dataPoints[PediatricSoftConstants.DataQueueLength - 1] = lastDataPoint;
 
                                     dataCounter++;
                                     if (dataCounter == PediatricSoftConstants.FFTLength)
@@ -585,15 +585,15 @@ namespace PediatricSoft
                                                 switch (PediatricSensorData.DataSelect)
                                                 {
                                                     case PediatricSoftConstants.DataSelect.ADC:
-                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(DataQueue.Select(x => x.ADC).ToArray()[i_dataFFTComplex], 0);
+                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].ADC, 0);
                                                         break;
 
                                                     case PediatricSoftConstants.DataSelect.OpenLoop:
-                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(DataQueue.Select(x => x.BzDemod).ToArray()[i_dataFFTComplex], 0);
+                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].BzDemod, 0);
                                                         break;
 
                                                     case PediatricSoftConstants.DataSelect.ClosedLoop:
-                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(DataQueue.Select(x => x.BzError).ToArray()[i_dataFFTComplex], 0);
+                                                        dataFFTComplex[i_dataFFTComplex] = new Complex(dataPoints[PediatricSoftConstants.DataQueueLength - PediatricSoftConstants.FFTLength + i_dataFFTComplex].BzError, 0);
                                                         break;
                                                 }
 
@@ -601,16 +601,11 @@ namespace PediatricSoft
 
                                             Fourier.Forward(dataFFTComplex, FourierOptions.Matlab);
 
-                                            double temp;
                                             double[] dataFFTSingleSided = new double[PediatricSoftConstants.FFTLength / 2];
                                             dataFFTSingleSided[0] = dataFFTComplex[0].Magnitude / PediatricSoftConstants.FFTLength;
                                             for (int i_dataFFTSingleSided = 1; i_dataFFTSingleSided < PediatricSoftConstants.FFTLength / 2; i_dataFFTSingleSided++)
                                             {
-                                                temp = Math.Log10(2 * dataFFTComplex[i_dataFFTSingleSided].Magnitude / PediatricSoftConstants.FFTLength);
-                                                if (!double.IsInfinity(temp))
-                                                {
-                                                    dataFFTSingleSided[i_dataFFTSingleSided] = temp;
-                                                }
+                                                dataFFTSingleSided[i_dataFFTSingleSided] = 2 * dataFFTComplex[i_dataFFTSingleSided].Magnitude / PediatricSoftConstants.FFTLength;
                                             }
 
                                             ChartValuesFFT.Clear();
@@ -1164,7 +1159,7 @@ namespace PediatricSoft
                 // See if the threshold was reached
                 lock (dataLock)
                 {
-                    transmission = DataQueue.Select(x => x.ADC).ToArray().Min() / coldSensorADCValue;
+                    transmission = dataPoints.Select(x => x.ADC).Min() / coldSensorADCValue;
                 }
 
                 if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
@@ -1535,7 +1530,7 @@ namespace PediatricSoft
 
             lock (dataLock)
             {
-                plusValue = DataQueue.Select(x => x.BzDemodRAW).ToArray().Average();
+                plusValue = dataPoints.Select(x => x.BzDemodRAW).Average();
             }
 
             SendCommand(String.Concat("#", UInt16ToStringBE(minusField)));
@@ -1554,7 +1549,7 @@ namespace PediatricSoft
 
             lock (dataLock)
             {
-                minusValue = DataQueue.Select(x => x.BzDemodRAW).ToArray().Average();
+                minusValue = dataPoints.Select(x => x.BzDemodRAW).Average();
             }
 
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)));

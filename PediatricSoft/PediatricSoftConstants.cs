@@ -8,6 +8,7 @@ namespace PediatricSoft
         // Constants
         public const int DebugLogQueueMaxCount = 128;
         public const int NumberOfThreads = 128;
+        public const int DataSampleRate = 1000;
         public const int DataQueueLength = 4096; // number of data points to hold in memory and plot
         public const int PlotQueueLength = 256;
         public const int FFTLength = 512;
@@ -42,7 +43,7 @@ namespace PediatricSoft
         public const double SensorTargetLaserTransmissionStep = 0.5;
         public const double SensorTargetLaserTransmissionRun = 0.33;
 
-        public const double ConversionTime = 0.001;
+        public const double ConversionTime = 1 / DataSampleRate;
         public const double ConversionADC = (double)5 / 125 / 16777215;
 
 
