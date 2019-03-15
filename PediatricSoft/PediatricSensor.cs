@@ -213,7 +213,6 @@ namespace PediatricSoft
                 currentState = State;
 
                 if (currentState == PediatricSoftConstants.SensorState.Valid ||
-                    currentState == PediatricSoftConstants.SensorState.LaserLockDone ||
                     currentState == PediatricSoftConstants.SensorState.Idle)
                 {
                     State = PediatricSoftConstants.SensorState.Setup;
@@ -225,7 +224,7 @@ namespace PediatricSoft
             }
 
             if (canRun)
-                while (currentState != PediatricSoftConstants.SensorState.LaserLockDone &&
+                while (currentState != PediatricSoftConstants.SensorState.Idle &&
                        currentState != PediatricSoftConstants.SensorState.Failed)
                 {
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
@@ -308,8 +307,7 @@ namespace PediatricSoft
             {
                 currentState = State;
 
-                if (currentState == PediatricSoftConstants.SensorState.LaserLockDone ||
-                    currentState == PediatricSoftConstants.SensorState.Idle)
+                if (currentState == PediatricSoftConstants.SensorState.Idle)
                 {
                     State = PediatricSoftConstants.SensorState.ZeroFields;
                     currentState = State;
@@ -716,10 +714,6 @@ namespace PediatricSoft
 
                         case PediatricSoftConstants.SensorState.LaserLockPID:
                             SendCommandsLaserLockPID();
-                            break;
-
-                        case PediatricSoftConstants.SensorState.StabilizeCellHeat:
-                            SendCommandsStabilizeCellHeat();
                             break;
 
                         case PediatricSoftConstants.SensorState.ZeroFields:
@@ -1135,10 +1129,6 @@ namespace PediatricSoft
             // Wait for the cell to warm up
             Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
 
-            // Turn on the Z-coil to increase absorption
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockFieldZOffset)));
-
             // Laser heat sweep cycle. Here we look for the Rb resonance.
 
             for (int i = 0; i < PediatricSoftConstants.MaxNumberOfLaserLockSweepCycles; i++)
@@ -1322,50 +1312,6 @@ namespace PediatricSoft
 
             //SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
             //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
-
-            lock (stateLock)
-            {
-                currentState = State;
-                if (currentState == correctState)
-                {
-                    State++;
-                }
-                else
-                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
-            }
-        }
-
-        private void SendCommandsStabilizeCellHeat()
-        {
-            PediatricSoftConstants.SensorState currentState;
-            PediatricSoftConstants.SensorState correctState;
-
-            lock (stateLock)
-            {
-                currentState = State;
-                correctState = State;
-            }
-
-            double transmission = 0;
-
-            SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdCellHeat)));
-
-            while (currentState == correctState && transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
-            {
-                Thread.Sleep(PediatricSoftConstants.SensorLaserHeatStepSleepTime);
-                lock (dataLock)
-                {
-                    transmission = lastDataPoint.ADC / coldSensorADCValue;
-                }
-                lock (stateLock)
-                {
-                    currentState = State;
-                }
-            }
-
-            SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSensorConfig.DefaultCellHeat)));
 
             lock (stateLock)
             {

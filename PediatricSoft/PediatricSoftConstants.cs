@@ -38,10 +38,10 @@ namespace PediatricSoft
         public const int StateHandlerCellHeatInitialTime = 4000; // 4 seconds
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
-        public const int StateHandlerCellHeatLockSleepTime = 30000; // 30 seconds
+        public const int StateHandlerCellHeatLockSleepTime = 10000; // 10 seconds
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
-        public const double SensorTargetLaserTransmissionStep = 0.5;
+        public const double SensorTargetLaserTransmissionStep = 0.3;
         public const double SensorTargetLaserTransmissionRun = 0.33;
 
         public const double ConversionTime = 1 / DataSampleRate;
@@ -100,7 +100,6 @@ namespace PediatricSoft
 
         public const string SensorCommandFieldZOffset = "@B";
         public const ushort SensorColdFieldZOffset = 0x8000;
-        public const ushort SensorLaserLockFieldZOffset = 0x0000;
 
         public const string SensorCommandFieldZModulationAmplitude = "@C";
         public const ushort SensorColdFieldZModulationAmplitude = 0x0000;
@@ -163,11 +162,9 @@ namespace PediatricSoft
             LaserLockSweep,
             LaserLockStep,
             LaserLockPID,
-            StabilizeCellHeat,
-            LaserLockDone,
+            CellHeatLock,
             ZeroFields,
             CalibrateMagnetometer,
-            CellHeatLock,
             Idle,
             Start,
             Run,
