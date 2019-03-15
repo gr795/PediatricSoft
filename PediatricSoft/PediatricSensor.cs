@@ -1555,14 +1555,12 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable | PediatricSoftConstants.SensorCellLockEnable)));
 
-            Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatLockSleepTime);
-
             lock (stateLock)
             {
                 currentState = State;
                 if (currentState == correctState)
                 {
-                    State++;
+                    State = PediatricSoftConstants.SensorState.Idle;
                 }
                 else
                     if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");

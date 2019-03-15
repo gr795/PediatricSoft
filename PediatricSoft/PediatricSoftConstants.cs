@@ -38,7 +38,6 @@ namespace PediatricSoft
         public const int StateHandlerCellHeatInitialTime = 4000; // 4 seconds
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
-        public const int StateHandlerCellHeatLockSleepTime = 10000; // 10 seconds
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.3;

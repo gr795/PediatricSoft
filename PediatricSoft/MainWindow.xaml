@@ -49,6 +49,15 @@
                     Content="Scan Ports">
                 </Button>
 
+                <Button
+                    Name="ButtonSendCommands"
+                    Margin="0,0,0,10"
+                    Height="20"
+                    IsEnabled="{Binding ButtonSendCommandsIsEnabled}"
+                    Command="{Binding ButtonSendCommandsCommand}"
+                    Content="Send Commands">
+                </Button>
+
                 <TextBlock
                     Name="TextBlockSensorCount"
                     Margin="0,0,0,10"
@@ -65,14 +74,6 @@
                 </Button>
 
                 <Button
-                    Name="ButtonStartStopSensors"
-                    Margin="0,0,0,10"
-                    Height="20"
-                    Command="{Binding ButtonStartStopSensorsCommand}"
-                    Content="{Binding ButtonStartStopSensorsContent}">
-                </Button>
-
-                <Button
                     Name="ButtonZeroFields"
                     Margin="0,0,0,10"
                     Height="20"
@@ -81,12 +82,11 @@
                 </Button>
 
                 <Button
-                    Name="ButtonSendCommands"
+                    Name="ButtonStartStopSensors"
                     Margin="0,0,0,10"
                     Height="20"
-                    IsEnabled="{Binding ButtonSendCommandsIsEnabled}"
-                    Command="{Binding ButtonSendCommandsCommand}"
-                    Content="Send Commands">
+                    Command="{Binding ButtonStartStopSensorsCommand}"
+                    Content="{Binding ButtonStartStopSensorsContent}">
                 </Button>
 
                 <TextBlock
