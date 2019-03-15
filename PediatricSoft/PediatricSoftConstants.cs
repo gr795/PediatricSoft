@@ -7,7 +7,6 @@ namespace PediatricSoft
 
         // Constants
         public const int DebugLogQueueMaxCount = 128;
-        public const int NumberOfThreads = 128;
         public const int DataSampleRate = 1000;
         public const int DataQueueLength = 4096; // number of data points to hold in memory and plot
         public const int PlotQueueLength = 256;
@@ -18,9 +17,8 @@ namespace PediatricSoft
         public const string PediatricSoftFolderRelative = "PediatricSoft";
         public const string SensorConfigFolderRelative = "SensorConfig";
 
-        public const int SerialPortMaxRetries = 10;
+        public const int SerialPortMaxRetries = 3;
         public const int SerialPortSleepAfterFail = 1000;
-        //public const UInt32 SerialPortBaudRate = 115200;
         public const UInt32 SerialPortBaudRate = 921600;
         public const UInt32 SerialPortWriteTimeout = 100;
         public const UInt32 SerialPortReadTimeout = 10;
@@ -46,16 +44,14 @@ namespace PediatricSoft
         public const double ConversionTime = 1 / DataSampleRate;
         public const double ConversionADC = (double)5 / 125 / 16777215;
 
-
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
         public const double SensorADCColdValueLowGainMaxVolts = 4.99;
 
         public const double SensorCoilsCalibrationTeslaPerHex = 4.5e-12; // 4.5 pT per step
 
-        public const int MaxNumberOfLaserLockSweepCycles = 30; // About 1 minute
+        public const int MaxNumberOfLaserLockSweepCycles = 100; // About 3 minutes
         public const int MaxNumberOfLaserLockStepCycles = 3; // We really should need more than 1
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
-        public const int NumberOfMagnetometerCalibrationSteps = 100;
 
         public const ushort SensorFieldCheckRange = 0x00DE; // about 1 nT 
         public const ushort SensorFieldStep = 0x0016; // about 0.1 nT 
@@ -73,10 +69,10 @@ namespace PediatricSoft
 
         public const string SensorCommandLaserCurrent = "@3";
         public const ushort SensorColdLaserCurrent = 0x0000;
-        public const ushort SensorDefaultLaserCurrent = 0x9000;
+        public const ushort SensorDefaultLaserCurrent = 0x7000;
 
         public const string SensorCommandLaserCurrentModulation = "@4";
-        public const ushort SensorDefaultLaserCurrentModulation = 0x0200;
+        public const ushort SensorDefaultLaserCurrentModulation = 0x0180;
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;

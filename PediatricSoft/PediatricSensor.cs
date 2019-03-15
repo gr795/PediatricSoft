@@ -1310,9 +1310,6 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable)));
 
-            //SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
-            //SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
-
             lock (stateLock)
             {
                 currentState = State;
