@@ -26,9 +26,9 @@
 
                 <ComboBox Margin="10,0,0,0"
                           VerticalAlignment="Center"
-                          ItemsSource="{Binding Path=Sensors}"
+                          ItemsSource="{Binding Sensors}"
                           DisplayMemberPath="PortSN"
-                          SelectedItem="{Binding Path=CurrentSensor}">
+                          SelectedItem="{Binding CurrentSensor}">
 
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Selected">
@@ -94,8 +94,8 @@
                 <TextBox Margin="10,5"
                          Grid.Row="0"
                          Grid.Column="1"
-                         Text="{Binding TextBoxLaserCurrentText}"
-                         Foreground="{Binding TextBoxLaserCurrentColor}">
+                         Text="{Binding TextBoxLaserCurrent.Text}"
+                         Foreground="{Binding TextBoxLaserCurrent.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
@@ -107,8 +107,8 @@
                 <TextBox Margin="10,5"
                          Grid.Row="1"
                          Grid.Column="1"
-                         Text="{Binding TextBoxFieldZModulationAmplitudeText}"
-                         Foreground="{Binding TextBoxFieldZModulationAmplitudeColor}">
+                         Text="{Binding TextBoxFieldZModulationAmplitude.Text}"
+                         Foreground="{Binding TextBoxFieldZModulationAmplitude.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
@@ -120,8 +120,8 @@
                 <TextBox Margin="10,5"
                          Grid.Row="2"
                          Grid.Column="1"
-                         Text="{Binding TextBoxDefaultCellHeatText}"
-                         Foreground="{Binding TextBoxDefaultCellHeatColor}">
+                         Text="{Binding TextBoxDefaultCellHeat.Text}"
+                         Foreground="{Binding TextBoxDefaultCellHeat.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
@@ -133,8 +133,8 @@
                 <TextBox Margin="10,5"
                          Grid.Row="3"
                          Grid.Column="1"
-                         Text="{Binding TextBoxMaxCellHeatText}"
-                         Foreground="{Binding TextBoxMaxCellHeatColor}">
+                         Text="{Binding TextBoxMaxCellHeat.Text}"
+                         Foreground="{Binding TextBoxMaxCellHeat.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
@@ -146,8 +146,8 @@
                 <TextBox Margin="10,5"
                          Grid.Row="4"
                          Grid.Column="1"
-                         Text="{Binding TextBoxCellHeatLockPointText}"
-                         Foreground="{Binding TextBoxCellHeatLockPointColor}">
+                         Text="{Binding TextBoxCellHeatLockPoint.Text}"
+                         Foreground="{Binding TextBoxCellHeatLockPoint.Color}">
                 </TextBox>
 
             </Grid>

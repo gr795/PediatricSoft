@@ -13,7 +13,6 @@ using System.Timers;
 using System.Xml.Serialization;
 using System.Numerics;
 using MathNet.Numerics.IntegralTransforms;
-using System.Diagnostics;
 
 namespace PediatricSoft
 {

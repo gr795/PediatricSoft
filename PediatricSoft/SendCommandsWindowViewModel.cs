@@ -3,7 +3,6 @@ using Prism.Mvvm;
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace PediatricSoft
 {
@@ -18,6 +17,12 @@ namespace PediatricSoft
         public DelegateCommand<object> TextBoxCommandStringKeyUpCommand { get; private set; }
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
         public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
+
+        public TextBoxSensorConfig TextBoxLaserCurrent { get; private set; }
+        public TextBoxSensorConfig TextBoxFieldZModulationAmplitude { get; private set; }
+        public TextBoxSensorConfig TextBoxDefaultCellHeat { get; private set; }
+        public TextBoxSensorConfig TextBoxMaxCellHeat { get; private set; }
+        public TextBoxSensorConfig TextBoxCellHeatLockPoint { get; private set; }
 
         public string TextBoxCommandStringText { get; set; } = String.Empty;
         public string[] CommandHistory
@@ -35,176 +40,6 @@ namespace PediatricSoft
             }
         }
 
-        private Brush textBoxLaserCurrentColor = new SolidColorBrush(Colors.Black);
-        public Brush TextBoxLaserCurrentColor
-        {
-            get { return textBoxLaserCurrentColor; }
-            set { textBoxLaserCurrentColor = value; RaisePropertyChanged(); }
-        }
-
-        public string TextBoxLaserCurrentText
-        {
-            get
-            {
-                if (CurrentSensor != null)
-                    return PediatricSensor.UInt16ToStringBE(CurrentSensor.PediatricSensorConfig.LaserCurrent);
-                else
-                    return string.Empty;
-            }
-            set
-            {
-                if (ushort.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out ushort result))
-                {
-                    if (CurrentSensor != null)
-                    {
-                        CurrentSensor.PediatricSensorConfig.LaserCurrent = result;
-                        TextBoxLaserCurrentColor = new SolidColorBrush(Colors.DarkGreen);
-                    }
-                }
-                else
-                {
-                    TextBoxLaserCurrentColor = new SolidColorBrush(Colors.Red);
-                }
-                RaisePropertyChanged();
-            }
-        }
-
-        private Brush textBoxFieldZModulationAmplitudeColor = new SolidColorBrush(Colors.Black);
-        public Brush TextBoxFieldZModulationAmplitudeColor
-        {
-            get { return textBoxFieldZModulationAmplitudeColor; }
-            set { textBoxFieldZModulationAmplitudeColor = value; RaisePropertyChanged(); }
-        }
-
-        public string TextBoxFieldZModulationAmplitudeText
-        {
-            get
-            {
-                if (CurrentSensor != null)
-                    return PediatricSensor.UInt16ToStringBE(CurrentSensor.PediatricSensorConfig.FieldZModulationAmplitude);
-                else
-                    return string.Empty;
-            }
-            set
-            {
-                if (ushort.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out ushort result))
-                {
-                    if (CurrentSensor != null)
-                    {
-                        CurrentSensor.PediatricSensorConfig.FieldZModulationAmplitude = result;
-                        TextBoxFieldZModulationAmplitudeColor = new SolidColorBrush(Colors.DarkGreen);
-                    }
-                }
-                else
-                {
-                    TextBoxFieldZModulationAmplitudeColor = new SolidColorBrush(Colors.Red);
-                }
-                RaisePropertyChanged();
-            }
-        }
-
-        private Brush textBoxDefaultCellHeatColor = new SolidColorBrush(Colors.Black);
-        public Brush TextBoxDefaultCellHeatColor
-        {
-            get { return textBoxDefaultCellHeatColor; }
-            set { textBoxDefaultCellHeatColor = value; RaisePropertyChanged(); }
-        }
-
-        public string TextBoxDefaultCellHeatText
-        {
-            get
-            {
-                if (CurrentSensor != null)
-                    return PediatricSensor.UInt16ToStringBE(CurrentSensor.PediatricSensorConfig.DefaultCellHeat);
-                else
-                    return string.Empty;
-            }
-            set
-            {
-                if (ushort.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out ushort result))
-                {
-                    if (CurrentSensor != null)
-                    {
-                        CurrentSensor.PediatricSensorConfig.DefaultCellHeat = result;
-                        TextBoxDefaultCellHeatColor = new SolidColorBrush(Colors.DarkGreen);
-                    }
-                }
-                else
-                {
-                    TextBoxDefaultCellHeatColor = new SolidColorBrush(Colors.Red);
-                }
-                RaisePropertyChanged();
-            }
-        }
-
-        private Brush textBoxMaxCellHeatColor = new SolidColorBrush(Colors.Black);
-        public Brush TextBoxMaxCellHeatColor
-        {
-            get { return textBoxMaxCellHeatColor; }
-            set { textBoxMaxCellHeatColor = value; RaisePropertyChanged(); }
-        }
-
-        public string TextBoxMaxCellHeatText
-        {
-            get
-            {
-                if (CurrentSensor != null)
-                    return PediatricSensor.UInt16ToStringBE(CurrentSensor.PediatricSensorConfig.MaxCellHeat);
-                else
-                    return string.Empty;
-            }
-            set
-            {
-                if (ushort.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out ushort result))
-                {
-                    if (CurrentSensor != null)
-                    {
-                        CurrentSensor.PediatricSensorConfig.MaxCellHeat = result;
-                        TextBoxMaxCellHeatColor = new SolidColorBrush(Colors.DarkGreen);
-                    }
-                }
-                else
-                {
-                    TextBoxMaxCellHeatColor = new SolidColorBrush(Colors.Red);
-                }
-                RaisePropertyChanged();
-            }
-        }
-
-        private Brush textBoxCellHeatLockPointColor = new SolidColorBrush(Colors.Black);
-        public Brush TextBoxCellHeatLockPointColor
-        {
-            get { return textBoxCellHeatLockPointColor; }
-            set { textBoxCellHeatLockPointColor = value; RaisePropertyChanged(); }
-        }
-
-        public string TextBoxCellHeatLockPointText
-        {
-            get
-            {
-                if (CurrentSensor != null)
-                    return PediatricSensor.UInt16ToStringBE(CurrentSensor.PediatricSensorConfig.CellHeatLockPoint);
-                else
-                    return string.Empty;
-            }
-            set
-            {
-                if (ushort.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out ushort result))
-                {
-                    if (CurrentSensor != null)
-                    {
-                        CurrentSensor.PediatricSensorConfig.CellHeatLockPoint = result;
-                        TextBoxCellHeatLockPointColor = new SolidColorBrush(Colors.DarkGreen);
-                    }
-                }
-                else
-                {
-                    TextBoxCellHeatLockPointColor = new SolidColorBrush(Colors.Red);
-                }
-                RaisePropertyChanged();
-            }
-        }
-
         public SendCommandsWindowViewModel()
         {
             PediatricSensorData = PediatricSensorData.Instance;
@@ -219,25 +54,23 @@ namespace PediatricSoft
         {
             RaisePropertyChanged("CommandHistory");
 
-            TextBoxLaserCurrentColor = new SolidColorBrush(Colors.Black);
-            RaisePropertyChanged("TextBoxLaserCurrentText");
-            RaisePropertyChanged("TextBoxLaserCurrentColor");
+            if (CurrentSensor != null)
+            {
+                TextBoxLaserCurrent = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrent");
+                RaisePropertyChanged("TextBoxLaserCurrent");
 
-            TextBoxFieldZModulationAmplitudeColor = new SolidColorBrush(Colors.Black);
-            RaisePropertyChanged("TextBoxFieldZModulationAmplitudeText");
-            RaisePropertyChanged("TextBoxFieldZModulationAmplitudeColor");
+                TextBoxFieldZModulationAmplitude = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "FieldZModulationAmplitude");
+                RaisePropertyChanged("TextBoxFieldZModulationAmplitude");
 
-            TextBoxDefaultCellHeatColor = new SolidColorBrush(Colors.Black);
-            RaisePropertyChanged("TextBoxDefaultCellHeatText");
-            RaisePropertyChanged("TextBoxDefaultCellHeatColor");
+                TextBoxDefaultCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "DefaultCellHeat");
+                RaisePropertyChanged("TextBoxDefaultCellHeat");
 
-            TextBoxMaxCellHeatColor = new SolidColorBrush(Colors.Black);
-            RaisePropertyChanged("TextBoxMaxCellHeatText");
-            RaisePropertyChanged("TextBoxMaxCellHeatColor");
+                TextBoxMaxCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "MaxCellHeat");
+                RaisePropertyChanged("TextBoxMaxCellHeat");
 
-            TextBoxCellHeatLockPointColor = new SolidColorBrush(Colors.Black);
-            RaisePropertyChanged("TextBoxCellHeatLockPointText");
-            RaisePropertyChanged("TextBoxCellHeatLockPointColor");
+                TextBoxCellHeatLockPoint = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "CellHeatLockPoint");
+                RaisePropertyChanged("TextBoxCellHeatLockPoint");
+            }
         }
 
         private void TextBoxCommandStringOnKeyDown(object parameter)
