@@ -17,8 +17,8 @@ namespace PediatricSoft
         public const string PediatricSoftFolderRelative = "PediatricSoft";
         public const string SensorConfigFolderRelative = "SensorConfig";
 
-        public const int SerialPortMaxRetries = 3;
-        public const int SerialPortSleepAfterFail = 1000;
+        public const int SerialPortMaxRetries = 5;
+        public const int SerialPortSleepAfterFail = 5000;
         public const UInt32 SerialPortBaudRate = 921600;
         public const UInt32 SerialPortWriteTimeout = 100;
         public const UInt32 SerialPortReadTimeout = 10;
