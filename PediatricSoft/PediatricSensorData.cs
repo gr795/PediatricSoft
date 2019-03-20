@@ -378,6 +378,11 @@ namespace PediatricSoft
                     }
                 }
             }
+            else
+            {
+                DebugLogQueue.Enqueue("Failed to get FTDI serial numbers (error " + ftStatus.ToString() + ")");
+                return SerialNumbers.ToArray();
+            }
 
             return SerialNumbers.ToArray();
         }

@@ -36,10 +36,12 @@ namespace PediatricSoft
         public const int StateHandlerCellHeatInitialTime = 4000; // 4 seconds
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
+        public const int StateHandlerCellHeatStabilizeTime = 180000; // 3 minutes
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.3;
         public const double SensorTargetLaserTransmissionRun = 0.33;
+        public const double SensorTargetLaserTransmission5Percent = 0.05;
 
         public const double ConversionTime = 1 / DataSampleRate;
         public const double ConversionADC = (double)5 / 125 / 16777215;
@@ -63,6 +65,8 @@ namespace PediatricSoft
         public const ushort SensorLockDisable = 0x0000;
         public const ushort SensorLaserLockEnable = 0x0005;
         public const ushort SensorCellLockEnable = 0x0010;
+        public const ushort SensorBzLockEnable = 0x0008;
+        public const ushort SensorByLockEnable = 0x0020;
 
         public const string SensorCommandPIDInverse = "@1";
         public const ushort SensorDefaultPIDInverse = 0x0001;
@@ -72,33 +76,32 @@ namespace PediatricSoft
         public const ushort SensorDefaultLaserCurrent = 0x7000;
 
         public const string SensorCommandLaserCurrentModulation = "@4";
-        public const ushort SensorDefaultLaserCurrentModulation = 0x0180;
+        public const ushort SensorDefaultLaserCurrentModulation = 0x0100;
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorDefaultLaserHeat = 0x0500;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
-        public const ushort SensorLaserHeatStep = 10;
+        public const ushort SensorLaserHeatStep = 0x0010;
 
         public const string SensorCommandFieldXOffset = "@7";
-        public const ushort SensorColdFieldXOffset = 0x8000;
+        public const ushort SensorDefaultFieldXOffset = 0x8000;
 
         public const string SensorCommandFieldXModulationAmplitude = "@8";
-        public const ushort SensorColdFieldXModulationAmplitude = 0x0000;
+        public const ushort SensorDefaultFieldXModulationAmplitude = 0x0000;
 
         public const string SensorCommandFieldYOffset = "@9";
-        public const ushort SensorColdFieldYOffset = 0x8000;
+        public const ushort SensorDefaultFieldYOffset = 0x8000;
 
         public const string SensorCommandFieldYModulationAmplitude = "@A";
-        public const ushort SensorColdFieldYModulationAmplitude = 0x0000;
+        public const ushort SensorDefaultFieldYModulationAmplitude = 0x3000;
 
         public const string SensorCommandFieldZOffset = "@B";
-        public const ushort SensorColdFieldZOffset = 0x8000;
+        public const ushort SensorDefaultFieldZOffset = 0x8000;
 
         public const string SensorCommandFieldZModulationAmplitude = "@C";
-        public const ushort SensorColdFieldZModulationAmplitude = 0x0000;
-        public const ushort SensorDefaultFieldZModulationAmplitude = 0x07C0;
+        public const ushort SensorDefaultFieldZModulationAmplitude = 0x3000;
 
         public const string SensorCommandLaserModulationFrequency = "@E";
         public const ushort SensorDefaultLaserModulationFrequency = 0x0010;
@@ -107,16 +110,28 @@ namespace PediatricSoft
         public const ushort SensorDefaultDelayForLaser = 0x0590;
 
         public const string SensorCommandPIDLaserCurrentP = "@10";
-        public const ushort SensorDefaultPIDLaserCurrentP = 0x0010;
+        public const ushort SensorDefaultPIDLaserCurrentP = 0x0000;
 
         public const string SensorCommandPIDLaserCurrentI = "@11";
         public const ushort SensorDefaultPIDLaserCurrentI = 0x0080;
 
         public const string SensorCommandPIDLaserHeaterI = "@1D";
-        public const ushort SensorDefaultPIDLaserHeaterI = 0x0300;
+        public const ushort SensorDefaultPIDLaserHeaterI = 0x0200;
 
         public const string SensorCommandPIDCellHeaterI = "@2A";
-        public const ushort SensorDefaultPIDCellHeaterI = 0x0006;
+        public const ushort SensorDefaultPIDCellHeaterI = 0x0008;
+
+        public const string SensorCommandPIDByP = "@16";
+        public const ushort SensorDefaultPIDByP = 0x0020;
+
+        public const string SensorCommandPIDByI = "@17";
+        public const ushort SensorDefaultPIDByI = 0x0020;
+
+        public const string SensorCommandPIDBzP = "@19";
+        public const ushort SensorDefaultPIDBzP = 0x0020;
+
+        public const string SensorCommandPIDBzI = "@1A";
+        public const ushort SensorDefaultPIDBzI = 0x0020;
 
         public const string SensorCommandDigitalDataStreamingAndADCGain = "@20";
         public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;
@@ -126,13 +141,12 @@ namespace PediatricSoft
 
         public const string SensorCommandCellHeat = "@21";
         public const ushort SensorColdCellHeat = 0x0000;
-        public const ushort SensorDefaultCellHeat = 0x5000;
+        public const ushort SensorDefaultCellHeat = 0x8000;
         public const ushort SensorMinCellHeat = 0x0000;
-        public const ushort SensorMaxCellHeat = 0x9000;
-        public const ushort SensorCellHeatStep = 10;
+        public const ushort SensorMaxCellHeat = 0xFFFF;
 
         public const string SensorCommandDigitalDataSelector = "@22";
-        public const ushort SensorDefaultDigitalDataSelector = 0x0050;
+        public const ushort SensorDefaultDigitalDataSelector = 0x0056;
 
         public const string SensorCommandADCDisplayGain = "@23";
         public const ushort SensorDefaultADCDisplayGain = 0x0009;
@@ -144,7 +158,7 @@ namespace PediatricSoft
         public const ushort SensorDefault2fPhase = 0x05C0;
 
         public const string SensorCommandBzPhase = "@27";
-        public const ushort SensorDefaultBzPhase = 0x0460;
+        public const ushort SensorDefaultBzPhase = 0x0500;
 
         public const string SensorCommandCellHeatLockPoint = "@28";
         public const ushort SensorDefaultCellHeatLockPoint = 0x1000;
