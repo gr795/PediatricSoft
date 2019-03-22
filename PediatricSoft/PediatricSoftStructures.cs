@@ -5,25 +5,29 @@
         public int TimeRAW;
         public int ADCRAW;
         public int BzDemodRAW;
-        public int BzErrorRAW;
+        public int BzFeedbackRAW;
+        public int OtherRAW;
 
         public double Time;
         public double ADC;
         public double BzDemod;
-        public double BzError;
+        public double BzFeedback;
+        public double Other;
 
-        public DataPoint(int _TimeRAW, int _ADCRAW, int _BzDemodRAW, int _BzErrorRAW,
-                         double _Time, double _ADC, double _BzDemod, double _BzError)
+        public DataPoint(int _TimeRAW, int _ADCRAW, int _BzDemodRAW, int _BzFeedbackRAW, int _OtherRAW,
+                         double _Time, double _ADC, double _BzDemod, double _BzFeedback, double _Other)
         {
             TimeRAW = _TimeRAW;
             ADCRAW = _ADCRAW;
             BzDemodRAW = _BzDemodRAW;
-            BzErrorRAW = _BzErrorRAW;
+            BzFeedbackRAW = _BzFeedbackRAW;
+            OtherRAW = _OtherRAW;
 
             Time = _Time;
             ADC = _ADC;
             BzDemod = _BzDemod;
-            BzError = _BzError;
+            BzFeedback = _BzFeedback;
+            Other = _Other;
         }
     }
 }
