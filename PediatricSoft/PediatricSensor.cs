@@ -709,8 +709,8 @@ namespace PediatricSoft
                             SendCommandsSetup();
                             break;
 
-                        case PediatricSoftConstants.SensorState.LaserLockSweep:
-                            SendCommandsLaserLockSweep();
+                        case PediatricSoftConstants.SensorState.StartLock:
+                            SendCommandsStartLock();
                             break;
 
                         case PediatricSoftConstants.SensorState.LaserLockStep:
@@ -1060,7 +1060,7 @@ namespace PediatricSoft
             }
         }
 
-        private void SendCommandsLaserLockSweep()
+        private void SendCommandsStartLock()
         {
             PediatricSoftConstants.SensorState currentState;
             PediatricSoftConstants.SensorState correctState;
@@ -1071,21 +1071,29 @@ namespace PediatricSoft
                 correctState = State;
             }
 
-            double transmission = double.MaxValue;
-
             // Turn on the laser
             lock (dataLock)
             {
                 SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
                 SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserCurrent)));
+
+                // Set the cell heater to the default value
+                SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
+                SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.DefaultCellHeat)));
+
                 dataUpdated = false;
             }
 
             // Wait a bit
-            Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
+            Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
 
             // Record the ADC value
-            coldSensorADCValue = lastDataPoint.ADC;
+            lock (dataLock)
+            {
+                coldSensorADCValue = dataPoints.Select(x => x.ADC)
+                                               .Skip(dataPoints.Length - PediatricSoftConstants.StateHandlerTransmissionAveragingTime)
+                                               .Average();
+            }
 
             // Here we check if the laser is working as expected
             if (coldSensorADCValue < PediatricSoftConstants.SensorADCColdValueLowGainMinVolts ||
@@ -1109,79 +1117,13 @@ namespace PediatricSoft
 
             // Wait for the cell to warm up
             Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
-
-            // Laser heat sweep cycle. Here we look for the Rb resonance.
-
-            for (int i = 0; i < PediatricSoftConstants.MaxNumberOfLaserLockSweepCycles; i++)
-            {
-                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Laser lock sweep cycle: {i}");
-
-                // Set the laser heater to the max value
-                SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMaxLaserHeat)));
-
-                // Wait a bit
-                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
-                Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
-
-                // Set the laser heater to the min value
-                SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMinLaserHeat)));
-
-                // Wait a bit
-                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Waiting for {PediatricSoftConstants.StateHandlerLaserHeatSweepTime} ms");
-                Thread.Sleep(PediatricSoftConstants.StateHandlerLaserHeatSweepTime);
-
-                // See if the threshold was reached
-                lock (dataLock)
-                {
-                    transmission = dataPoints.Select(x => x.ADC).Min() / coldSensorADCValue;
-                }
-
-                if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionSweep)
-                {
-                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Sweep cycle - found Rb resonance");
-                    if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Transmission on resonance: {transmission}");
-
-                    lock (stateLock)
-                    {
-                        currentState = State;
-                        if (currentState == correctState)
-                        {
-                            State++;
-                        }
-                    }
-                    return;
-                }
-                else
-                {
-                    // Check if the lock was cancelled
-                    lock (stateLock)
-                    {
-                        currentState = State;
-                        if (currentState != correctState)
-                        {
-                            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
-                            return;
-                        }
-                    }
-                }
-
-                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Didn't find Rb resonance, going to wait more");
-                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Minimal transmission {transmission} is higher than the target {PediatricSoftConstants.SensorTargetLaserTransmissionSweep}");
-
-            }
-
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Didn't find Rb resonance, giving up");
-
-            // Fail
+            
             lock (stateLock)
             {
                 currentState = State;
                 if (currentState == correctState)
                 {
-                    State = PediatricSoftConstants.SensorState.Failed;
-                    return;
+                    State++;
                 }
             }
 
@@ -1240,7 +1182,7 @@ namespace PediatricSoft
                             currentState = State;
                             if (currentState != correctState)
                             {
-                                if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                                PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
                                 return;
                             }
                         }
@@ -1268,7 +1210,7 @@ namespace PediatricSoft
                     State = PediatricSoftConstants.SensorState.Failed;
                 }
             }
-            PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: We saw Rb resonance, but the step cycle failed. Giving up");
+            PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Laser lock failed. Giving up");
 
         }
 

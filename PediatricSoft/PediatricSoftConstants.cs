@@ -33,13 +33,12 @@ namespace PediatricSoft
         public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
-        public const int StateHandlerCellHeatInitialTime = 4000; // 4 seconds
+        public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
         public const int StateHandlerCellHeatStabilizeTime = 180000; // 3 minutes
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
-        public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.3;
         public const double SensorTargetLaserTransmissionRun = 0.33;
         public const double SensorTargetLaserTransmission5Percent = 0.05;
@@ -52,8 +51,7 @@ namespace PediatricSoft
 
         public const double SensorCoilsCalibrationTeslaPerHex = 4.5e-12; // 4.5 pT per step
 
-        public const int MaxNumberOfLaserLockSweepCycles = 100; // About 3 minutes
-        public const int MaxNumberOfLaserLockStepCycles = 3; // We really should need more than 1
+        public const int MaxNumberOfLaserLockStepCycles = 30;
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
 
         public const ushort SensorFieldCheckRange = 0x00DE; // about 1 nT 
@@ -79,7 +77,7 @@ namespace PediatricSoft
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
-        public const ushort SensorMaxLaserHeat = 0x1000;
+        public const ushort SensorMaxLaserHeat = 0x1800;
         public const ushort SensorLaserHeatStep = 0x0010;
 
         public const string SensorCommandFieldXOffset = "@7";
@@ -168,7 +166,7 @@ namespace PediatricSoft
             Init,
             Valid,
             Setup,
-            LaserLockSweep,
+            StartLock,
             LaserLockStep,
             LaserLockPID,
             CellHeatLock,
