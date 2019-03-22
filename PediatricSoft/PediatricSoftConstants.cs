@@ -37,6 +37,7 @@ namespace PediatricSoft
         public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
         public const int StateHandlerADCColdDelay = 1000; // 1 second
         public const int StateHandlerCellHeatStabilizeTime = 180000; // 3 minutes
+        public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
         public const double SensorTargetLaserTransmissionSweep = 0.2;
         public const double SensorTargetLaserTransmissionStep = 0.3;
@@ -58,9 +59,6 @@ namespace PediatricSoft
         public const ushort SensorFieldCheckRange = 0x00DE; // about 1 nT 
         public const ushort SensorFieldStep = 0x0016; // about 0.1 nT 
 
-        public const int SensorLaserHeatStepCycleDelay = 2000;
-        public const int SensorLaserHeatStepSleepTime = 100;
-
         public const string SensorCommandLock = "@0";
         public const ushort SensorLockDisable = 0x0000;
         public const ushort SensorLaserLockEnable = 0x0005;
@@ -80,9 +78,8 @@ namespace PediatricSoft
 
         public const string SensorCommandLaserHeat = "@5";
         public const ushort SensorColdLaserHeat = 0x0000;
-        public const ushort SensorDefaultLaserHeat = 0x0500;
         public const ushort SensorMinLaserHeat = 0x0000;
-        public const ushort SensorMaxLaserHeat = 0x2000;
+        public const ushort SensorMaxLaserHeat = 0x1000;
         public const ushort SensorLaserHeatStep = 0x0010;
 
         public const string SensorCommandFieldXOffset = "@7";
@@ -162,6 +159,9 @@ namespace PediatricSoft
 
         public const string SensorCommandCellHeatLockPoint = "@28";
         public const ushort SensorDefaultCellHeatLockPoint = 0x1000;
+
+        public const string SensorCommandTriggers = "@40";
+        public const ushort SensorSetCurrentADCValueAsHeatLockPoint = 0x0004;
 
         public enum SensorState : byte
         {

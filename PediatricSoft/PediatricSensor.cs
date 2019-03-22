@@ -1328,7 +1328,8 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.DefaultCellHeat)));
 
             SendCommand(PediatricSoftConstants.SensorCommandLock);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable | PediatricSoftConstants.SensorCellLockEnable)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable |
+                                                            PediatricSoftConstants.SensorCellLockEnable)));
 
             Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatStabilizeTime);
 
@@ -1489,6 +1490,42 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable |
                                                             PediatricSoftConstants.SensorBzLockEnable |
                                                             PediatricSoftConstants.SensorByLockEnable)));
+
+            while (commandQueue.TryPeek(out string dummy))
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                if (State != correctState)
+                {
+                    PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    return;
+                }
+            }
+
+            Thread.Sleep(PediatricSoftConstants.StateHandlerTransmissionAveragingTime);
+
+            double targetADCValue = 0;
+
+            // Check the transmission
+            lock (dataLock)
+            {
+                targetADCValue = dataPoints.Select(x => x.ADC)
+                                         .Skip(dataPoints.Length - PediatricSoftConstants.StateHandlerTransmissionAveragingTime)
+                                         .Average();
+            }
+            if (targetADCValue < coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionRun)
+            {
+                targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionRun;
+            }
+            ushort cellHeatLockPoint = (ushort)(ushort.MaxValue * (targetADCValue / 5));
+
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeatLockPoint);
+            SendCommand(String.Concat("#", UInt16ToStringBE(cellHeatLockPoint)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandLock);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable |
+                                                            PediatricSoftConstants.SensorBzLockEnable |
+                                                            PediatricSoftConstants.SensorByLockEnable |
+                                                            PediatricSoftConstants.SensorCellLockEnable)));
 
             while (commandQueue.TryPeek(out string dummy))
             {
