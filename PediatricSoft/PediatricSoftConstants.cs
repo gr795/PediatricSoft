@@ -43,14 +43,16 @@ namespace PediatricSoft
         public const double SensorTargetLaserTransmissionRun = 0.33;
         public const double SensorTargetLaserTransmission5Percent = 0.05;
 
-        public const double ConversionTime = 1 / DataSampleRate;
+        public const double ConversionTime = (double)1 / DataSampleRate;
         public const double ConversionADC = (double)5 / 125 / 16777215;
 
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
         public const double SensorADCColdValueLowGainMaxVolts = 4.99;
 
-        public const double SensorCoilsCalibrationTeslaPerHex = 4.5e-12; // 4.5 pT per step
+        public const double SensorYCoilCalibrationTeslaPerHex = 2.29e-12; // 4.5 pT per step
+        public const double SensorZCoilCalibrationTeslaPerHex = 2.29e-12; // 4.5 pT per step
 
+        public const double StreamingAccumulatorSize = 125;
         public const int MaxNumberOfLaserLockStepCycles = 30;
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
 
@@ -78,7 +80,7 @@ namespace PediatricSoft
         public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x1800;
-        public const ushort SensorLaserHeatStep = 0x0010;
+        public const ushort SensorLaserHeatStep = 0x0008;
 
         public const string SensorCommandFieldXOffset = "@7";
         public const ushort SensorDefaultFieldXOffset = 0x8000;
@@ -117,16 +119,16 @@ namespace PediatricSoft
         public const ushort SensorDefaultPIDCellHeaterI = 0x0008;
 
         public const string SensorCommandPIDByP = "@16";
-        public const ushort SensorDefaultPIDByP = 0x0020;
+        public const ushort SensorDefaultPIDByP = 0x0000;
 
         public const string SensorCommandPIDByI = "@17";
-        public const ushort SensorDefaultPIDByI = 0x0020;
+        public const ushort SensorDefaultPIDByI = 0x0004;
 
         public const string SensorCommandPIDBzP = "@19";
-        public const ushort SensorDefaultPIDBzP = 0x0020;
+        public const ushort SensorDefaultPIDBzP = 0x0000;
 
         public const string SensorCommandPIDBzI = "@1A";
-        public const ushort SensorDefaultPIDBzI = 0x0020;
+        public const ushort SensorDefaultPIDBzI = 0x0004;
 
         public const string SensorCommandDigitalDataStreamingAndADCGain = "@20";
         public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;
@@ -141,7 +143,7 @@ namespace PediatricSoft
         public const ushort SensorMaxCellHeat = 0xFFFF;
 
         public const string SensorCommandDigitalDataSelector = "@22";
-        public const ushort SensorDefaultDigitalDataSelector = 0x0576;
+        public const ushort SensorDefaultDigitalDataSelector = 0x7650;
 
         public const string SensorCommandADCDisplayGain = "@23";
         public const ushort SensorDefaultADCDisplayGain = 0x0009;

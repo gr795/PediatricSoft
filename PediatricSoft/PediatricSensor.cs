@@ -403,6 +403,12 @@ namespace PediatricSoft
                 int plotCounter = 0;
                 int dataCounter = 0;
 
+                int _TimeRAW = 0;
+                int _ADCRAW = 0;
+                int _BzDemodRAW = 0;
+                int _BzFeedbackRAW = 0;
+                int _Bz2fRAW = 0;
+
                 if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: Streaming starting");
 
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
@@ -565,18 +571,25 @@ namespace PediatricSoft
                                 {
                                     Array.Reverse(data); // switch from MSB to LSB
 
+                                    _TimeRAW = BitConverter.ToInt32(data, 16);
+                                    _ADCRAW = BitConverter.ToInt32(data, 0);
+                                    _BzDemodRAW = BitConverter.ToInt32(data, 4);
+                                    _BzFeedbackRAW = BitConverter.ToInt32(data, 12);
+                                    _Bz2fRAW = BitConverter.ToInt32(data, 8);
+
+
                                     lastDataPoint = new DataPoint
                                     (
-                                        BitConverter.ToInt32(data, 16), // TimeRAW
-                                        BitConverter.ToInt32(data, 12), // ADCRAW
-                                        BitConverter.ToInt32(data, 8), // BzDemodRAW
-                                        BitConverter.ToInt32(data, 4), // BzFeedbackRAW
-                                        BitConverter.ToInt32(data, 0), // OtherRAW
-                                        PediatricSoftConstants.ConversionTime * BitConverter.ToInt32(data, 16),
-                                        PediatricSoftConstants.ConversionADC * BitConverter.ToInt32(data, 12),
-                                        CalibrationBzDemod * BitConverter.ToInt32(data, 8),
-                                        PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex * (BitConverter.ToInt32(data, 4)),
-                                        BitConverter.ToInt32(data, 0)
+                                        _TimeRAW,
+                                        _ADCRAW,
+                                        _BzDemodRAW,
+                                        _BzFeedbackRAW,
+                                        _Bz2fRAW,
+                                        PediatricSoftConstants.ConversionTime * _TimeRAW,
+                                        PediatricSoftConstants.ConversionADC * _ADCRAW,
+                                        CalibrationBzDemod * _BzDemodRAW,
+                                        PediatricSoftConstants.SensorZCoilCalibrationTeslaPerHex * (_BzFeedbackRAW / PediatricSoftConstants.StreamingAccumulatorSize),
+                                        _Bz2fRAW
                                     );
 
                                     Array.Copy(dataPoints, 1, dataPoints, 0, PediatricSoftConstants.DataQueueLength - 1);
@@ -1117,7 +1130,7 @@ namespace PediatricSoft
 
             // Wait for the cell to warm up
             Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
-            
+
             lock (stateLock)
             {
                 currentState = State;
@@ -1571,7 +1584,7 @@ namespace PediatricSoft
                 }
             }
 
-            CalibrationBzDemod = PediatricSoftConstants.SensorCoilsCalibrationTeslaPerHex / ((plusValue - minusValue) / (plusField - minusField));
+            CalibrationBzDemod = PediatricSoftConstants.SensorZCoilCalibrationTeslaPerHex / ((plusValue - minusValue) / (plusField - minusField));
 
             if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Sensor {SN}: ZDemod calibration {CalibrationBzDemod}");
 
