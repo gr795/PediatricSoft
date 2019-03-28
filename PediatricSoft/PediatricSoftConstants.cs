@@ -33,13 +33,11 @@ namespace PediatricSoft
         public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
-        public const int StateHandlerCellHeatInitialTime = 5000; // 5 seconds
-        public const int StateHandlerLaserHeatSweepTime = 1000; // 1 second
-        public const int StateHandlerADCColdDelay = 1000; // 1 second
+        public const int StateHandlerCellHeatInitialTime = 30000; // 30 seconds
         public const int StateHandlerCellHeatStabilizeTime = 180000; // 3 minutes
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
-        public const double SensorTargetLaserTransmissionStep = 0.3;
+        public const double SensorTargetLaserTransmissionStep = 0.5;
         public const double SensorTargetLaserTransmissionRun = 0.33;
         public const double SensorTargetLaserTransmission5Percent = 0.05;
 
@@ -47,17 +45,14 @@ namespace PediatricSoft
         public const double ConversionADC = (double)5 / 125 / 16777215;
 
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
-        public const double SensorADCColdValueLowGainMaxVolts = 4.99;
+        public const double SensorADCColdValueLowGainMaxVolts = 4.5;
 
         public const double SensorYCoilCalibrationTeslaPerHex = 2.29e-12; // 4.5 pT per step
         public const double SensorZCoilCalibrationTeslaPerHex = 2.29e-12; // 4.5 pT per step
 
-        public const double StreamingAccumulatorSize = 125;
+        public const double FeedbackStreamingScalingFactor = 125 * 128;
         public const int MaxNumberOfLaserLockStepCycles = 30;
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
-
-        public const ushort SensorFieldCheckRange = 0x00DE; // about 1 nT 
-        public const ushort SensorFieldStep = 0x0016; // about 0.1 nT 
 
         public const string SensorCommandLock = "@0";
         public const ushort SensorLockDisable = 0x0000;
@@ -77,6 +72,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultLaserCurrentModulation = 0x0100;
 
         public const string SensorCommandLaserHeat = "@5";
+        public const ushort SensorDefaultLaserHeat = 0x0800;
         public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x1800;
@@ -119,16 +115,16 @@ namespace PediatricSoft
         public const ushort SensorDefaultPIDCellHeaterI = 0x0008;
 
         public const string SensorCommandPIDByP = "@16";
-        public const ushort SensorDefaultPIDByP = 0x0000;
+        public const ushort SensorDefaultPIDByP = 0x0020;
 
         public const string SensorCommandPIDByI = "@17";
-        public const ushort SensorDefaultPIDByI = 0x0004;
+        public const ushort SensorDefaultPIDByI = 0x0020;
 
         public const string SensorCommandPIDBzP = "@19";
-        public const ushort SensorDefaultPIDBzP = 0x0000;
+        public const ushort SensorDefaultPIDBzP = 0x0020;
 
         public const string SensorCommandPIDBzI = "@1A";
-        public const ushort SensorDefaultPIDBzI = 0x0004;
+        public const ushort SensorDefaultPIDBzI = 0x0020;
 
         public const string SensorCommandDigitalDataStreamingAndADCGain = "@20";
         public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;
@@ -172,12 +168,18 @@ namespace PediatricSoft
             LaserLockStep,
             LaserLockPID,
             CellHeatLock,
+            HoldCurrentCellHeat,
             ZeroFields,
-            CalibrateMagnetometer,
+            HoldCurrentTransmission,
             Idle,
             Start,
+            HoldCurrentBy,
+            StartDataSave,
             Run,
             Stop,
+            StopDataSave,
+            ByLock,
+            GoIdle,
             ShutDownRequested,
             ShutDownComplete,
             Failed
