@@ -78,23 +78,23 @@ namespace PediatricSoft
         public const ushort SensorMaxLaserHeat = 0x1800;
         public const ushort SensorLaserHeatStep = 0x0008;
 
-        public const string SensorCommandFieldXOffset = "@7";
-        public const ushort SensorDefaultFieldXOffset = 0x8000;
+        public const string SensorCommandBxOffset = "@7";
+        public const ushort SensorDefaultBxOffset = 0x8000;
 
-        public const string SensorCommandFieldXModulationAmplitude = "@8";
-        public const ushort SensorDefaultFieldXModulationAmplitude = 0x0000;
+        public const string SensorCommandBxModulation = "@8";
+        public const ushort SensorDefaultBxModulation = 0x0000;
 
-        public const string SensorCommandFieldYOffset = "@9";
-        public const ushort SensorDefaultFieldYOffset = 0x8000;
+        public const string SensorCommandByOffset = "@9";
+        public const ushort SensorDefaultByOffset = 0x8000;
 
-        public const string SensorCommandFieldYModulationAmplitude = "@A";
-        public const ushort SensorDefaultFieldYModulationAmplitude = 0x3000;
+        public const string SensorCommandByModulation = "@A";
+        public const ushort SensorDefaultByModulation = 0x3000;
 
-        public const string SensorCommandFieldZOffset = "@B";
-        public const ushort SensorDefaultFieldZOffset = 0x8000;
+        public const string SensorCommandBzOffset = "@B";
+        public const ushort SensorDefaultBzOffset = 0x8000;
 
-        public const string SensorCommandFieldZModulationAmplitude = "@C";
-        public const ushort SensorDefaultFieldZModulationAmplitude = 0x3000;
+        public const string SensorCommandBzModulation = "@C";
+        public const ushort SensorDefaultBzModulation = 0x3000;
 
         public const string SensorCommandLaserModulationFrequency = "@E";
         public const ushort SensorDefaultLaserModulationFrequency = 0x0010;

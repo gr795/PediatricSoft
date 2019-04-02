@@ -19,10 +19,11 @@ namespace PediatricSoft
         public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
 
         public TextBoxSensorConfig TextBoxLaserCurrent { get; private set; }
-        public TextBoxSensorConfig TextBoxFieldZModulationAmplitude { get; private set; }
+        public TextBoxSensorConfig TextBoxLaserCurrentModulation { get; private set; }
+        public TextBoxSensorConfig TextBoxBzModulation { get; private set; }
         public TextBoxSensorConfig TextBoxDefaultCellHeat { get; private set; }
         public TextBoxSensorConfig TextBoxMaxCellHeat { get; private set; }
-        public TextBoxSensorConfig TextBoxCellHeatLockPoint { get; private set; }
+        
 
         public string TextBoxCommandStringText { get; set; } = String.Empty;
         public string[] CommandHistory
@@ -59,17 +60,18 @@ namespace PediatricSoft
                 TextBoxLaserCurrent = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrent");
                 RaisePropertyChanged("TextBoxLaserCurrent");
 
-                TextBoxFieldZModulationAmplitude = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "FieldZModulationAmplitude");
-                RaisePropertyChanged("TextBoxFieldZModulationAmplitude");
+                TextBoxLaserCurrentModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrentModulation");
+                RaisePropertyChanged("TextBoxLaserCurrentModulation");
+
+                TextBoxBzModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "BzModulation");
+                RaisePropertyChanged("TextBoxBzModulation");
 
                 TextBoxDefaultCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "DefaultCellHeat");
                 RaisePropertyChanged("TextBoxDefaultCellHeat");
 
                 TextBoxMaxCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "MaxCellHeat");
                 RaisePropertyChanged("TextBoxMaxCellHeat");
-
-                TextBoxCellHeatLockPoint = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "CellHeatLockPoint");
-                RaisePropertyChanged("TextBoxCellHeatLockPoint");
+                
             }
         }
 

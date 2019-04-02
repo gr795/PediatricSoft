@@ -101,53 +101,53 @@
                 <TextBlock VerticalAlignment="Center"
                            Grid.Row="1"
                            Grid.Column="0">
-                    Field Z Modulation Amplitude
+                    Laser Current Modulation
                 </TextBlock>
 
                 <TextBox Margin="10,5"
                          Grid.Row="1"
                          Grid.Column="1"
-                         Text="{Binding TextBoxFieldZModulationAmplitude.Text}"
-                         Foreground="{Binding TextBoxFieldZModulationAmplitude.Color}">
+                         Text="{Binding TextBoxLaserCurrentModulation.Text}"
+                         Foreground="{Binding TextBoxLaserCurrentModulation.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
                            Grid.Row="2"
                            Grid.Column="0">
-                    Default Cell Heat
+                    Bz Modulation
                 </TextBlock>
 
                 <TextBox Margin="10,5"
                          Grid.Row="2"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxBzModulation.Text}"
+                         Foreground="{Binding TextBoxBzModulation.Color}">
+                </TextBox>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="3"
+                           Grid.Column="0">
+                    Default Cell Heat
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="3"
                          Grid.Column="1"
                          Text="{Binding TextBoxDefaultCellHeat.Text}"
                          Foreground="{Binding TextBoxDefaultCellHeat.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
-                           Grid.Row="3"
+                           Grid.Row="4"
                            Grid.Column="0">
                     Max Cell Heat
                 </TextBlock>
 
                 <TextBox Margin="10,5"
-                         Grid.Row="3"
+                         Grid.Row="4"
                          Grid.Column="1"
                          Text="{Binding TextBoxMaxCellHeat.Text}"
                          Foreground="{Binding TextBoxMaxCellHeat.Color}">
-                </TextBox>
-
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="4"
-                           Grid.Column="0">
-                    Cell Heat Lock Point
-                </TextBlock>
-
-                <TextBox Margin="10,5"
-                         Grid.Row="4"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxCellHeatLockPoint.Text}"
-                         Foreground="{Binding TextBoxCellHeatLockPoint.Color}">
                 </TextBox>
 
             </Grid>

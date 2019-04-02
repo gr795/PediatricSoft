@@ -9,10 +9,10 @@ namespace PediatricSoft
         public ushort Head { get; set; }
 
         public ushort LaserCurrent { get; set; }
-        public ushort FieldZModulationAmplitude { get; set; }
+        public ushort LaserCurrentModulation { get; set; }
+        public ushort BzModulation { get; set; }
         public ushort DefaultCellHeat { get; set; }
         public ushort MaxCellHeat { get; set; }
-        public ushort CellHeatLockPoint { get; set; }
 
         public PediatricSensorConfig()
         {
@@ -21,10 +21,10 @@ namespace PediatricSoft
             Head = 0;
 
             LaserCurrent = PediatricSoftConstants.SensorDefaultLaserCurrent;
-            FieldZModulationAmplitude = PediatricSoftConstants.SensorDefaultFieldZModulationAmplitude;
+            LaserCurrentModulation = PediatricSoftConstants.SensorDefaultLaserCurrentModulation;
+            BzModulation = PediatricSoftConstants.SensorDefaultBzModulation;
             DefaultCellHeat = PediatricSoftConstants.SensorDefaultCellHeat;
             MaxCellHeat = PediatricSoftConstants.SensorMaxCellHeat;
-            CellHeatLockPoint = PediatricSoftConstants.SensorDefaultCellHeatLockPoint;
         }
 
         public bool Equals(PediatricSensorConfig config)
@@ -32,7 +32,6 @@ namespace PediatricSoft
             bool result = true;
             foreach (PropertyInfo pi in this.GetType().GetProperties())
             {
-                //result = result && Convert.ChangeType(pi.GetValue(this), pi.PropertyType).Equals(Convert.ChangeType(pi.GetValue(config), pi.PropertyType));
                 result = result && pi.GetValue(this).Equals(pi.GetValue(config));
             }
             return result;

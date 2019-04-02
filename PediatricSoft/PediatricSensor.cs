@@ -33,9 +33,9 @@ namespace PediatricSoft
 
         private double coldSensorADCValue = 0;
         private ushort currentCellHeat = 0;
-        private ushort zeroXField = PediatricSoftConstants.SensorDefaultFieldXOffset;
-        private ushort zeroYField = PediatricSoftConstants.SensorDefaultFieldYOffset;
-        private ushort zeroZField = PediatricSoftConstants.SensorDefaultFieldZOffset;
+        private ushort zeroBx = PediatricSoftConstants.SensorDefaultBxOffset;
+        private ushort zeroBy = PediatricSoftConstants.SensorDefaultByOffset;
+        private ushort zeroBz = PediatricSoftConstants.SensorDefaultBzOffset;
 
         private bool infoRequested = false;
         private string requestedInfoString = string.Empty;
@@ -1015,22 +1015,22 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorColdLaserHeat)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldXOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandBxOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultBxOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldXModulationAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandBxModulation);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldYOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandByOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultByOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandByModulation);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldZOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandBzOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultBzOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandBzModulation);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
             SendCommand(PediatricSoftConstants.SensorCommandLaserModulationFrequency);
@@ -1145,7 +1145,7 @@ namespace PediatricSoft
             }
 
             // Turn the Y-Coil to max current
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+            SendCommand(PediatricSoftConstants.SensorCommandByOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MaxValue)));
 
             // Set the cell heater to the max value
@@ -1413,26 +1413,26 @@ namespace PediatricSoft
 
             // Reset fields
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldXOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldXOffset)));
+            SendCommand(PediatricSoftConstants.SensorCommandBxOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultBxOffset)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldXModulationAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandBxModulation);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandByModulation);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
+            SendCommand(PediatricSoftConstants.SensorCommandBzModulation);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
             for (ushort yField = ushort.MinValue; yField < ushort.MaxValue; yField = UShortSafeInc(yField, fieldStep, ushort.MaxValue))
             {
                 for (ushort zField = ushort.MinValue; zField < ushort.MaxValue; zField = UShortSafeInc(zField, fieldStep, ushort.MaxValue))
                 {
-                    SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+                    SendCommand(PediatricSoftConstants.SensorCommandByOffset);
                     SendCommand(String.Concat("#", UInt16ToStringBE(yField)));
 
-                    SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
+                    SendCommand(PediatricSoftConstants.SensorCommandBzOffset);
                     SendCommand(String.Concat("#", UInt16ToStringBE(zField)));
 
                     while (commandQueue.TryPeek(out string dummy))
@@ -1466,8 +1466,8 @@ namespace PediatricSoft
                     {
                         maxADCRAWValue = currentADCRAWValue;
 
-                        zeroYField = yField;
-                        zeroZField = zField;
+                        zeroBy = yField;
+                        zeroBz = zField;
 
                     }
 
@@ -1475,17 +1475,17 @@ namespace PediatricSoft
 
             }
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(zeroYField)));
+            SendCommand(PediatricSoftConstants.SensorCommandByOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroBy)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZOffset);
-            SendCommand(String.Concat("#", UInt16ToStringBE(zeroZField)));
+            SendCommand(PediatricSoftConstants.SensorCommandBzOffset);
+            SendCommand(String.Concat("#", UInt16ToStringBE(zeroBz)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldYModulationAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandByModulation);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultByModulation)));
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldZModulationAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.FieldZModulationAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandBzModulation);
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.BzModulation)));
 
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable |
@@ -1598,7 +1598,7 @@ namespace PediatricSoft
 
             lock (dataLock)
             {
-                SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
+                SendCommand(PediatricSoftConstants.SensorCommandByOffset);
                 SendCommand("?");
                 infoRequested = true;
             }
@@ -1608,20 +1608,20 @@ namespace PediatricSoft
                 Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
             }
 
-            if (ushort.TryParse(requestedInfoString, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out zeroYField))
+            if (ushort.TryParse(requestedInfoString, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out zeroBy))
             {
                 // Success
                 // Turn off the By lock but keep the value
 
-                SendCommand(PediatricSoftConstants.SensorCommandFieldYOffset);
-                SendCommand(String.Concat("#", UInt16ToStringBE(zeroYField)));
+                SendCommand(PediatricSoftConstants.SensorCommandByOffset);
+                SendCommand(String.Concat("#", UInt16ToStringBE(zeroBy)));
 
                 SendCommand(PediatricSoftConstants.SensorCommandLock);
                 SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable |
                                                                 PediatricSoftConstants.SensorBzLockEnable |
                                                                 PediatricSoftConstants.SensorCellLockEnable)));
 
-                SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
+                SendCommand(PediatricSoftConstants.SensorCommandByModulation);
                 SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MinValue)));
 
                 while (commandQueue.TryPeek(out string dummy))
@@ -1670,8 +1670,8 @@ namespace PediatricSoft
                 correctState = State;
             }
 
-            SendCommand(PediatricSoftConstants.SensorCommandFieldYModulationAmplitude);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultFieldYModulationAmplitude)));
+            SendCommand(PediatricSoftConstants.SensorCommandByModulation);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultByModulation)));
 
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLaserLockEnable |
