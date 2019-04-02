@@ -88,7 +88,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultByOffset = 0x8000;
 
         public const string SensorCommandByModulation = "@A";
-        public const ushort SensorDefaultByModulation = 0x3000;
+        public const ushort SensorDefaultByModulation = 0x1000;
 
         public const string SensorCommandBzOffset = "@B";
         public const ushort SensorDefaultBzOffset = 0x8000;
@@ -115,13 +115,13 @@ namespace PediatricSoft
         public const ushort SensorDefaultPIDCellHeaterI = 0x0008;
 
         public const string SensorCommandPIDByP = "@16";
-        public const ushort SensorDefaultPIDByP = 0x0020;
+        public const ushort SensorDefaultPIDByP = 0x0000;
 
         public const string SensorCommandPIDByI = "@17";
-        public const ushort SensorDefaultPIDByI = 0x0020;
+        public const ushort SensorDefaultPIDByI = 0x0001;
 
         public const string SensorCommandPIDBzP = "@19";
-        public const ushort SensorDefaultPIDBzP = 0x0020;
+        public const ushort SensorDefaultPIDBzP = 0x0000;
 
         public const string SensorCommandPIDBzI = "@1A";
         public const ushort SensorDefaultPIDBzI = 0x0020;
