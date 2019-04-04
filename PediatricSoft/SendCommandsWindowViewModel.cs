@@ -24,7 +24,59 @@ namespace PediatricSoft
         public TextBoxSensorConfig TextBoxBzKI { get; private set; }
         public TextBoxSensorConfig TextBoxDefaultCellHeat { get; private set; }
         public TextBoxSensorConfig TextBoxMaxCellHeat { get; private set; }
-        
+
+        public bool RadioButtonDataSelectADCIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ADC)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.ADC;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
+        public bool RadioButtonDataSelectOpenLoopIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.OpenLoop)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.OpenLoop;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
+        public bool RadioButtonDataSelectClosedLoopIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ClosedLoop)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.ClosedLoop;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
+        public bool RadioButtonDataSelectIsEnabled
+        {
+            get { return PediatricSensorData.DebugMode || (!PediatricSensorData.IsRunning && PediatricSensorData.CanStartStop); }
+        }
 
         public string TextBoxCommandStringText { get; set; } = String.Empty;
         public string[] CommandHistory
@@ -163,6 +215,13 @@ namespace PediatricSoft
         private void ButtonSendSetupCommandsOnClick()
         {
             if (CurrentSensor != null) CurrentSensor.SendCommandsSetup();
+        }
+
+        private void RadioButtonsRaisePropertyChanged()
+        {
+            RaisePropertyChanged("RadioButtonDataSelectADCIsChecked");
+            RaisePropertyChanged("RadioButtonDataSelectOpenLoopIsChecked");
+            RaisePropertyChanged("RadioButtonDataSelectClosedLoopIsChecked");
         }
 
     }

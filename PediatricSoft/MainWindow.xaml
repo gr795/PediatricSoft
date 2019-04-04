@@ -89,32 +89,6 @@
                     Content="{Binding ButtonStartStopSensorsContent}">
                 </Button>
 
-                <TextBlock
-                    Margin="0,0,0,5"
-                    Text="Data select">
-                </TextBlock>
-
-                <RadioButton
-                    Margin="20,0,0,5"
-                    Content="ADC"
-                    IsEnabled="{Binding RadioButtonDataSelectIsEnabled}"
-                    IsChecked="{Binding RadioButtonDataSelectADCIsChecked}">
-                </RadioButton>
-
-                <RadioButton
-                    Margin="20,0,0,5"
-                    Content="Open loop"
-                    IsEnabled="{Binding RadioButtonDataSelectIsEnabled}"
-                    IsChecked="{Binding RadioButtonDataSelectOpenLoopIsChecked}">
-                </RadioButton>
-
-                <RadioButton
-                    Margin="20,0,0,10"
-                    Content="Closed loop"
-                    IsEnabled="{Binding RadioButtonDataSelectIsEnabled}"
-                    IsChecked="{Binding RadioButtonDataSelectClosedLoopIsChecked}">
-                </RadioButton>
-
                 <StackPanel
                     Orientation="Horizontal"
                     Margin="0,0,0,10">
