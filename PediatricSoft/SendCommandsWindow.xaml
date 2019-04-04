@@ -79,6 +79,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -127,24 +128,37 @@
                 <TextBlock VerticalAlignment="Center"
                            Grid.Row="3"
                            Grid.Column="0">
-                    Default Cell Heat
+                    Bz KI
                 </TextBlock>
 
                 <TextBox Margin="10,5"
                          Grid.Row="3"
+                         Grid.Column="1"
+                         Text="{Binding TextBoxBzKI.Text}"
+                         Foreground="{Binding TextBoxBzKI.Color}">
+                </TextBox>
+
+                <TextBlock VerticalAlignment="Center"
+                           Grid.Row="4"
+                           Grid.Column="0">
+                    Default Cell Heat
+                </TextBlock>
+
+                <TextBox Margin="10,5"
+                         Grid.Row="4"
                          Grid.Column="1"
                          Text="{Binding TextBoxDefaultCellHeat.Text}"
                          Foreground="{Binding TextBoxDefaultCellHeat.Color}">
                 </TextBox>
 
                 <TextBlock VerticalAlignment="Center"
-                           Grid.Row="4"
+                           Grid.Row="5"
                            Grid.Column="0">
                     Max Cell Heat
                 </TextBlock>
 
                 <TextBox Margin="10,5"
-                         Grid.Row="4"
+                         Grid.Row="5"
                          Grid.Column="1"
                          Text="{Binding TextBoxMaxCellHeat.Text}"
                          Foreground="{Binding TextBoxMaxCellHeat.Color}">

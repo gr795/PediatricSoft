@@ -21,6 +21,7 @@ namespace PediatricSoft
         public TextBoxSensorConfig TextBoxLaserCurrent { get; private set; }
         public TextBoxSensorConfig TextBoxLaserCurrentModulation { get; private set; }
         public TextBoxSensorConfig TextBoxBzModulation { get; private set; }
+        public TextBoxSensorConfig TextBoxBzKI { get; private set; }
         public TextBoxSensorConfig TextBoxDefaultCellHeat { get; private set; }
         public TextBoxSensorConfig TextBoxMaxCellHeat { get; private set; }
         
@@ -65,6 +66,9 @@ namespace PediatricSoft
 
                 TextBoxBzModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "BzModulation");
                 RaisePropertyChanged("TextBoxBzModulation");
+
+                TextBoxBzKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "BzKI");
+                RaisePropertyChanged("TextBoxBzKI");
 
                 TextBoxDefaultCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "DefaultCellHeat");
                 RaisePropertyChanged("TextBoxDefaultCellHeat");

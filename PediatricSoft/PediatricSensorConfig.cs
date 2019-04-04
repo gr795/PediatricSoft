@@ -11,6 +11,7 @@ namespace PediatricSoft
         public ushort LaserCurrent { get; set; }
         public ushort LaserCurrentModulation { get; set; }
         public ushort BzModulation { get; set; }
+        public ushort BzKI { get; set; }
         public ushort DefaultCellHeat { get; set; }
         public ushort MaxCellHeat { get; set; }
 
@@ -23,6 +24,7 @@ namespace PediatricSoft
             LaserCurrent = PediatricSoftConstants.SensorDefaultLaserCurrent;
             LaserCurrentModulation = PediatricSoftConstants.SensorDefaultLaserCurrentModulation;
             BzModulation = PediatricSoftConstants.SensorDefaultBzModulation;
+            BzKI = PediatricSoftConstants.SensorDefaultPIDBzI;
             DefaultCellHeat = PediatricSoftConstants.SensorDefaultCellHeat;
             MaxCellHeat = PediatricSoftConstants.SensorMaxCellHeat;
         }

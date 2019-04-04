@@ -20,7 +20,7 @@ namespace PediatricSoft
         public const int SerialPortMaxRetries = 5;
         public const int SerialPortSleepAfterFail = 5000;
         public const UInt32 SerialPortBaudRate = 921600;
-        public const UInt32 SerialPortWriteTimeout = 100;
+        public const UInt32 SerialPortWriteTimeout = 1000;
         public const UInt32 SerialPortReadTimeout = 10;
         public const byte SerialPortLatency = 2;
 
@@ -124,7 +124,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultPIDBzP = 0x0000;
 
         public const string SensorCommandPIDBzI = "@1A";
-        public const ushort SensorDefaultPIDBzI = 0x0020;
+        public const ushort SensorDefaultPIDBzI = 0x0010;
 
         public const string SensorCommandDigitalDataStreamingAndADCGain = "@20";
         public const ushort SensorDigitalDataStreamingOffGainLow = 0x0000;

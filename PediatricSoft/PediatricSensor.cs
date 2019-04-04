@@ -821,17 +821,7 @@ namespace PediatricSoft
                 // If we failed to open the device previously - try resetting it
                 if (ftStatus != FTDI.FT_STATUS.FT_OK)
                 {
-                    ftStatus = _FTDI.ResetPort();
-                    if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                    {
-                        lock (stateLock)
-                        {
-                            State = PediatricSoftConstants.SensorState.Failed;
-                        }
-                        PediatricSensorData.DebugLogQueue.Enqueue($"Failed to reset the FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
-                        Dispose();
-                        return;
-                    }
+                    _FTDI = new FTDI();
 
                     // Sleep a bit
                     Thread.Sleep(PediatricSoftConstants.SerialPortSleepAfterFail);
@@ -1061,7 +1051,7 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDByI)));
 
             SendCommand(PediatricSoftConstants.SensorCommandPIDBzI);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDBzI)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.BzKI)));
 
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOnGainLow)));
