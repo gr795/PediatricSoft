@@ -7,16 +7,25 @@
         xmlns:prism="http://prismlibrary.com/"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="SendCommandsWindow" Height="500" Width="600"
+        Title="SendCommandsWindow" Height="500" Width="500"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
         <local:SendCommandsWindowViewModel/>
     </Window.DataContext>
 
-    <DockPanel HorizontalAlignment="Left">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <DockPanel Width="300">
+        <DockPanel
+            Grid.Row="0"
+            Grid.Column="0">
 
             <StackPanel Margin="10,10,10,5" DockPanel.Dock="Top" Orientation="Horizontal">
 
@@ -59,112 +68,121 @@
 
             </TextBox>
 
-            <ListView Margin="10,5"
+            <ListView Margin="10,5,10,10"
                      DockPanel.Dock="Top"
                      ItemsSource="{Binding CommandHistory}">
             </ListView>
 
         </DockPanel>
 
-        <StackPanel Orientation="Vertical">
+        <StackPanel
+            Grid.Row="0"
+            Grid.Column="1"
+            Orientation="Vertical">
 
             <TextBlock Margin="10,15,10,5"
                        Text="Sensor configuration">
             </TextBlock>
 
-            <Grid Margin="10,5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="75" />
-                </Grid.ColumnDefinitions>
+            <StackPanel Margin="10,5">
 
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="0"
-                           Grid.Column="0">
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxLaserCurrent.Text}"
+                        Foreground="{Binding TextBoxLaserCurrent.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
                     Laser Current
-                </TextBlock>
+                    </TextBlock>
 
-                <TextBox Margin="10,5"
-                         Grid.Row="0"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxLaserCurrent.Text}"
-                         Foreground="{Binding TextBoxLaserCurrent.Color}">
-                </TextBox>
+                </DockPanel>
 
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="1"
-                           Grid.Column="0">
-                    Laser Current Modulation
-                </TextBlock>
+                <DockPanel
+                    Margin="0,5">
 
-                <TextBox Margin="10,5"
-                         Grid.Row="1"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxLaserCurrentModulation.Text}"
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxLaserCurrentModulation.Text}"
                          Foreground="{Binding TextBoxLaserCurrentModulation.Color}">
-                </TextBox>
+                    </TextBox>
 
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="2"
-                           Grid.Column="0">
-                    Bz Modulation
-                </TextBlock>
+                    <TextBlock VerticalAlignment="Center">
+                    Laser Current Modulation
+                    </TextBlock>
 
-                <TextBox Margin="10,5"
-                         Grid.Row="2"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxBzModulation.Text}"
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxBzModulation.Text}"
                          Foreground="{Binding TextBoxBzModulation.Color}">
-                </TextBox>
+                    </TextBox>
 
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="3"
-                           Grid.Column="0">
-                    Bz KI
-                </TextBlock>
+                    <TextBlock VerticalAlignment="Center">
+                    Bz Modulation
+                    </TextBlock>
 
-                <TextBox Margin="10,5"
-                         Grid.Row="3"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxBzKI.Text}"
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxBzKI.Text}"
                          Foreground="{Binding TextBoxBzKI.Color}">
-                </TextBox>
+                    </TextBox>
 
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="4"
-                           Grid.Column="0">
-                    Default Cell Heat
-                </TextBlock>
+                    <TextBlock VerticalAlignment="Center">
+                    Bz KI
+                    </TextBlock>
 
-                <TextBox Margin="10,5"
-                         Grid.Row="4"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxDefaultCellHeat.Text}"
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxDefaultCellHeat.Text}"
                          Foreground="{Binding TextBoxDefaultCellHeat.Color}">
-                </TextBox>
+                    </TextBox>
 
-                <TextBlock VerticalAlignment="Center"
-                           Grid.Row="5"
-                           Grid.Column="0">
-                    Max Cell Heat
-                </TextBlock>
+                    <TextBlock VerticalAlignment="Center">
+                    Default Cell Heat
+                    </TextBlock>
 
-                <TextBox Margin="10,5"
-                         Grid.Row="5"
-                         Grid.Column="1"
-                         Text="{Binding TextBoxMaxCellHeat.Text}"
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxMaxCellHeat.Text}"
                          Foreground="{Binding TextBoxMaxCellHeat.Color}">
-                </TextBox>
+                    </TextBox>
 
-            </Grid>
+                    <TextBlock VerticalAlignment="Center">
+                    Max Cell Heat
+                    </TextBlock>
+
+                </DockPanel>
+
+            </StackPanel>
 
             <TextBlock Margin="10,15,10,5"
                        Text="Debug Mode Commands">
@@ -178,6 +196,6 @@
 
         </StackPanel>
 
-    </DockPanel>
-        
+    </Grid>
+
 </Window>
