@@ -120,6 +120,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DebugLog.cs" />
     <Compile Include="EventDataLayer.cs" />
     <Compile Include="EventUILayer.cs" />
     <Compile Include="MainWindowViewModel.cs" />

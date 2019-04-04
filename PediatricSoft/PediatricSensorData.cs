@@ -15,6 +15,7 @@ namespace PediatricSoft
     {
         // Fields
         private static readonly PediatricSensorData instance = new PediatricSensorData();
+        private DebugLog DebugLog = DebugLog.Instance;
 
         // Constructors
         static PediatricSensorData()
@@ -50,8 +51,6 @@ namespace PediatricSoft
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 PediatricSoftConstants.PediatricSoftFolderRelative,
                 PediatricSoftConstants.SensorConfigFolderRelative);
-
-        public ConcurrentQueue<string> DebugLogQueue = new ConcurrentQueue<string>();
 
         public ObservableCollection<PediatricSensor> Sensors { get; private set; } = new ObservableCollection<PediatricSensor>();
 
@@ -115,7 +114,7 @@ namespace PediatricSoft
             {
                 if (CanScan)
                 {
-                    DebugLogQueue.Enqueue("Begin port scan");
+                    DebugLog.Enqueue("Begin port scan");
 
                     CanScan = false;
                     CanLock = false;
@@ -162,7 +161,7 @@ namespace PediatricSoft
                         }
                         else
                         {
-                            DebugLogQueue.Enqueue($"Sensor with serial number {serial} is already on the list - skipping");
+                            DebugLog.Enqueue($"Sensor with serial number {serial} is already on the list - skipping");
                         }
                     });
 
@@ -174,7 +173,7 @@ namespace PediatricSoft
 
                     CanScan = true;
 
-                    DebugLogQueue.Enqueue("Port scan done");
+                    DebugLog.Enqueue("Port scan done");
                 }
             });
         }
@@ -185,7 +184,7 @@ namespace PediatricSoft
             {
                 if (CanLock)
                 {
-                    DebugLogQueue.Enqueue("Begin sensor lock");
+                    DebugLog.Enqueue("Begin sensor lock");
 
                     CanScan = false;
                     CanLock = false;
@@ -204,7 +203,7 @@ namespace PediatricSoft
                     CanZeroFields = true;
                     CanSendCommands = true;
 
-                    DebugLogQueue.Enqueue("Sensor lock done");
+                    DebugLog.Enqueue("Sensor lock done");
                 }
             });
         }
@@ -223,7 +222,7 @@ namespace PediatricSoft
 
                     if (IsRunning)
                     {
-                        DebugLogQueue.Enqueue("Stopping all sensors");
+                        DebugLog.Enqueue("Stopping all sensors");
 
                         Parallel.ForEach(Sensors, sensor =>
                         {
@@ -239,7 +238,7 @@ namespace PediatricSoft
                     }
                     else
                     {
-                        DebugLogQueue.Enqueue("Starting all sensors");
+                        DebugLog.Enqueue("Starting all sensors");
 
                         IsRunning = true;
 
@@ -345,18 +344,18 @@ namespace PediatricSoft
             // Check status
             if (ftStatus == FTDI.FT_STATUS.FT_OK)
             {
-                DebugLogQueue.Enqueue("Number of FTDI devices (A and B): " + ftdiDeviceCount.ToString());
+                DebugLog.Enqueue("Number of FTDI devices (A and B): " + ftdiDeviceCount.ToString());
             }
             else
             {
-                DebugLogQueue.Enqueue("Failed to get number of devices (error " + ftStatus.ToString() + ")");
+                DebugLog.Enqueue("Failed to get number of devices (error " + ftStatus.ToString() + ")");
                 return SerialNumbers.ToArray();
             }
 
             // If no devices available, return
             if (ftdiDeviceCount == 0)
             {
-                DebugLogQueue.Enqueue("No FTDI devices found");
+                DebugLog.Enqueue("No FTDI devices found");
                 return SerialNumbers.ToArray();
             }
 
@@ -373,14 +372,14 @@ namespace PediatricSoft
                 {
                     if (ftdiDeviceList[i].Description.ToString() == PediatricSoftConstants.ValidIDN)
                     {
-                        DebugLogQueue.Enqueue("Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
+                        DebugLog.Enqueue("Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
                         SerialNumbers.Add(ftdiDeviceList[i].SerialNumber.ToString());
                     }
                 }
             }
             else
             {
-                DebugLogQueue.Enqueue("Failed to get FTDI serial numbers (error " + ftStatus.ToString() + ")");
+                DebugLog.Enqueue("Failed to get FTDI serial numbers (error " + ftStatus.ToString() + ")");
                 return SerialNumbers.ToArray();
             }
 

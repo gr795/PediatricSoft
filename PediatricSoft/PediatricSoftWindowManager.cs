@@ -12,6 +12,7 @@ namespace PediatricSoft
         private static readonly PediatricSoftWindowManager instance = new PediatricSoftWindowManager();
 
         private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
+        private DebugLog DebugLog = DebugLog.Instance;
 
         private MainWindow MainWindow;
         private SendCommandsWindow SendCommandsWindow;
@@ -58,7 +59,7 @@ namespace PediatricSoft
                 case "ShowSendCommandsWindow":
                     if (SendCommandsWindow == null)
                     {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Creating new Send Commands window");
+                        if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Creating new Send Commands window");
                         SendCommandsWindow = new SendCommandsWindow();
                         SendCommandsWindow.Closing += SendCommandsWindowOnClosing;
                         //SendCommandsWindow.Activated += WindowOnActivated;
@@ -66,7 +67,7 @@ namespace PediatricSoft
                     }
                     else
                     {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Showing existing Send Commands window");
+                        if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Showing existing Send Commands window");
                         SendCommandsWindow.WindowState = WindowState.Normal;
                         SendCommandsWindow.Focus();
                     }
@@ -75,7 +76,7 @@ namespace PediatricSoft
                 case "ShowPlotWindow":
                     if (PlotWindow == null)
                     {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Creating new Plot Window");
+                        if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Creating new Plot Window");
                         PlotWindow = new PlotWindow();
                         PlotWindow.Closing += PlotWindowOnClosing;
                         //PlotWindow.Activated += WindowOnActivated;
@@ -83,7 +84,7 @@ namespace PediatricSoft
                     }
                     else
                     {
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Showing existing Plot Window");
+                        if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Showing existing Plot Window");
                         PlotWindow.WindowState = WindowState.Normal;
                         PlotWindow.Focus();
                     }
@@ -104,7 +105,7 @@ namespace PediatricSoft
 
         private void MainWindowOnClosing(object sender, CancelEventArgs e)
         {
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Closing Main Window");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Closing Main Window");
             SendCommandsWindow?.Close();
             PlotWindow?.Close();
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown");
@@ -114,20 +115,20 @@ namespace PediatricSoft
 
         private void SendCommandsWindowOnClosing(object sender, CancelEventArgs e)
         {
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Closing Send Commands window");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Closing Send Commands window");
             SendCommandsWindow = null;
         }
 
         private void PlotWindowOnClosing(object sender, CancelEventArgs e)
         {
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Closing Plot Window");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Closing Plot Window");
             PlotWindow = null;
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("ClearAllPlotCheckBox");
         }
 
         private void WindowOnActivated(object sender, System.EventArgs e)
         {
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Window Manager: Bringing up all windows");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Bringing up all windows");
             Window window = (Window)sender;
 
             window.Activated -= WindowOnActivated;

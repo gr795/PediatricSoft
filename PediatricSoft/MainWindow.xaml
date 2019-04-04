@@ -21,7 +21,7 @@
             Margin="10"
             Height="145"
             DockPanel.Dock="Bottom"
-            ItemsSource="{Binding DebugLog}">
+            ItemsSource="{Binding DebugLog.StringArray}">
         </ListView>
 
         <DockPanel

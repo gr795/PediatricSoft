@@ -9,6 +9,7 @@ namespace PediatricSoft
     public class SendCommandsWindowViewModel : BindableBase
     {
         private PediatricSensorData PediatricSensorData;
+        private DebugLog DebugLog = DebugLog.Instance;
 
         public ObservableCollection<PediatricSensor> Sensors { get { return PediatricSensorData.Sensors; } }
         public PediatricSensor CurrentSensor { get; set; }
@@ -169,7 +170,7 @@ namespace PediatricSoft
                     if (CurrentSensor != null)
                         CurrentSensor.SendCommand(TextBoxCommandStringText);
                     else
-                        if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue($"Can't send commands - sensor sensor not selected");
+                        if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Can't send commands - sensor sensor not selected");
                     TextBoxCommandStringText = String.Empty;
                     RaisePropertyChanged("TextBoxCommandStringText");
                     RaisePropertyChanged("CommandHistory");

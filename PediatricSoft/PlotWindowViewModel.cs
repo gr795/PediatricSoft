@@ -15,6 +15,7 @@ namespace PediatricSoft
         // Fields
 
         private readonly PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
+        private DebugLog DebugLog = DebugLog.Instance;
         private readonly SubscriptionToken SubscriptionTokenEventDataLayer;
         private readonly SubscriptionToken SubscriptionTokenEventUILayer;
         private readonly CartesianMapper<XYPoint> mapper = Mappers.Xy<XYPoint>().X(v => v.X).Y(v => v.LogYAvg);
@@ -66,7 +67,7 @@ namespace PediatricSoft
 
         private void UpdateSeriesCollection()
         {
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot Window View Model: UpdateSeriesCollection");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Plot Window View Model: UpdateSeriesCollection");
 
             SeriesCollection = new SeriesCollection();
             SeriesCollectionFFT = new SeriesCollection(mapper);
@@ -97,12 +98,12 @@ namespace PediatricSoft
 
         public void Dispose()
         {
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot window view model: calling Dispose()");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Plot window view model: calling Dispose()");
 
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Unsubscribe(SubscriptionTokenEventDataLayer);
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Unsubscribe(SubscriptionTokenEventUILayer);
 
-            if (PediatricSensorData.DebugMode) PediatricSensorData.DebugLogQueue.Enqueue("Plot window view model: Dispose() done");
+            if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Plot window view model: Dispose() done");
         }
 
         // Event handlers
