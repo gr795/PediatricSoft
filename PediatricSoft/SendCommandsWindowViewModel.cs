@@ -74,6 +74,22 @@ namespace PediatricSoft
             }
         }
 
+        public bool RadioButtonDataSelectDoubleFIsChecked
+        {
+            get
+            {
+                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.DoubleF)
+                    return true;
+                else
+                    return false;
+            }
+            set
+            {
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.DoubleF;
+                RadioButtonsRaisePropertyChanged();
+            }
+        }
+
         public bool RadioButtonDataSelectIsEnabled
         {
             get { return PediatricSensorData.DebugMode || (!PediatricSensorData.IsRunning && PediatricSensorData.CanStartStop); }
@@ -223,6 +239,7 @@ namespace PediatricSoft
             RaisePropertyChanged("RadioButtonDataSelectADCIsChecked");
             RaisePropertyChanged("RadioButtonDataSelectOpenLoopIsChecked");
             RaisePropertyChanged("RadioButtonDataSelectClosedLoopIsChecked");
+            RaisePropertyChanged("RadioButtonDataSelectDoubleFIsChecked");
         }
 
     }

@@ -126,6 +126,9 @@ namespace PediatricSoft
                     case PediatricSoftConstants.DataSelect.ClosedLoop:
                         return lastDataPoint.BzFeedbackRAW;
 
+                    case PediatricSoftConstants.DataSelect.DoubleF:
+                        return lastDataPoint.Bz2fRAW;
+
                     default:
                         return 0;
                 }
@@ -147,6 +150,9 @@ namespace PediatricSoft
                     case PediatricSoftConstants.DataSelect.ClosedLoop:
                         return lastDataPoint.BzFeedback.ToString("+0.000E+00;-0.000E+00");
 
+                    case PediatricSoftConstants.DataSelect.DoubleF:
+                        return lastDataPoint.Bz2f.ToString("+0.000E+00;-0.000E+00");
+
                     default:
                         return "";
                 }
@@ -167,6 +173,9 @@ namespace PediatricSoft
 
                     case PediatricSoftConstants.DataSelect.ClosedLoop:
                         return lastDataPoint.BzFeedback;
+
+                    case PediatricSoftConstants.DataSelect.DoubleF:
+                        return lastDataPoint.Bz2f;
 
                     default:
                         return 0;

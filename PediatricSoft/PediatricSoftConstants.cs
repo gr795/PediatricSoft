@@ -189,7 +189,8 @@ namespace PediatricSoft
         {
             ADC,
             OpenLoop,
-            ClosedLoop
+            ClosedLoop,
+            DoubleF
         }
 
     }
