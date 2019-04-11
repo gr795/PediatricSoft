@@ -47,19 +47,24 @@ namespace PediatricSoft
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
         public const double SensorADCColdValueLowGainMaxVolts = 4.5;
 
-        public const double SensorYCoilCalibrationTeslaPerHex = 2.29e-12; // 4.5 pT per step
-        public const double SensorZCoilCalibrationTeslaPerHex = 2.29e-12; // 4.5 pT per step
+        public const double SensorYCoilCalibrationTeslaPerHex = 2.29e-12;
+        public const double SensorZCoilCalibrationTeslaPerHex = 2.29e-12;
+
+        public const double SensorCoilCalibrationStepTesla = 0.5e-9; // 0.5 nT
+        public const ushort SensorCoilCalibrationStepHex = (ushort)(SensorCoilCalibrationStepTesla / SensorZCoilCalibrationTeslaPerHex);
 
         public const double FeedbackStreamingScalingFactor = 125 * 128;
         public const int MaxNumberOfLaserLockStepCycles = 30;
         public const int NumberOfFieldZeroingIntervalsOneAxis = 20; // This produces (n+1)^2 iterations
 
         public const string SensorCommandLock = "@0";
-        public const ushort SensorLockDisable = 0x0000;
-        public const ushort SensorLaserLockEnable = 0x0005;
-        public const ushort SensorCellLockEnable = 0x0010;
-        public const ushort SensorBzLockEnable = 0x0008;
-        public const ushort SensorByLockEnable = 0x0020;
+        public const ushort SensorLockDisableAll = 0x0000;
+        public const ushort SensorLockLaserDiodeCurrent = 0x0001;
+        public const ushort SensorLockLaserDiodeTemperature = 0x0004;
+        public const ushort SensorLockOpticalResonance = SensorLockLaserDiodeCurrent | SensorLockLaserDiodeTemperature;
+        public const ushort SensorLockCellTemperature = 0x0010;
+        public const ushort SensorLockBz = 0x0008;
+        public const ushort SensorLockBy = 0x0020;
 
         public const string SensorCommandPIDInverse = "@1";
         public const ushort SensorDefaultPIDInverse = 0x0001;
@@ -75,7 +80,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultLaserHeat = 0x0800;
         public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
-        public const ushort SensorMaxLaserHeat = 0x1800;
+        public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 0x0008;
 
         public const string SensorCommandBxOffset = "@7";
@@ -169,16 +174,17 @@ namespace PediatricSoft
             LaserLockPID,
             CellHeatLock,
             HoldCurrentCellHeat,
-            ZeroFields,
+            ZeroFieldsYZ,
+            HoldCurrentBy,
+            HoldCurrentBz,
+            ZeroFieldsX,
             HoldCurrentTransmission,
             Idle,
             Start,
-            HoldCurrentBy,
             StartDataSave,
             Run,
             Stop,
             StopDataSave,
-            ByLock,
             GoIdle,
             ShutDownRequested,
             ShutDownComplete,
