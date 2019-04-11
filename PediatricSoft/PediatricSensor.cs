@@ -183,6 +183,30 @@ namespace PediatricSoft
             }
         }
 
+        private double calibrationBzDemod = 0;
+        public double CalibrationBzDemod
+        {
+            get
+            {
+                return calibrationBzDemod;
+            }
+            private set
+            {
+                calibrationBzDemod = value;
+                RaisePropertyChanged();
+                RaisePropertyChanged("CalibrationBzDemodString");
+            }
+        }
+
+        public string CalibrationBzDemodString
+        {
+            get
+            {
+                return CalibrationBzDemod.ToString("+0.000E+00;-0.000E+00");
+            }
+        }
+
+
         public ushort Chassis { get { return PediatricSensorConfig.Chassis; } }
         public ushort Port { get { return PediatricSensorConfig.Port; } }
         public ushort Head { get { return PediatricSensorConfig.Head; } }
@@ -591,7 +615,7 @@ namespace PediatricSoft
                                         _Bz2fRAW,
                                         PediatricSoftConstants.ConversionTime * _TimeRAW,
                                         PediatricSoftConstants.ConversionADC * _ADCRAW,
-                                        _BzDemodRAW,
+                                        CalibrationBzDemod * _BzDemodRAW,
                                         PediatricSoftConstants.SensorZCoilCalibrationTeslaPerHex * (_BzFeedbackRAW / PediatricSoftConstants.FeedbackStreamingScalingFactor),
                                         _Bz2fRAW
                                     );
@@ -734,7 +758,7 @@ namespace PediatricSoft
                             break;
 
                         case PediatricSoftConstants.SensorState.ZeroFieldsYZ:
-                            SendCommandsZeroYZFieldsStep(currentState);
+                            SendCommandsZeroFieldsYZ(currentState);
                             break;
 
                         case PediatricSoftConstants.SensorState.HoldCurrentBy:
@@ -745,8 +769,8 @@ namespace PediatricSoft
                             SendCommandsHoldCurrentBz(currentState);
                             break;
 
-                        case PediatricSoftConstants.SensorState.ZeroFieldsX:
-                            SendCommandsZeroXFieldsStep(currentState);
+                        case PediatricSoftConstants.SensorState.ZeroFieldX:
+                            SendCommandsZeroFieldX(currentState);
                             break;
 
                         case PediatricSoftConstants.SensorState.HoldCurrentTransmission:
@@ -1309,7 +1333,7 @@ namespace PediatricSoft
 
         }
 
-        private void SendCommandsZeroYZFieldsStep(PediatricSoftConstants.SensorState correctState)
+        private void SendCommandsZeroFieldsYZ(PediatricSoftConstants.SensorState correctState)
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Begin field zeroing");
 
@@ -1466,7 +1490,7 @@ namespace PediatricSoft
 
         }
 
-        private void SendCommandsZeroXFieldsStep(PediatricSoftConstants.SensorState correctState)
+        private void SendCommandsZeroFieldX(PediatricSoftConstants.SensorState correctState)
         {
 
             ushort fieldStep = ushort.MaxValue / PediatricSoftConstants.NumberOfFieldZeroingIntervalsOneAxis - 1;
@@ -1479,7 +1503,7 @@ namespace PediatricSoft
                 SendCommand(PediatricSoftConstants.SensorCommandBxOffset);
                 SendCommand(String.Concat("#", UInt16ToStringBE(currentBx)));
 
-                currentCalibrationBzDemod = SendCommandsCalibrateMagnetometer(correctState);
+                currentCalibrationBzDemod = CalibrateMagnetometer(correctState);
 
                 if (Math.Abs(currentCalibrationBzDemod) < Math.Abs(bestCalibrationBzDemod))
                 {
@@ -1493,9 +1517,7 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandBxOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(zeroBx)));
 
-            DebugLog.Enqueue($"Sensor {SN}: Best X offset: {zeroBx}");
-            DebugLog.Enqueue($"Sensor {SN}: Best Calibration: {bestCalibrationBzDemod}");
-            DebugLog.Enqueue($"Sensor {SN}: Field zeroing done");
+            CalibrationBzDemod = bestCalibrationBzDemod;
 
             while (commandQueue.TryPeek(out string dummy))
             {
@@ -1718,7 +1740,7 @@ namespace PediatricSoft
 
         }
 
-        private double SendCommandsCalibrateMagnetometer(PediatricSoftConstants.SensorState correctState)
+        private double CalibrateMagnetometer(PediatricSoftConstants.SensorState correctState)
         {
             double calibrationBzDemod = 0;
 

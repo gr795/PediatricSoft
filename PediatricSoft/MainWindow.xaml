@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         Title="{Binding WindowTitle}"
         Height="650"
-        Width="950"
+        Width="1030"
         MinHeight="650"
-        MinWidth="950">
+        MinWidth="500">
 
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -55,7 +55,7 @@
                     Height="20"
                     IsEnabled="{Binding ButtonSendCommandsIsEnabled}"
                     Command="{Binding ButtonSendCommandsCommand}"
-                    Content="Send Commands">
+                    Content="Configuration">
                 </Button>
 
                 <TextBlock
@@ -178,6 +178,19 @@
                             Header="Transmission"
                             Width="75"
                             DisplayMemberBinding="{Binding Transmission}">
+                        </GridViewColumn>
+
+                        <GridViewColumn
+                            Header="Bz Calibration"
+                            Width="100">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        Text="{Binding CalibrationBzDemodString}"
+                                        FontSize="14"
+                                        FontFamily="Courier New"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
                         <GridViewColumn

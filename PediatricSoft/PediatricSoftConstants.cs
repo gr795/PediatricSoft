@@ -177,7 +177,7 @@ namespace PediatricSoft
             ZeroFieldsYZ,
             HoldCurrentBy,
             HoldCurrentBz,
-            ZeroFieldsX,
+            ZeroFieldX,
             HoldCurrentTransmission,
             Idle,
             Start,
