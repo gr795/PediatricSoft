@@ -34,12 +34,16 @@ namespace PediatricSoft
 
         public const int StateHandlerSleepTime = 10; // in ms
         public const int StateHandlerCellHeatInitialTime = 30000; // 30 seconds
-        public const int StateHandlerCellHeatStabilizeTime = 180000; // 3 minutes
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
+
+        public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
+        public const int StabilizeCellHeatFailAfter = 300000; // 300 seconds
+        public const int StabilizeCellHeatMeasurementInterval = 1000; // Measure every 1 second
+        public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
 
         public const double SensorTargetLaserTransmissionStep = 0.5;
         public const double SensorTargetLaserTransmissionRun = 0.33;
-        public const double SensorTargetLaserTransmission5Percent = 0.05;
+        public const double SensorTargetLaserTransmissionOffMagneticResonance = 0.05;
 
         public const double ConversionTime = (double)1 / DataSampleRate;
         public const double ConversionADC = (double)5 / 125 / 16777215;
@@ -173,6 +177,8 @@ namespace PediatricSoft
             LaserLockStep,
             LaserLockPID,
             CellHeatLock,
+            StabilizeCellHeat,
+            StartFieldZeroing,
             HoldCurrentCellHeat,
             ZeroFieldsYZ,
             HoldCurrentBy,

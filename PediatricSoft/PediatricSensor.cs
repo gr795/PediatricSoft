@@ -358,7 +358,7 @@ namespace PediatricSoft
 
                 if (currentState == PediatricSoftConstants.SensorState.Idle)
                 {
-                    State = PediatricSoftConstants.SensorState.HoldCurrentCellHeat;
+                    State = PediatricSoftConstants.SensorState.StartFieldZeroing;
                     currentState = State;
                     canRun = true;
                 }
@@ -761,6 +761,17 @@ namespace PediatricSoft
 
                         case PediatricSoftConstants.SensorState.CellHeatLock:
                             SendCommandsCellHeatLock(currentState);
+                            break;
+
+                        case PediatricSoftConstants.SensorState.StabilizeCellHeat:
+                            SendCommandsStabilizeCellHeat(currentState);
+                            break;
+
+                        case PediatricSoftConstants.SensorState.StartFieldZeroing:
+                            lock (stateLock)
+                            {
+                                State++;
+                            }
                             break;
 
                         case PediatricSoftConstants.SensorState.HoldCurrentCellHeat:
@@ -1292,7 +1303,7 @@ namespace PediatricSoft
         private void SendCommandsCellHeatLock(PediatricSoftConstants.SensorState correctState)
         {
 
-            double targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmission5Percent;
+            double targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionOffMagneticResonance;
             if (targetADCValue > PediatricSoftConstants.SensorADCColdValueLowGainMaxVolts)
             {
                 targetADCValue = PediatricSoftConstants.SensorADCColdValueLowGainMaxVolts;
@@ -1314,7 +1325,64 @@ namespace PediatricSoft
             {
                 if (State == correctState)
                 {
-                    State = PediatricSoftConstants.SensorState.Idle;
+                    State++;
+                }
+                else
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                }
+            }
+
+        }
+
+        private void SendCommandsStabilizeCellHeat(PediatricSoftConstants.SensorState correctState)
+        {
+
+            int arraySize = PediatricSoftConstants.StabilizeCellHeatTimeWindow / PediatricSoftConstants.StabilizeCellHeatMeasurementInterval;
+            double[] transmissionArray = new double[arraySize];
+            int arrayIndex = 0;
+
+            double minTransmission = PediatricSoftConstants.SensorTargetLaserTransmissionOffMagneticResonance - PediatricSoftConstants.StabilizeCellHeatTolerance;
+            double maxTransmission = PediatricSoftConstants.SensorTargetLaserTransmissionOffMagneticResonance + PediatricSoftConstants.StabilizeCellHeatTolerance;
+
+            int runTime = 0;
+
+            while (State == correctState)
+            {
+                lock(dataLock)
+                {
+                    transmissionArray[arrayIndex] = lastDataPoint.ADC / coldSensorADCValue;
+                }
+
+                if ((transmissionArray.Min() > minTransmission) && (transmissionArray.Max() < maxTransmission))
+                {
+                    break;
+                }
+
+                arrayIndex++;
+                if (arrayIndex == arraySize)
+                {
+                    arrayIndex = 0;
+                }
+
+                Thread.Sleep(PediatricSoftConstants.StabilizeCellHeatMeasurementInterval);
+
+                runTime = runTime + PediatricSoftConstants.StabilizeCellHeatMeasurementInterval;
+                if (runTime > PediatricSoftConstants.StabilizeCellHeatFailAfter)
+                {
+                    lock(stateLock)
+                    {
+                        State = PediatricSoftConstants.SensorState.Failed;
+                    }
+                    DebugLog.Enqueue($"Sensor {SN}: Failed to stabilize cell heat");
+                }
+            }
+
+            lock (stateLock)
+            {
+                if (State == correctState)
+                {
+                    State++;
                 }
                 else
                 {
