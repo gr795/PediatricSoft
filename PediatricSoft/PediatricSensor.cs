@@ -391,6 +391,16 @@ namespace PediatricSoft
             }
         }
 
+        public void SendCommandsSetupPublic()
+        {
+            PediatricSoftConstants.SensorState currentState;
+            lock (stateLock)
+            {
+                currentState = State;
+            }
+            SendCommandsSetup(currentState);
+        }
+
         public static string UInt16ToStringBE(ushort value)
         {
             byte[] t = BitConverter.GetBytes(value);
@@ -734,7 +744,7 @@ namespace PediatricSoft
                     switch (currentState)
                     {
                         case PediatricSoftConstants.SensorState.Setup:
-                            SendCommandsSetup();
+                            SendCommandsSetup(currentState);
                             break;
 
                         case PediatricSoftConstants.SensorState.StartLock:
@@ -809,7 +819,7 @@ namespace PediatricSoft
                         case PediatricSoftConstants.SensorState.ShutDownRequested:
                             if (!PediatricSensorData.DebugMode)
                             {
-                                SendCommandsSetup();
+                                SendCommandsSetup(currentState);
 
                                 // Disable streaming
                                 SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
@@ -1026,7 +1036,7 @@ namespace PediatricSoft
             pediatricSensorConfigOnLoad = pediatricSensorConfig.GetValueCopy();
         }
 
-        public void SendCommandsSetup()
+        private void SendCommandsSetup(PediatricSoftConstants.SensorState correctState)
         {
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockDisableAll)));
