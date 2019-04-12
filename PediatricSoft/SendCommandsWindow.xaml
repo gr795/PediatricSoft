@@ -7,8 +7,12 @@
         xmlns:prism="http://prismlibrary.com/"
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
-        Title="SendCommandsWindow" Height="500" Width="500"
-        ResizeMode="CanMinimize">
+        Title="SendCommandsWindow"
+        MinHeight="400"
+        MinWidth="750"
+        Height="400"
+        Width="750"
+        >
 
     <Window.DataContext>
         <local:SendCommandsWindowViewModel/>
@@ -21,23 +25,30 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <DockPanel
             Grid.Row="0"
-            Grid.Column="0">
+            Grid.Column="0"
+            Margin="10,5">
 
-            <StackPanel Margin="10,10,10,5" DockPanel.Dock="Top" Orientation="Horizontal">
+            <StackPanel
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                Margin="0,5">
 
-                <TextBlock VerticalAlignment="Center">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Margin="0,0,10,0">
                     Sensor:
                 </TextBlock>
 
-                <ComboBox Margin="10,0,0,0"
-                          VerticalAlignment="Center"
-                          ItemsSource="{Binding Sensors}"
-                          DisplayMemberPath="PortSN"
-                          SelectedItem="{Binding CurrentSensor}">
+                <ComboBox
+                    VerticalAlignment="Center"
+                    ItemsSource="{Binding Sensors}"
+                    DisplayMemberPath="PortSN"
+                    SelectedItem="{Binding CurrentSensor}">
 
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Selected">
@@ -53,7 +64,7 @@
             </StackPanel>
 
             <TextBox Name="TextBoxCommandString"
-                     Margin="10,0"
+                     Margin="0,5"
                      DockPanel.Dock="Top"
                      Text="{Binding TextBoxCommandStringText, UpdateSourceTrigger=PropertyChanged}">
 
@@ -68,7 +79,7 @@
 
             </TextBox>
 
-            <ListView Margin="10,5,10,10"
+            <ListView Margin="0,5"
                      DockPanel.Dock="Top"
                      ItemsSource="{Binding CommandHistory}">
             </ListView>
@@ -76,44 +87,16 @@
         </DockPanel>
 
         <StackPanel
+            Margin="10,5"
             Grid.Row="0"
             Grid.Column="1"
             Orientation="Vertical">
 
-            <TextBlock
-                    Margin="10,0,0,5"
-                    Text="Data select">
-            </TextBlock>
-
-            <RadioButton
-                    Margin="20,0,0,5"
-                    Content="ADC"
-                    IsChecked="{Binding RadioButtonDataSelectADCIsChecked}">
-            </RadioButton>
-
-            <RadioButton
-                    Margin="20,0,0,5"
-                    Content="Open loop"
-                    IsChecked="{Binding RadioButtonDataSelectOpenLoopIsChecked}">
-            </RadioButton>
-
-            <RadioButton
-                    Margin="20,0,0,5"
-                    Content="Closed loop"
-                    IsChecked="{Binding RadioButtonDataSelectClosedLoopIsChecked}">
-            </RadioButton>
-
-            <RadioButton
-                    Margin="20,0,0,10"
-                    Content="2f"
-                    IsChecked="{Binding RadioButtonDataSelectDoubleFIsChecked}">
-            </RadioButton>
-
-            <TextBlock Margin="10,15,10,5"
+            <TextBlock Margin="0,5"
                        Text="Sensor configuration">
             </TextBlock>
 
-            <StackPanel Margin="10,5">
+            <StackPanel>
 
                 <DockPanel
                     Margin="0,5">
@@ -138,7 +121,7 @@
                         DockPanel.Dock="Right"
                         Width="75"
                         Text="{Binding TextBoxLaserCurrentModulation.Text}"
-                         Foreground="{Binding TextBoxLaserCurrentModulation.Color}">
+                        Foreground="{Binding TextBoxLaserCurrentModulation.Color}">
                     </TextBox>
 
                     <TextBlock VerticalAlignment="Center">
@@ -154,7 +137,7 @@
                         DockPanel.Dock="Right"
                         Width="75"
                         Text="{Binding TextBoxBzModulation.Text}"
-                         Foreground="{Binding TextBoxBzModulation.Color}">
+                        Foreground="{Binding TextBoxBzModulation.Color}">
                     </TextBox>
 
                     <TextBlock VerticalAlignment="Center">
@@ -170,7 +153,7 @@
                         DockPanel.Dock="Right"
                         Width="75"
                         Text="{Binding TextBoxBzKI.Text}"
-                         Foreground="{Binding TextBoxBzKI.Color}">
+                        Foreground="{Binding TextBoxBzKI.Color}">
                     </TextBox>
 
                     <TextBlock VerticalAlignment="Center">
@@ -213,12 +196,49 @@
 
             </StackPanel>
 
-            <TextBlock Margin="10,15,10,5"
+        </StackPanel>
+
+        <StackPanel
+            Margin="10,5"
+            Grid.Row="0"
+            Grid.Column="2"
+            Orientation="Vertical">
+
+            <TextBlock
+                    Margin="0,5"
+                    Text="Data select">
+            </TextBlock>
+
+            <RadioButton
+                    Margin="10,2"
+                    Content="ADC"
+                    IsChecked="{Binding RadioButtonDataSelectADCIsChecked}">
+            </RadioButton>
+
+            <RadioButton
+                    Margin="10,2"
+                    Content="Open loop"
+                    IsChecked="{Binding RadioButtonDataSelectOpenLoopIsChecked}">
+            </RadioButton>
+
+            <RadioButton
+                    Margin="10,2"
+                    Content="Closed loop"
+                    IsChecked="{Binding RadioButtonDataSelectClosedLoopIsChecked}">
+            </RadioButton>
+
+            <RadioButton
+                    Margin="10,2"
+                    Content="2f"
+                    IsChecked="{Binding RadioButtonDataSelectDoubleFIsChecked}">
+            </RadioButton>
+
+            <TextBlock Margin="0,5"
                        Text="Debug Mode Commands">
             </TextBlock>
 
             <Button
-                Margin="10,5"
+                Margin="0,5"
                 Command="{Binding ButtonSendSetupCommandsCommand}">
                 Send Setup Commands
             </Button>
