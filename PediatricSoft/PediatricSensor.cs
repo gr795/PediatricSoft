@@ -206,6 +206,7 @@ namespace PediatricSoft
             }
         }
 
+        public string Name { get { return PediatricSensorConfig.Name; } }
 
         public ushort Chassis { get { return PediatricSensorConfig.Chassis; } }
         public ushort Port { get { return PediatricSensorConfig.Port; } }

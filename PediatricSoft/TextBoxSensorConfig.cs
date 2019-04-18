@@ -10,12 +10,14 @@ namespace PediatricSoft
         private readonly PediatricSensorConfig config;
         private readonly PropertyInfo propertyInfo;
         private Brush color;
+        private readonly bool hexString;
 
         // Constructors
-        public TextBoxSensorConfig(PediatricSensorConfig _config, string propertyName)
+        public TextBoxSensorConfig(PediatricSensorConfig _config, string propertyName, bool _hexString = true)
         {
             config = _config;
             color = new SolidColorBrush(Colors.Black);
+            hexString = _hexString;
 
             foreach (PropertyInfo pi in config.GetType().GetProperties())
             {
@@ -41,7 +43,14 @@ namespace PediatricSoft
             {
                 if (config != null && propertyInfo != null)
                 {
-                    return PediatricSensor.UInt16ToStringBE((ushort)propertyInfo.GetValue(config));
+                    if (hexString)
+                    {
+                        return PediatricSensor.UInt16ToStringBE((ushort)propertyInfo.GetValue(config));
+                    }
+                    else
+                    {
+                        return propertyInfo.GetValue(config).ToString();
+                    }
                 }
                 else
                 {
@@ -50,7 +59,24 @@ namespace PediatricSoft
             }
             set
             {
-                if (ushort.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out ushort result))
+                ushort result = 0;
+                bool success = false;
+
+                try
+                {
+                    if (hexString)
+                    {
+                        result = ushort.Parse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                    else
+                    {
+                        result = ushort.Parse(value);
+                    }
+                    success = true;
+                }
+                catch { }
+
+                if (success)
                 {
                     if (config != null && propertyInfo != null)
                     {

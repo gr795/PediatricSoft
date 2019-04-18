@@ -148,18 +148,23 @@
                     <GridView>
 
                         <GridViewColumn
-                            Header="Chassis #"
-                            DisplayMemberBinding="{Binding Chassis}">
+                            Header="Name "
+                            DisplayMemberBinding="{Binding PediatricSensorConfig.Name}">
                         </GridViewColumn>
 
                         <GridViewColumn
-                            Header="Port #"
-                            DisplayMemberBinding="{Binding Port}">
+                            Header="Chassis # "
+                            DisplayMemberBinding="{Binding PediatricSensorConfig.Chassis}">
                         </GridViewColumn>
 
                         <GridViewColumn
-                            Header="Head #"
-                            DisplayMemberBinding="{Binding Head}">
+                            Header="Port # "
+                            DisplayMemberBinding="{Binding PediatricSensorConfig.Port}">
+                        </GridViewColumn>
+
+                        <GridViewColumn
+                            Header="Head # "
+                            DisplayMemberBinding="{Binding PediatricSensorConfig.Head}">
                         </GridViewColumn>
 
                         <GridViewColumn

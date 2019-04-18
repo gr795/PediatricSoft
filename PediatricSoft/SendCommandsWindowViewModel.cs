@@ -19,6 +19,10 @@ namespace PediatricSoft
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
         public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
 
+        public TextBoxSensorConfig TextBoxChassis { get; private set; }
+        public TextBoxSensorConfig TextBoxPort { get; private set; }
+        public TextBoxSensorConfig TextBoxHead { get; private set; }
+
         public TextBoxSensorConfig TextBoxLaserCurrent { get; private set; }
         public TextBoxSensorConfig TextBoxLaserCurrentModulation { get; private set; }
         public TextBoxSensorConfig TextBoxBzModulation { get; private set; }
@@ -127,6 +131,15 @@ namespace PediatricSoft
 
             if (CurrentSensor != null)
             {
+                TextBoxChassis = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "Chassis", false);
+                RaisePropertyChanged("TextBoxChassis");
+
+                TextBoxPort = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "Port", false);
+                RaisePropertyChanged("TextBoxPort");
+
+                TextBoxHead = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "Head", false);
+                RaisePropertyChanged("TextBoxHead");
+
                 TextBoxLaserCurrent = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrent");
                 RaisePropertyChanged("TextBoxLaserCurrent");
 

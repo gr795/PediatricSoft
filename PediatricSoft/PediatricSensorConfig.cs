@@ -1,12 +1,38 @@
-﻿using System.Reflection;
+﻿using Prism.Mvvm;
+using System.Reflection;
 
 namespace PediatricSoft
 {
-    public class PediatricSensorConfig
+    public class PediatricSensorConfig : BindableBase
     {
-        public ushort Chassis { get; set; }
-        public ushort Port { get; set; }
-        public ushort Head { get; set; }
+
+        private string name;
+        public string Name
+        {
+            get { return name; }
+            set { name = value; RaisePropertyChanged(); }
+        }
+
+        private ushort chassis;
+        public ushort Chassis
+        {
+            get { return chassis; }
+            set { chassis = value; RaisePropertyChanged(); }
+        }
+
+        private ushort port;
+        public ushort Port
+        {
+            get { return port; }
+            set { port = value; RaisePropertyChanged(); }
+        }
+
+        private ushort head;
+        public ushort Head
+        {
+            get { return head; }
+            set { head = value; RaisePropertyChanged(); }
+        }
 
         public ushort LaserCurrent { get; set; }
         public ushort LaserCurrentModulation { get; set; }
@@ -17,6 +43,8 @@ namespace PediatricSoft
 
         public PediatricSensorConfig()
         {
+            Name = string.Empty;
+
             Chassis = 0;
             Port = 0;
             Head = 0;

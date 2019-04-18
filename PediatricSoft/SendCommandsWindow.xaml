@@ -103,6 +103,71 @@
 
                     <TextBox
                         DockPanel.Dock="Right"
+                        Width="150"
+                        Text="not implemented"
+                        IsEnabled="False"
+                        Foreground="{Binding TextBoxLaserCurrent.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Name
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxChassis.Text}"
+                        Foreground="{Binding TextBoxChassis.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Chassis
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxPort.Text}"
+                        Foreground="{Binding TextBoxPort.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Port
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxHead.Text}"
+                        Foreground="{Binding TextBoxHead.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Head
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
                         Width="75"
                         Text="{Binding TextBoxLaserCurrent.Text}"
                         Foreground="{Binding TextBoxLaserCurrent.Color}">
