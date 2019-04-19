@@ -362,24 +362,33 @@ namespace PediatricSoft
             // Allocate storage for device info list
             FTDI.FT_DEVICE_INFO_NODE[] ftdiDeviceList = new FTDI.FT_DEVICE_INFO_NODE[ftdiDeviceCount];
 
-            // Populate our device list
-            ftStatus = myFtdiDevice.GetDeviceList(ftdiDeviceList);
-
-            // Add potential sensors to the list
-            if (ftStatus == FTDI.FT_STATUS.FT_OK)
+            // Wrap the following code in try-catch to avoid exceptions when devices are being added
+            try
             {
-                for (UInt32 i = 0; i < ftdiDeviceCount; i++)
+                // Populate our device list
+                ftStatus = myFtdiDevice.GetDeviceList(ftdiDeviceList);
+
+                // Add potential sensors to the list
+                if (ftStatus == FTDI.FT_STATUS.FT_OK)
                 {
-                    if (ftdiDeviceList[i].Description.ToString() == PediatricSoftConstants.ValidIDN)
+                    for (UInt32 i = 0; i < ftdiDeviceCount; i++)
                     {
-                        DebugLog.Enqueue("Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
-                        SerialNumbers.Add(ftdiDeviceList[i].SerialNumber.ToString());
+                        if (ftdiDeviceList[i].Description.ToString() == PediatricSoftConstants.ValidIDN)
+                        {
+                            DebugLog.Enqueue("Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
+                            SerialNumbers.Add(ftdiDeviceList[i].SerialNumber.ToString());
+                        }
                     }
                 }
+                else
+                {
+                    DebugLog.Enqueue("Failed to get FTDI serial numbers (error " + ftStatus.ToString() + ")");
+                    return SerialNumbers.ToArray();
+                }
             }
-            else
+            catch
             {
-                DebugLog.Enqueue("Failed to get FTDI serial numbers (error " + ftStatus.ToString() + ")");
+                DebugLog.Enqueue("Failed to get FTDI serial numbers - devices are still being added. Please wait a few minutes.");
                 return SerialNumbers.ToArray();
             }
 
