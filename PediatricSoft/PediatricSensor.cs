@@ -810,6 +810,10 @@ namespace PediatricSoft
                             SendCommandsStartDataSave(currentState);
                             break;
 
+                        case PediatricSoftConstants.SensorState.SyncTimers:
+                            SendCommandsSyncTimers(currentState);
+                            break;
+
                         case PediatricSoftConstants.SensorState.Stop:
                             lock (stateLock)
                             {
@@ -1641,9 +1645,9 @@ namespace PediatricSoft
                                          .Average();
             }
 
-            if (targetADCValue < coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionRun)
+            if (targetADCValue < coldSensorADCValue * PediatricSoftConstants.SensorMinLaserTransmissionRun)
             {
-                targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionRun;
+                targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorMinLaserTransmissionRun;
             }
 
             ushort cellHeatLockPoint = (ushort)(ushort.MaxValue * (targetADCValue / 5));
@@ -1693,6 +1697,63 @@ namespace PediatricSoft
 
                     dataSaveEnable = PediatricSensorData.SaveDataEnabled;
                     dataSaveRAW = PediatricSensorData.SaveRAWValues;
+                }
+            }
+
+            lock (stateLock)
+            {
+                if (State == correctState)
+                {
+                    State++;
+                }
+                else
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                }
+            }
+
+        }
+
+        private void SendCommandsSyncTimers(PediatricSoftConstants.SensorState correctState)
+        {
+            PediatricSoftConstants.SensorState currentState = correctState;
+
+            double startTime = 0;
+            double currentTime = double.MaxValue;
+
+            lock(dataLock)
+            {
+                startTime = lastDataPoint.Time;
+            }
+
+            // If we are the master board - send out the sync pulse
+            if (pediatricSensorConfig.Chassis == PediatricSoftConstants.MasterCardChassis &&
+                pediatricSensorConfig.Port == PediatricSoftConstants.MasterCardPort)
+            {
+                SendCommand(PediatricSoftConstants.SensorCommandTriggers);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorSyncTimers)));
+
+                while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+                {
+                    Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    lock (stateLock)
+                    {
+                        currentState = State;
+                    }
+                }
+            }
+
+            // Wait for the clocks to reset
+            while (currentTime > startTime && currentState == correctState)
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                lock (dataLock)
+                {
+                    currentTime = lastDataPoint.Time;
+                }
+                lock(stateLock)
+                {
+                    currentState = State;
                 }
             }
 

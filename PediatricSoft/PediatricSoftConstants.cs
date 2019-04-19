@@ -16,6 +16,8 @@ namespace PediatricSoft
         public const string ValidIDN = "Arrow USB Blaster B";
         public const string PediatricSoftFolderRelative = "PediatricSoft";
         public const string SensorConfigFolderRelative = "SensorConfig";
+        public const ushort MasterCardChassis = 3;
+        public const ushort MasterCardPort = 1;
 
         public const int SerialPortMaxRetries = 5;
         public const int SerialPortSleepAfterFail = 5000;
@@ -42,7 +44,7 @@ namespace PediatricSoft
         public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
 
         public const double SensorTargetLaserTransmissionStep = 0.5;
-        public const double SensorTargetLaserTransmissionRun = 0.33;
+        public const double SensorMinLaserTransmissionRun = 0.15;
         public const double SensorTargetLaserTransmissionOffMagneticResonance = 0.05;
 
         public const double ConversionTime = (double)1 / DataSampleRate;
@@ -167,6 +169,7 @@ namespace PediatricSoft
 
         public const string SensorCommandTriggers = "@40";
         public const ushort SensorSetCurrentADCValueAsHeatLockPoint = 0x0004;
+        public const ushort SensorSyncTimers = 0x0002;
 
         public enum SensorState : byte
         {
@@ -187,6 +190,7 @@ namespace PediatricSoft
             HoldCurrentTransmission,
             Idle,
             Start,
+            SyncTimers,
             StartDataSave,
             Run,
             Stop,
