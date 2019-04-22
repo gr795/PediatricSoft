@@ -213,7 +213,14 @@ namespace PediatricSoft
         public ushort Head { get { return PediatricSensorConfig.Head; } }
 
         public string SN { get; private set; } = String.Empty;
-        public string PortSN { get { return String.Concat(SN); } }
+        public string UserFriendlyName
+        {
+            get
+            {
+                return $"C{Chassis}-P{Port}-{SN}";
+            }
+        }
+
         public bool CanSendCommand { get; private set; } = true;
         public bool IsDisposed { get; private set; } = false;
         public bool IsLocked { get; private set; } = false;

@@ -47,7 +47,7 @@
                 <ComboBox
                     VerticalAlignment="Center"
                     ItemsSource="{Binding Sensors}"
-                    DisplayMemberPath="PortSN"
+                    DisplayMemberPath="UserFriendlyName"
                     SelectedItem="{Binding CurrentSensor}">
 
                     <i:Interaction.Triggers>
