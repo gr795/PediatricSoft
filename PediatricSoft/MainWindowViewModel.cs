@@ -121,7 +121,7 @@ namespace PediatricSoft
 
         public string TextBlockSaveFolderText
         {
-            get { return PediatricSensorData.SaveFolder; }
+            get { return String.Concat("Data Save Folder: ", PediatricSensorData.SaveFolder); }
             set { PediatricSensorData.SaveFolder = value; RaisePropertyChanged(); }
         }
 
@@ -143,7 +143,7 @@ namespace PediatricSoft
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Main Window View Model: Save Data checkbox toggled");
 
-            if (string.IsNullOrEmpty(TextBlockSaveFolderText))
+            if (string.IsNullOrEmpty(PediatricSensorData.SaveFolder))
                 ChooseSaveDataFolder();
 
             if (CheckBoxSaveDataIsChecked)
@@ -165,12 +165,21 @@ namespace PediatricSoft
                 System.Windows.Forms.DialogResult result = dialog.ShowDialog();
                 if (result == DialogResult.OK)
                 {
-                    TextBlockSaveFolderText = dialog.SelectedPath;
-                    if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Main Window View Model: Save Data Folder: {TextBlockSaveFolderText}");
+                    PediatricSensorData.SaveFolder = dialog.SelectedPath;
+                    if (PediatricSensorData.DebugMode)
+                    {
+                        DebugLog.Enqueue($"Main Window View Model: {TextBlockSaveFolderText}");
+                    }
                 }
                 else
-                    if (string.IsNullOrEmpty(TextBlockSaveFolderText)) CheckBoxSaveDataIsChecked = false;
+                {
+                    if (string.IsNullOrEmpty(PediatricSensorData.SaveFolder))
+                    {
+                        CheckBoxSaveDataIsChecked = false;
+                    }
+                }
             }
+            RaisePropertyChanged("TextBlockSaveFolderText");
         }
 
         private void ButtonSendCommandsOnClick()
