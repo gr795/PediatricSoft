@@ -1578,7 +1578,6 @@ namespace PediatricSoft
 
             ushort fieldStep = ushort.MaxValue / PediatricSoftConstants.NumberOfFieldZeroingIntervalsOneAxis - 1;
 
-            double currentCalibrationBzDemod = 0;
             double bestCalibrationBzDemod = double.PositiveInfinity;
 
             for (ushort currentBx = ushort.MinValue; currentBx < ushort.MaxValue; currentBx = UShortSafeInc(currentBx, fieldStep, ushort.MaxValue))
@@ -1586,11 +1585,11 @@ namespace PediatricSoft
                 SendCommand(PediatricSoftConstants.SensorCommandBxOffset);
                 SendCommand(String.Concat("#", UInt16ToStringBE(currentBx)));
 
-                currentCalibrationBzDemod = CalibrateMagnetometer(correctState);
+                CalibrationBzDemod = CalibrateMagnetometer(correctState);
 
-                if (Math.Abs(currentCalibrationBzDemod) < Math.Abs(bestCalibrationBzDemod))
+                if (Math.Abs(CalibrationBzDemod) < Math.Abs(bestCalibrationBzDemod))
                 {
-                    bestCalibrationBzDemod = currentCalibrationBzDemod;
+                    bestCalibrationBzDemod = CalibrationBzDemod;
                     zeroBx = currentBx;
 
                 }

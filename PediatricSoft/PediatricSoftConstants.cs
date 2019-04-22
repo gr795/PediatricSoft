@@ -39,7 +39,7 @@ namespace PediatricSoft
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
-        public const int StabilizeCellHeatFailAfter = 600000; // 600 seconds / 10 minutes
+        public const int StabilizeCellHeatFailAfter = 300000; // 600 seconds / 10 minutes
         public const int StabilizeCellHeatMeasurementInterval = 1000; // Measure every 1 second
         public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
 
