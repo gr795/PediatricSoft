@@ -135,6 +135,8 @@ namespace PediatricSoft
                                 App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
                             }
                         });
+                    
+                    RaisePropertyChanged("SensorCount");
 
                     string[] potentialSensorSerialNumbers = GetPotentialSensorSerialNumbers();
                     string[] currentSensorSerialNumbers = Sensors.Select(x => x.SN).ToArray();
