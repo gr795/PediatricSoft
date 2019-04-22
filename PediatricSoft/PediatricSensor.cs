@@ -219,6 +219,14 @@ namespace PediatricSoft
         public bool IsLocked { get; private set; } = false;
         public bool IsRunning { get; private set; } = false;
         public bool IsValid { get; private set; } = false;
+        public bool IsMasterCard
+        {
+            get
+            {
+                return (pediatricSensorConfig.Chassis == PediatricSoftConstants.MasterCardChassis &&
+                        pediatricSensorConfig.Port == PediatricSoftConstants.MasterCardPort);
+            }
+        }
 
         private bool isPlotted = false;
         public bool IsPlotted
@@ -1720,40 +1728,45 @@ namespace PediatricSoft
             double startTime = 0;
             double currentTime = double.MaxValue;
 
-            lock(dataLock)
+            // If master card is present - sync timers
+            if (PediatricSensorData.IsMasterCardPresent)
             {
-                startTime = lastDataPoint.Time;
-            }
 
-            // If we are the master board - send out the sync pulse
-            if (pediatricSensorConfig.Chassis == PediatricSoftConstants.MasterCardChassis &&
-                pediatricSensorConfig.Port == PediatricSoftConstants.MasterCardPort)
-            {
-                SendCommand(PediatricSoftConstants.SensorCommandTriggers);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorSyncTimers)));
+                lock (dataLock)
+                {
+                    startTime = lastDataPoint.Time;
+                }
 
-                while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+                // If we are the master board - send out the sync pulse
+                if (IsMasterCard)
+                {
+                    SendCommand(PediatricSoftConstants.SensorCommandTriggers);
+                    SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorSyncTimers)));
+
+                    while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+                    {
+                        Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                        lock (stateLock)
+                        {
+                            currentState = State;
+                        }
+                    }
+                }
+
+                // Wait for the clocks to reset
+                while (currentTime > startTime && currentState == correctState)
                 {
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    lock (dataLock)
+                    {
+                        currentTime = lastDataPoint.Time;
+                    }
                     lock (stateLock)
                     {
                         currentState = State;
                     }
                 }
-            }
 
-            // Wait for the clocks to reset
-            while (currentTime > startTime && currentState == correctState)
-            {
-                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                lock (dataLock)
-                {
-                    currentTime = lastDataPoint.Time;
-                }
-                lock(stateLock)
-                {
-                    currentState = State;
-                }
             }
 
             lock (stateLock)

@@ -98,6 +98,8 @@ namespace PediatricSoft
             set { canZeroFields = value; RaisePropertyChanged(); }
         }
 
+        public bool IsMasterCardPresent { get; private set; } = false;
+
         private PediatricSoftConstants.DataSelect dataSelect = PediatricSoftConstants.DataSelect.ADC;
         public PediatricSoftConstants.DataSelect DataSelect
         {
@@ -171,6 +173,12 @@ namespace PediatricSoft
                     {
                         CanLock = true;
                         CanSendCommands = true;
+                    }
+
+                    IsMasterCardPresent = false;
+                    foreach (PediatricSensor sensor in Sensors)
+                    {
+                        IsMasterCardPresent = IsMasterCardPresent | sensor.IsMasterCard;
                     }
 
                     CanScan = true;
