@@ -100,11 +100,11 @@ namespace PediatricSoft
 
         public bool IsMasterCardPresent { get; private set; } = false;
 
-        private PediatricSoftConstants.DataSelect dataSelect = PediatricSoftConstants.DataSelect.ADC;
+        private PediatricSoftConstants.DataSelect dataSelect = PediatricSoftConstants.DataSelect.ClosedLoop;
         public PediatricSoftConstants.DataSelect DataSelect
         {
             get { return dataSelect; }
-            set { dataSelect = value; }
+            set { dataSelect = value; RaisePropertyChanged(); }
         }
 
         // Methods
