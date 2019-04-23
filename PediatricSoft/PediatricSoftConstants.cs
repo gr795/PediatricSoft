@@ -171,6 +171,12 @@ namespace PediatricSoft
         public const ushort SensorSetCurrentADCValueAsHeatLockPoint = 0x0004;
         public const ushort SensorSyncTimers = 0x0002;
 
+        public const string SensorCommandLED = "@D";
+        public const ushort SensorLEDOff = 0x0000;
+        public const ushort SensorLEDBlue = 0x0001;
+        public const ushort SensorLEDRed = 0x0002;
+        public const ushort SensorLEDBlueBlinkRedBlink = 0x000C;
+
         public enum SensorState : byte
         {
             Init,
@@ -196,6 +202,7 @@ namespace PediatricSoft
             Stop,
             StopDataSave,
             GoIdle,
+            SoftFail,
             ShutDownRequested,
             ShutDownComplete,
             Failed

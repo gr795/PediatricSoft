@@ -847,21 +847,12 @@ namespace PediatricSoft
                             }
                             break;
 
+                        case PediatricSoftConstants.SensorState.SoftFail:
+                            SendCommandsShutDown(currentState);
+                            break;
+
                         case PediatricSoftConstants.SensorState.ShutDownRequested:
-                            if (!PediatricSensorData.DebugMode)
-                            {
-                                SendCommandsSetup(currentState);
-
-                                // Disable streaming
-                                SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
-                                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOffGainLow)));
-
-                                while (commandQueue.TryPeek(out string dummy)) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                            }
-                            lock (stateLock)
-                            {
-                                State++;
-                            }
+                            SendCommandsShutDown(currentState);
                             break;
 
                         default:
@@ -1153,6 +1144,9 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandBzPhase);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultBzPhase)));
 
+            SendCommand(PediatricSoftConstants.SensorCommandLED);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDOff)));
+
             lock (stateLock)
             {
                 if (State == PediatricSoftConstants.SensorState.Setup)
@@ -1168,6 +1162,9 @@ namespace PediatricSoft
             // Turn on the laser
             lock (dataLock)
             {
+                SendCommand(PediatricSoftConstants.SensorCommandLED);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDRed)));
+
                 SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
                 SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserCurrent)));
 
@@ -1369,7 +1366,7 @@ namespace PediatricSoft
 
             while (State == correctState)
             {
-                lock(dataLock)
+                lock (dataLock)
                 {
                     transmissionArray[arrayIndex] = lastDataPoint.ADC / coldSensorADCValue;
                 }
@@ -1390,7 +1387,7 @@ namespace PediatricSoft
                 runTime = runTime + PediatricSoftConstants.StabilizeCellHeatMeasurementInterval;
                 if (runTime > PediatricSoftConstants.StabilizeCellHeatFailAfter)
                 {
-                    lock(stateLock)
+                    lock (stateLock)
                     {
                         State = PediatricSoftConstants.SensorState.Failed;
                     }
@@ -1675,6 +1672,9 @@ namespace PediatricSoft
                                                             PediatricSoftConstants.SensorLockBy |
                                                             PediatricSoftConstants.SensorLockCellTemperature)));
 
+            SendCommand(PediatricSoftConstants.SensorCommandLED);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDBlue)));
+
             while (commandQueue.TryPeek(out string dummy))
             {
                 Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
@@ -1813,6 +1813,61 @@ namespace PediatricSoft
                 else
                 {
                     DebugLog.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                }
+            }
+
+        }
+
+        private void SendCommandsShutDown(PediatricSoftConstants.SensorState correctState)
+        {
+            PediatricSoftConstants.SensorState currentState = correctState;
+
+            SendCommandsSetup(correctState);
+
+            // Disable streaming
+            SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOffGainLow)));
+
+            // Turn off LEDs if shutting down
+            if (correctState == PediatricSoftConstants.SensorState.ShutDownRequested)
+            {
+                SendCommand(PediatricSoftConstants.SensorCommandLED);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDOff)));
+            }
+
+            // Blink LEDs if failing
+            if (correctState == PediatricSoftConstants.SensorState.SoftFail)
+            {
+                SendCommand(PediatricSoftConstants.SensorCommandLED);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDBlueBlinkRedBlink)));
+            }
+
+            while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+            {
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
+
+            lock (stateLock)
+            {
+                if (currentState == PediatricSoftConstants.SensorState.SoftFail)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                else
+                {
+                    if (currentState == PediatricSoftConstants.SensorState.ShutDownRequested)
+                    {
+                        State = PediatricSoftConstants.SensorState.ShutDownComplete;
+                    }
+                    else
+                    {
+                        DebugLog.Enqueue($"Sensor {SN}: We are in the shutdown procedure, but we shouldn't be here. Failing..");
+                        State = PediatricSoftConstants.SensorState.Failed;
+                    }
                 }
             }
 
