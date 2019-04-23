@@ -53,8 +53,8 @@ namespace PediatricSoft
         public const double SensorADCColdValueLowGainMinVolts = 0.5; // Minimum ADC voltage on low gain
         public const double SensorADCColdValueLowGainMaxVolts = 4.5;
 
-        public const double SensorYCoilCalibrationTeslaPerHex = 2.29e-12;
-        public const double SensorZCoilCalibrationTeslaPerHex = 2.29e-12;
+        public const double SensorYCoilCalibrationTeslaPerHex = 4.87e-12;
+        public const double SensorZCoilCalibrationTeslaPerHex = 4.87e-12;
 
         public const double SensorCoilCalibrationStepTesla = 0.5e-9; // 0.5 nT
         public const ushort SensorCoilCalibrationStepHex = (ushort)(SensorCoilCalibrationStepTesla / SensorZCoilCalibrationTeslaPerHex);
