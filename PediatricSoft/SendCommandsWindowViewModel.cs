@@ -244,7 +244,10 @@ namespace PediatricSoft
 
         private void ButtonSendSetupCommandsOnClick()
         {
-            if (CurrentSensor != null) CurrentSensor.SendCommandsSetupPublic();
+            if (CurrentSensor != null)
+            {
+                CurrentSensor.Standby();
+            }
         }
 
         private void RadioButtonsRaisePropertyChanged()

@@ -450,16 +450,6 @@ namespace PediatricSoft
             }
         }
 
-        public void SendCommandsSetupPublic()
-        {
-            PediatricSoftConstants.SensorState currentState;
-            lock (stateLock)
-            {
-                currentState = State;
-            }
-            SendCommandsSetup(currentState);
-        }
-
         public static string UInt16ToStringBE(ushort value)
         {
             byte[] t = BitConverter.GetBytes(value);
