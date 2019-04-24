@@ -13,6 +13,7 @@ using System.Timers;
 using System.Xml.Serialization;
 using System.Numerics;
 using MathNet.Numerics.IntegralTransforms;
+using System.Diagnostics;
 
 namespace PediatricSoft
 {
@@ -1216,29 +1217,53 @@ namespace PediatricSoft
 
         private void SendCommandsStartLock(PediatricSoftConstants.SensorState correctState)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            PediatricSoftConstants.SensorState currentState = correctState;
 
-            // Turn on the laser
-            lock (dataLock)
+            // Turn on the LED
+            SendCommand(PediatricSoftConstants.SensorCommandLED);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDRed)));
+
+            // Turn on the Laser
+            SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserCurrent)));
+
+            // Set the laser heater to the default value
+            SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
+
+            // Set the cell heater to the default value
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.DefaultCellHeat)));
+
+            while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
             {
-                SendCommand(PediatricSoftConstants.SensorCommandLED);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDRed)));
-
-                SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
-                SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserCurrent)));
-
-                // Set the laser heater to the default value
-                SendCommand(PediatricSoftConstants.SensorCommandLaserHeat);
-                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultLaserHeat)));
-
-                // Set the cell heater to the default value
-                SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
-                SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.DefaultCellHeat)));
-
-                dataUpdated = false;
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
             }
 
             // Wait a bit
-            Thread.Sleep(PediatricSoftConstants.StateHandlerCellHeatInitialTime);
+            stopwatch.Restart();
+            while (stopwatch.ElapsedMilliseconds < PediatricSoftConstants.StateHandlerCellHeatInitialTime &&
+                   currentState == correctState)
+            {
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
+            stopwatch.Stop();
+
+            // If we failed - return
+            if (currentState != correctState)
+            {
+                DebugLog.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                return;
+            }
 
             // Record the ADC value
             lock (dataLock)
@@ -1253,23 +1278,33 @@ namespace PediatricSoft
             {
                 lock (stateLock)
                 {
-                    State = PediatricSoftConstants.SensorState.Failed;
+                    State = PediatricSoftConstants.SensorState.SoftFail;
                 }
                 DebugLog.Enqueue($"Sensor {SN} failed: ADC value out of range ({coldSensorADCValue} V)");
                 return;
             }
 
-            // Turn the Y-Coil to max current
-            SendCommand(PediatricSoftConstants.SensorCommandByOffset);
+            // Turn the Z-Coil to max current
+            SendCommand(PediatricSoftConstants.SensorCommandBzOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(ushort.MaxValue)));
 
             // Set the cell heater to the max value
             SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
             SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.MaxCellHeat)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(0)));
+
+            while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+            {
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
 
             lock (stateLock)
             {
-                if (State == correctState)
+                if (currentState == correctState)
                 {
                     State++;
                 }
@@ -1279,6 +1314,7 @@ namespace PediatricSoft
 
         private void SendCommandsLaserLockStep(PediatricSoftConstants.SensorState correctState)
         {
+            PediatricSoftConstants.SensorState currentState = correctState;
 
             ushort laserHeat = PediatricSoftConstants.SensorMinLaserHeat;
             double transmission = double.MaxValue;
@@ -1292,11 +1328,36 @@ namespace PediatricSoft
 
             for (int i = 0; i < PediatricSoftConstants.MaxNumberOfLaserLockStepCycles; i++)
             {
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Laser lock step cycle: {i}");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Laser lock step cycle: {i}");
+                }
 
                 while (laserHeat < PediatricSoftConstants.SensorMaxLaserHeat)
                 {
-                    while (!dataUpdated) Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                    while (currentState == correctState)
+                    {
+                        lock (dataLock)
+                        {
+                            if (dataUpdated)
+                            {
+                                break;
+                            }
+                        }
+                        Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                        lock (stateLock)
+                        {
+                            currentState = State;
+                        }
+                    }
+
+                    // If we failed - return
+                    if (currentState != correctState)
+                    {
+                        DebugLog.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
+                        return;
+                    }
+
                     transmission = lastDataPoint.ADC / coldSensorADCValue;
 
                     if (transmission < PediatricSoftConstants.SensorTargetLaserTransmissionStep)
@@ -1312,18 +1373,6 @@ namespace PediatricSoft
                             }
                         }
                         return;
-                    }
-                    else
-                    {
-                        // Check if the lock was cancelled
-                        lock (stateLock)
-                        {
-                            if (State != correctState)
-                            {
-                                DebugLog.Enqueue($"Sensor {SN}: Lock was aborted or something failed. Returning.");
-                                return;
-                            }
-                        }
                     }
 
                     laserHeat = UShortSafeInc(laserHeat, PediatricSoftConstants.SensorLaserHeatStep, PediatricSoftConstants.SensorMaxLaserHeat);
@@ -1344,7 +1393,7 @@ namespace PediatricSoft
             {
                 if (State == correctState)
                 {
-                    State = PediatricSoftConstants.SensorState.Failed;
+                    State = PediatricSoftConstants.SensorState.SoftFail;
                 }
             }
             DebugLog.Enqueue($"Sensor {SN}: Laser lock failed. Giving up");
