@@ -272,18 +272,22 @@ namespace PediatricSoft
             {
                 currentState = State;
 
-                if (currentState == PediatricSoftConstants.SensorState.Valid ||
+                if (currentState == PediatricSoftConstants.SensorState.Standby ||
                     currentState == PediatricSoftConstants.SensorState.Idle)
                 {
-                    State = PediatricSoftConstants.SensorState.Setup;
+                    State = PediatricSoftConstants.SensorState.StartLock;
                     currentState = State;
                     canRun = true;
                 }
-
-
+                else
+                {
+                    State = PediatricSoftConstants.SensorState.SoftFail;
+                    DebugLog.Enqueue($"Sensor {SN}: Lock procedure was called, but we shouldn't be here. Failing..");
+                }
             }
 
             if (canRun)
+            {
                 while (currentState != PediatricSoftConstants.SensorState.Idle &&
                        currentState != PediatricSoftConstants.SensorState.Failed)
                 {
@@ -293,6 +297,7 @@ namespace PediatricSoft
                         currentState = State;
                     }
                 }
+            }
         }
 
         public void Start()
@@ -759,6 +764,20 @@ namespace PediatricSoft
                 {
                     switch (currentState)
                     {
+                        case PediatricSoftConstants.SensorState.Valid:
+                            if (PediatricSensorData.DebugMode)
+                            {
+                                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                            }
+                            else
+                            {
+                                lock (stateLock)
+                                {
+                                    State++;
+                                }
+                            }
+                            break;
+
                         case PediatricSoftConstants.SensorState.Setup:
                             SendCommandsSetup(currentState);
                             break;
@@ -1060,6 +1079,8 @@ namespace PediatricSoft
 
         private void SendCommandsSetup(PediatricSoftConstants.SensorState correctState)
         {
+            PediatricSoftConstants.SensorState currentState = correctState;
+
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockDisableAll)));
 
@@ -1146,6 +1167,15 @@ namespace PediatricSoft
 
             SendCommand(PediatricSoftConstants.SensorCommandLED);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDOff)));
+
+            while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+            {
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
 
             lock (stateLock)
             {

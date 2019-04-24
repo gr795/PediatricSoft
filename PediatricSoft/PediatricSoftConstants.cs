@@ -182,6 +182,7 @@ namespace PediatricSoft
             Init,
             Valid,
             Setup,
+            Standby,
             StartLock,
             LaserLockStep,
             LaserLockPID,
