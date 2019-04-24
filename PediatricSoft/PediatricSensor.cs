@@ -282,7 +282,7 @@ namespace PediatricSoft
                 }
                 else
                 {
-                    State = PediatricSoftConstants.SensorState.SoftFail;
+                    State = PediatricSoftConstants.SensorState.Failed;
                     DebugLog.Enqueue($"Sensor {SN}: Standby procedure was called, but we shouldn't be here. Failing..");
                 }
             }
@@ -319,7 +319,7 @@ namespace PediatricSoft
                 }
                 else
                 {
-                    State = PediatricSoftConstants.SensorState.SoftFail;
+                    State = PediatricSoftConstants.SensorState.Failed;
                     DebugLog.Enqueue($"Sensor {SN}: Lock procedure was called, but we shouldn't be here. Failing..");
                 }
             }

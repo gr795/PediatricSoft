@@ -204,7 +204,10 @@ namespace PediatricSoft
 
                     Parallel.ForEach(Sensors, sensor =>
                     {
-                        sensor.Standby();
+                        if (sensor.State != PediatricSoftConstants.SensorState.Failed)
+                        {
+                            sensor.Standby();
+                        }
                     });
 
                     CanScan = true;
@@ -234,7 +237,10 @@ namespace PediatricSoft
 
                     Parallel.ForEach(Sensors, sensor =>
                     {
-                        sensor.Lock();
+                        if (sensor.State != PediatricSoftConstants.SensorState.Failed)
+                        {
+                            sensor.Lock();
+                        }
                     });
 
                     CanScan = true;
@@ -266,7 +272,10 @@ namespace PediatricSoft
 
                         Parallel.ForEach(Sensors, sensor =>
                         {
-                            sensor.Stop();
+                            if (sensor.State != PediatricSoftConstants.SensorState.Failed)
+                            {
+                                sensor.Stop();
+                            }
                         });
 
                         IsRunning = false;
@@ -285,7 +294,10 @@ namespace PediatricSoft
                         if (SaveDataEnabled) CreateDataFolder();
                         Parallel.ForEach(Sensors, sensor =>
                         {
-                            sensor.Start();
+                            if (sensor.State != PediatricSoftConstants.SensorState.Failed)
+                            {
+                                sensor.Start();
+                            }
                         });
                     }
 
@@ -308,7 +320,10 @@ namespace PediatricSoft
 
                     Parallel.ForEach(Sensors, sensor =>
                     {
-                        sensor.ZeroFields();
+                        if (sensor.State != PediatricSoftConstants.SensorState.Failed)
+                        {
+                            sensor.ZeroFields();
+                        }
                     });
 
                     CanScan = true;
