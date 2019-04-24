@@ -188,6 +188,36 @@ namespace PediatricSoft
             });
         }
 
+        public void StandbyAllAsync()
+        {
+            Task.Run(() =>
+            {
+                if (CanLock)
+                {
+                    DebugLog.Enqueue("Begin sensor standby");
+
+                    CanScan = false;
+                    CanLock = false;
+                    CanStartStop = false;
+                    CanZeroFields = false;
+                    CanSendCommands = false;
+
+                    Parallel.ForEach(Sensors, sensor =>
+                    {
+                        sensor.Standby();
+                    });
+
+                    CanScan = true;
+                    CanLock = true;
+                    CanStartStop = false;
+                    CanZeroFields = false;
+                    CanSendCommands = true;
+
+                    DebugLog.Enqueue("Sensor standby done");
+                }
+            });
+        }
+
         public void LockAllAsync()
         {
             Task.Run(() =>

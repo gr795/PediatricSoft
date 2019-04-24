@@ -73,6 +73,14 @@
                 </TextBlock>
 
                 <Button
+                    Name="ButtonStandbySensors"
+                    Margin="0,0,0,10"
+                    Height="20"
+                    Command="{Binding ButtonStandbySensorsCommand}"
+                    Content="Standby">
+                </Button>
+
+                <Button
                     Name="ButtonLockSensors"
                     Margin="0,0,0,10"
                     Height="20"

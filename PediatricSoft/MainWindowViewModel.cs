@@ -22,6 +22,7 @@ namespace PediatricSoft
             PediatricSensorData = PediatricSensorData.Instance;
 
             ButtonScanPortsCommand = new DelegateCommand(PediatricSensorData.ScanPortsAsync, () => PediatricSensorData.CanScan);
+            ButtonStandbySensorsCommand = new DelegateCommand(PediatricSensorData.StandbyAllAsync, () => PediatricSensorData.CanLock);
             ButtonLockSensorsCommand = new DelegateCommand(PediatricSensorData.LockAllAsync, () => PediatricSensorData.CanLock);
             ButtonStartStopSensorsCommand = new DelegateCommand(PediatricSensorData.StartStopAsync, () => PediatricSensorData.CanStartStop);
             ButtonZeroFieldsCommand = new DelegateCommand(PediatricSensorData.ZeroFieldsAsync, () => PediatricSensorData.CanZeroFields);
@@ -47,6 +48,7 @@ namespace PediatricSoft
         public DebugLog DebugLog { get { return DebugLog.Instance; } }
 
         public DelegateCommand ButtonScanPortsCommand { get; private set; }
+        public DelegateCommand ButtonStandbySensorsCommand { get; private set; }
         public DelegateCommand ButtonLockSensorsCommand { get; private set; }
         public DelegateCommand ButtonStartStopSensorsCommand { get; private set; }
         public DelegateCommand ButtonZeroFieldsCommand { get; private set; }
@@ -69,6 +71,7 @@ namespace PediatricSoft
                 RaisePropertyChanged("");
 
                 ButtonScanPortsCommand.RaiseCanExecuteChanged();
+                ButtonStandbySensorsCommand.RaiseCanExecuteChanged();
                 ButtonLockSensorsCommand.RaiseCanExecuteChanged();
                 ButtonStartStopSensorsCommand.RaiseCanExecuteChanged();
                 ButtonZeroFieldsCommand.RaiseCanExecuteChanged();
@@ -208,6 +211,7 @@ namespace PediatricSoft
                     break;
 
                 case "CanLock":
+                    ButtonStandbySensorsCommand.RaiseCanExecuteChanged();
                     ButtonLockSensorsCommand.RaiseCanExecuteChanged();
                     break;
 

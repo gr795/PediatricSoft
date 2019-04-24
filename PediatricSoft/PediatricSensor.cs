@@ -263,6 +263,44 @@ namespace PediatricSoft
             uiUpdateTimer.Enabled = true;
         }
 
+        public void Standby()
+        {
+            PediatricSoftConstants.SensorState currentState;
+            bool canRun = false;
+
+            lock (stateLock)
+            {
+                currentState = State;
+
+                if (currentState == PediatricSoftConstants.SensorState.Valid ||
+                    currentState == PediatricSoftConstants.SensorState.Standby ||
+                    currentState == PediatricSoftConstants.SensorState.Idle)
+                {
+                    State = PediatricSoftConstants.SensorState.Setup;
+                    currentState = State;
+                    canRun = true;
+                }
+                else
+                {
+                    State = PediatricSoftConstants.SensorState.SoftFail;
+                    DebugLog.Enqueue($"Sensor {SN}: Standby procedure was called, but we shouldn't be here. Failing..");
+                }
+            }
+
+            if (canRun)
+            {
+                while (currentState != PediatricSoftConstants.SensorState.Standby &&
+                       currentState != PediatricSoftConstants.SensorState.Failed)
+                {
+                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                    lock (stateLock)
+                    {
+                        currentState = State;
+                    }
+                }
+            }
+        }
+
         public void Lock()
         {
             PediatricSoftConstants.SensorState currentState;
