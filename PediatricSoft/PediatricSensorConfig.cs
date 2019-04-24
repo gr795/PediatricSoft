@@ -36,10 +36,13 @@ namespace PediatricSoft
 
         public ushort LaserCurrent { get; set; }
         public ushort LaserCurrentModulation { get; set; }
+        public ushort LaserCurrentKI { get; set; }
+        public ushort LaserHeatKI { get; set; }
         public ushort BzModulation { get; set; }
         public ushort BzKI { get; set; }
         public ushort DefaultCellHeat { get; set; }
         public ushort MaxCellHeat { get; set; }
+        public ushort CellHeatKI { get; set; }
 
         public PediatricSensorConfig()
         {
@@ -51,10 +54,13 @@ namespace PediatricSoft
 
             LaserCurrent = PediatricSoftConstants.SensorDefaultLaserCurrent;
             LaserCurrentModulation = PediatricSoftConstants.SensorDefaultLaserCurrentModulation;
+            LaserCurrentKI = PediatricSoftConstants.SensorDefaultPIDLaserCurrentI;
+            LaserHeatKI = PediatricSoftConstants.SensorDefaultPIDLaserHeaterI;
             BzModulation = PediatricSoftConstants.SensorDefaultBzModulation;
             BzKI = PediatricSoftConstants.SensorDefaultPIDBzI;
             DefaultCellHeat = PediatricSoftConstants.SensorDefaultCellHeat;
             MaxCellHeat = PediatricSoftConstants.SensorMaxCellHeat;
+            CellHeatKI = PediatricSoftConstants.SensorDefaultPIDCellHeaterI;
         }
 
         public bool Equals(PediatricSensorConfig config)

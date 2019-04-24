@@ -25,10 +25,13 @@ namespace PediatricSoft
 
         public TextBoxSensorConfig TextBoxLaserCurrent { get; private set; }
         public TextBoxSensorConfig TextBoxLaserCurrentModulation { get; private set; }
+        public TextBoxSensorConfig TextBoxLaserCurrentKI { get; private set; }
+        public TextBoxSensorConfig TextBoxLaserHeatKI { get; private set; }
         public TextBoxSensorConfig TextBoxBzModulation { get; private set; }
         public TextBoxSensorConfig TextBoxBzKI { get; private set; }
         public TextBoxSensorConfig TextBoxDefaultCellHeat { get; private set; }
         public TextBoxSensorConfig TextBoxMaxCellHeat { get; private set; }
+        public TextBoxSensorConfig TextBoxCellHeatKI { get; private set; }
 
         public bool RadioButtonDataSelectADCIsChecked
         {
@@ -146,6 +149,12 @@ namespace PediatricSoft
                 TextBoxLaserCurrentModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrentModulation");
                 RaisePropertyChanged("TextBoxLaserCurrentModulation");
 
+                TextBoxLaserCurrentKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrentKI");
+                RaisePropertyChanged("TextBoxLaserCurrentKI");
+
+                TextBoxLaserHeatKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserHeatKI");
+                RaisePropertyChanged("TextBoxLaserHeatKI");
+
                 TextBoxBzModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "BzModulation");
                 RaisePropertyChanged("TextBoxBzModulation");
 
@@ -157,7 +166,10 @@ namespace PediatricSoft
 
                 TextBoxMaxCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "MaxCellHeat");
                 RaisePropertyChanged("TextBoxMaxCellHeat");
-                
+
+                TextBoxCellHeatKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "CellHeatKI");
+                RaisePropertyChanged("TextBoxCellHeatKI");
+
             }
         }
 

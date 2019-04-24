@@ -8,9 +8,9 @@
         xmlns:local="clr-namespace:PediatricSoft"
         mc:Ignorable="d"
         Title="SendCommandsWindow"
-        MinHeight="400"
+        MinHeight="500"
         MinWidth="750"
-        Height="400"
+        Height="500"
         Width="750"
         >
 
@@ -201,6 +201,38 @@
                     <TextBox
                         DockPanel.Dock="Right"
                         Width="75"
+                        Text="{Binding TextBoxLaserCurrentKI.Text}"
+                        Foreground="{Binding TextBoxLaserCurrentKI.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Laser Current KI
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxLaserHeatKI.Text}"
+                        Foreground="{Binding TextBoxLaserHeatKI.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Laser Heat KI
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
                         Text="{Binding TextBoxBzModulation.Text}"
                         Foreground="{Binding TextBoxBzModulation.Color}">
                     </TextBox>
@@ -255,6 +287,22 @@
 
                     <TextBlock VerticalAlignment="Center">
                     Max Cell Heat
+                    </TextBlock>
+
+                </DockPanel>
+
+                <DockPanel
+                    Margin="0,5">
+
+                    <TextBox
+                        DockPanel.Dock="Right"
+                        Width="75"
+                        Text="{Binding TextBoxCellHeatKI.Text}"
+                        Foreground="{Binding TextBoxCellHeatKI.Color}">
+                    </TextBox>
+
+                    <TextBlock VerticalAlignment="Center">
+                    Cell Heat KI
                     </TextBlock>
 
                 </DockPanel>

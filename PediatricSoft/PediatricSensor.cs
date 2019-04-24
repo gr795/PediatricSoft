@@ -1153,13 +1153,13 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDLaserCurrentP)));
 
             SendCommand(PediatricSoftConstants.SensorCommandPIDLaserCurrentI);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDLaserCurrentI)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserCurrentKI)));
 
             SendCommand(PediatricSoftConstants.SensorCommandPIDLaserHeaterI);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDLaserHeaterI)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.LaserHeatKI)));
 
             SendCommand(PediatricSoftConstants.SensorCommandPIDCellHeaterI);
-            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDCellHeaterI)));
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.CellHeatKI)));
 
             SendCommand(PediatricSoftConstants.SensorCommandPIDByP);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultPIDByP)));
