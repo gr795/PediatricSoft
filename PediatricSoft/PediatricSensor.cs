@@ -1291,7 +1291,6 @@ namespace PediatricSoft
             // Set the cell heater to the max value
             SendCommand(PediatricSoftConstants.SensorCommandCellHeat);
             SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.MaxCellHeat)));
-            SendCommand(String.Concat("#", UInt16ToStringBE(0)));
 
             while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
             {
