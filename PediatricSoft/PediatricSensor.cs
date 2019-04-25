@@ -1543,7 +1543,12 @@ namespace PediatricSoft
             int maxADCRAWValue = int.MinValue;
             int currentADCRAWValue = int.MinValue;
 
-            // Reset fields
+            // Reset fields and stuff
+
+            CalibrationBzDemod = 0;
+
+            SendCommand(PediatricSoftConstants.SensorCommandLED);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDRed)));
 
             SendCommand(PediatricSoftConstants.SensorCommandBxOffset);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDefaultBxOffset)));
