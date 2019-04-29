@@ -19,7 +19,7 @@ namespace PediatricSoft
         public const ushort MasterCardChassis = 3;
         public const ushort MasterCardPort = 1;
 
-        public const int SerialPortMaxRetries = 5;
+        public const int SerialPortMaxRetries = 3;
         public const int SerialPortSleepAfterFail = 5000;
         public const UInt32 SerialPortBaudRate = 921600;
         public const UInt32 SerialPortWriteTimeout = 1000;
@@ -39,7 +39,7 @@ namespace PediatricSoft
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
-        public const int StabilizeCellHeatFailAfter = 300000; // 600 seconds / 10 minutes
+        public const int StabilizeCellHeatFailAfter = 600000; // 600 seconds / 10 minutes
         public const int StabilizeCellHeatMeasurementInterval = 1000; // Measure every 1 second
         public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
 

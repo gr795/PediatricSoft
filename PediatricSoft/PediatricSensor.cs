@@ -1329,7 +1329,7 @@ namespace PediatricSoft
             {
                 if (PediatricSensorData.DebugMode)
                 {
-                    DebugLog.Enqueue($"Laser lock step cycle: {i}");
+                    DebugLog.Enqueue($"Sensor {SN}: Laser lock step cycle: {i}");
                 }
 
                 while (laserHeat < PediatricSoftConstants.SensorMaxLaserHeat)
@@ -1401,14 +1401,24 @@ namespace PediatricSoft
 
         private void SendCommandsLaserLockPID(PediatricSoftConstants.SensorState correctState)
         {
+            PediatricSoftConstants.SensorState currentState = correctState;
 
             SendCommand(PediatricSoftConstants.SensorCommandDigitalDataStreamingAndADCGain);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorDigitalDataStreamingOnGainHigh)));
 
-            coldSensorADCValue = coldSensorADCValue * 50 / 15.5;
-
             SendCommand(PediatricSoftConstants.SensorCommandLock);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockOpticalResonance)));
+
+            while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+            {
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
+
+            coldSensorADCValue = coldSensorADCValue * 50 / 15.5;
 
             lock (stateLock)
             {
@@ -1425,6 +1435,7 @@ namespace PediatricSoft
 
         private void SendCommandsCellHeatLock(PediatricSoftConstants.SensorState correctState)
         {
+            PediatricSoftConstants.SensorState currentState = correctState;
 
             double targetADCValue = coldSensorADCValue * PediatricSoftConstants.SensorTargetLaserTransmissionOffMagneticResonance;
             if (targetADCValue > PediatricSoftConstants.SensorADCColdValueLowGainMaxVolts)
@@ -1444,6 +1455,15 @@ namespace PediatricSoft
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockOpticalResonance |
                                                             PediatricSoftConstants.SensorLockCellTemperature)));
 
+            while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
+            {
+                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
+
             lock (stateLock)
             {
                 if (State == correctState)
@@ -1460,6 +1480,8 @@ namespace PediatricSoft
 
         private void SendCommandsStabilizeCellHeat(PediatricSoftConstants.SensorState correctState)
         {
+            PediatricSoftConstants.SensorState currentState = correctState;
+            Stopwatch stopwatch = new Stopwatch();
 
             int arraySize = PediatricSoftConstants.StabilizeCellHeatTimeWindow / PediatricSoftConstants.StabilizeCellHeatMeasurementInterval;
             double[] transmissionArray = new double[arraySize];
@@ -1468,9 +1490,9 @@ namespace PediatricSoft
             double minTransmission = PediatricSoftConstants.SensorTargetLaserTransmissionOffMagneticResonance - PediatricSoftConstants.StabilizeCellHeatTolerance;
             double maxTransmission = PediatricSoftConstants.SensorTargetLaserTransmissionOffMagneticResonance + PediatricSoftConstants.StabilizeCellHeatTolerance;
 
-            int runTime = 0;
+            stopwatch.Start();
 
-            while (State == correctState)
+            while (currentState == correctState)
             {
                 lock (dataLock)
                 {
@@ -1490,16 +1512,22 @@ namespace PediatricSoft
 
                 Thread.Sleep(PediatricSoftConstants.StabilizeCellHeatMeasurementInterval);
 
-                runTime = runTime + PediatricSoftConstants.StabilizeCellHeatMeasurementInterval;
-                if (runTime > PediatricSoftConstants.StabilizeCellHeatFailAfter)
+                if (stopwatch.ElapsedMilliseconds > PediatricSoftConstants.StabilizeCellHeatFailAfter)
                 {
                     lock (stateLock)
                     {
-                        State = PediatricSoftConstants.SensorState.Failed;
+                        State = PediatricSoftConstants.SensorState.SoftFail;
                     }
                     DebugLog.Enqueue($"Sensor {SN}: Failed to stabilize cell heat");
                 }
+
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
             }
+
+            stopwatch.Stop();
 
             lock (stateLock)
             {
@@ -1819,6 +1847,8 @@ namespace PediatricSoft
                 {
                     filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, SN);
                     filePath += ".txt";
+
+                    dataSaveBuffer.Clear();
 
                     dataSaveEnable = PediatricSensorData.SaveDataEnabled;
                     dataSaveRAW = PediatricSensorData.SaveRAWValues;
