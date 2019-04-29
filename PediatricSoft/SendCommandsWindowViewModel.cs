@@ -18,6 +18,7 @@ namespace PediatricSoft
         public DelegateCommand<object> TextBoxCommandStringKeyUpCommand { get; private set; }
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
         public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
+        public DelegateCommand ButtonSendVCSELBurnInCommandsCommand { get; private set; }
 
         public TextBoxSensorConfig TextBoxChassis { get; private set; }
         public TextBoxSensorConfig TextBoxPort { get; private set; }
@@ -126,6 +127,7 @@ namespace PediatricSoft
             TextBoxCommandStringKeyUpCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyUp);
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
             ButtonSendSetupCommandsCommand = new DelegateCommand(ButtonSendSetupCommandsOnClick, () => PediatricSensorData.DebugMode);
+            ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick, () => PediatricSensorData.DebugMode);
         }
 
         private void ComboBoxCommandOnSelectionChanged()
@@ -259,6 +261,15 @@ namespace PediatricSoft
             if (CurrentSensor != null)
             {
                 CurrentSensor.Standby();
+            }
+        }
+
+        private void ButtonSendVCSELBurnInCommandsOnClick()
+        {
+            foreach(PediatricSensor sensor in PediatricSensorData.Sensors)
+            {
+                sensor.SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
+                sensor.SendCommand(String.Concat("#", PediatricSensor.UInt16ToStringBE(ushort.MaxValue)));
             }
         }
 

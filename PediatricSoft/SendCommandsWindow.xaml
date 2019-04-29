@@ -356,6 +356,12 @@
                 Send Setup Commands
             </Button>
 
+            <Button
+                Margin="0,5"
+                Command="{Binding ButtonSendVCSELBurnInCommandsCommand}">
+                Burn-in ALL VCSELs
+            </Button>
+
         </StackPanel>
 
     </Grid>
