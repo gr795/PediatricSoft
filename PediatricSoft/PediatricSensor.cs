@@ -954,6 +954,7 @@ namespace PediatricSoft
                     // May be device already opened?
                     if (!_FTDI.IsOpen)
                     {
+                        _FTDI.Close();
                         continue;
                     }
                 }
@@ -1196,6 +1197,12 @@ namespace PediatricSoft
 
             SendCommand(PediatricSoftConstants.SensorCommandLED);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDOff)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandLaserHeatLimit);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorMaxLaserHeat)));
+
+            SendCommand(PediatricSoftConstants.SensorCommandCellHeatLimit);
+            SendCommand(String.Concat("#", UInt16ToStringBE(pediatricSensorConfig.MaxCellHeat)));
 
             while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
             {

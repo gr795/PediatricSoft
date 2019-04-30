@@ -39,7 +39,7 @@ namespace PediatricSoft
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
-        public const int StabilizeCellHeatFailAfter = 600000; // 600 seconds / 10 minutes
+        public const int StabilizeCellHeatFailAfter = 300000; // 5 minutes
         public const int StabilizeCellHeatMeasurementInterval = 1000; // Measure every 1 second
         public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
 
@@ -88,6 +88,8 @@ namespace PediatricSoft
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
         public const ushort SensorLaserHeatStep = 0x0008;
+
+        public const string SensorCommandLaserHeatLimit = "@30";
 
         public const string SensorCommandBxOffset = "@7";
         public const ushort SensorDefaultBxOffset = 0x8000;
@@ -148,6 +150,8 @@ namespace PediatricSoft
         public const ushort SensorDefaultCellHeat = 0x8000;
         public const ushort SensorMinCellHeat = 0x0000;
         public const ushort SensorMaxCellHeat = 0xFFFF;
+
+        public const string SensorCommandCellHeatLimit = "@31";
 
         public const string SensorCommandDigitalDataSelector = "@22";
         public const ushort SensorDefaultDigitalDataSelector = 0x7650;
