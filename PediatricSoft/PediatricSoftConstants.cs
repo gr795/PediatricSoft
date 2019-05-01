@@ -35,7 +35,7 @@ namespace PediatricSoft
         public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
-        public const int StateHandlerCellHeatInitialTime = 30000; // 30 seconds
+        public const int StateHandlerCellHeatInitialTime = 60000; // 60 seconds
         public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
 
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds

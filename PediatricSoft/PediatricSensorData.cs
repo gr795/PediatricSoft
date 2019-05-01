@@ -40,6 +40,7 @@ namespace PediatricSoft
         public bool IsDisposed { get; private set; } = false;
 
         public bool DebugMode { get; set; } = false;
+        public bool CanUpdateSeriesCollection { get; private set; } = true;
         public bool SaveDataEnabled { get; set; } = false;
         public bool SaveRAWValues { get; set; } = false;
         public string SaveFolder { get; set; } = String.Empty;
@@ -337,24 +338,27 @@ namespace PediatricSoft
 
         public void UpdateSeriesCollection()
         {
-            int count = 0;
-
-            foreach (PediatricSensor sensor in Sensors)
+            if (CanUpdateSeriesCollection)
             {
-                if (sensor.IsPlotted)
+                int count = 0;
+
+                foreach (PediatricSensor sensor in Sensors)
                 {
-                    count++;
+                    if (sensor.IsPlotted)
+                    {
+                        count++;
+                    }
                 }
-            }
 
-            if (count > 0)
-            {
-                PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ShowPlotWindow");
-                PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("UpdateSeriesCollection");
-            }
-            else
-            {
-                PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ClosePlotWindow");
+                if (count > 0)
+                {
+                    PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ShowPlotWindow");
+                    PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("UpdateSeriesCollection");
+                }
+                else
+                {
+                    PediatricSoftEventGlue.eventAggregator.GetEvent<EventUILayer>().Publish("ClosePlotWindow");
+                }
             }
         }
 
@@ -451,6 +455,7 @@ namespace PediatricSoft
 
         private void ClearAllPlotCheckBox()
         {
+            CanUpdateSeriesCollection = false;
             Parallel.ForEach(Sensors, sensor =>
             {
                 if (sensor.IsPlotted)
@@ -458,6 +463,7 @@ namespace PediatricSoft
                     sensor.IsPlotted = false;
                 }
             });
+            CanUpdateSeriesCollection = true;
         }
 
         private void DataLayerEventHandler(string eventString)

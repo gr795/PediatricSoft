@@ -76,7 +76,8 @@ namespace PediatricSoft
             }
             else
             {
-                DebugLog.Enqueue($"Sensor {serial}: Didn't get a response from the board: not valid");
+                _FTDI.GetCOMPort(out string comPort);
+                DebugLog.Enqueue($"Sensor {serial}: Didn't get a response from the board. Windows port name {comPort}.");
                 lock (stateLock)
                 {
                     State = PediatricSoftConstants.SensorState.Failed;
