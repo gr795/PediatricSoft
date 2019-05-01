@@ -35,11 +35,12 @@ namespace PediatricSoft
         public const UInt32 InfoBlockSize = 4;
 
         public const int StateHandlerSleepTime = 10; // in ms
-        public const int StateHandlerCellHeatInitialTime = 60000; // 60 seconds
-        public const int StateHandlerTransmissionAveragingTime = 1000; // in ms
+        public const int CellHeatInitialTime = 60000; // 60 seconds
+        public const int LaserLockWaitBetweenIterations = 10000; // 10 seconds
+        public const int TransmissionAveragingTime = 1000; // in ms
 
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
-        public const int StabilizeCellHeatFailAfter = 300000; // 5 minutes
+        public const int StabilizeCellHeatFailAfter = 600000; // 10 minutes
         public const int StabilizeCellHeatMeasurementInterval = 1000; // Measure every 1 second
         public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
 

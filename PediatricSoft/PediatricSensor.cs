@@ -1238,7 +1238,7 @@ namespace PediatricSoft
 
             // Wait a bit
             stopwatch.Restart();
-            while (stopwatch.ElapsedMilliseconds < PediatricSoftConstants.StateHandlerCellHeatInitialTime &&
+            while (stopwatch.ElapsedMilliseconds < PediatricSoftConstants.CellHeatInitialTime &&
                    currentState == correctState)
             {
                 Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
@@ -1304,6 +1304,7 @@ namespace PediatricSoft
 
         private void SendCommandsLaserLockStep(PediatricSoftConstants.SensorState correctState)
         {
+            Stopwatch stopwatch = new Stopwatch();
             PediatricSoftConstants.SensorState currentState = correctState;
 
             ushort laserHeat = PediatricSoftConstants.SensorMinLaserHeat;
@@ -1376,6 +1377,20 @@ namespace PediatricSoft
 
                 // Set laser heat to min for the next cycle
                 laserHeat = PediatricSoftConstants.SensorMinLaserHeat;
+                SendCommand(String.Concat("#", UInt16ToStringBE(laserHeat)));
+
+                // Wait a bit
+                stopwatch.Restart();
+                while (stopwatch.ElapsedMilliseconds < PediatricSoftConstants.LaserLockWaitBetweenIterations &&
+                       currentState == correctState)
+                {
+                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                    lock (stateLock)
+                    {
+                        currentState = State;
+                    }
+                }
+                stopwatch.Stop();
 
             }
 
@@ -1657,7 +1672,7 @@ namespace PediatricSoft
                 }
             }
 
-            Thread.Sleep(PediatricSoftConstants.StateHandlerTransmissionAveragingTime);
+            Thread.Sleep(PediatricSoftConstants.TransmissionAveragingTime);
 
             lock (stateLock)
             {
@@ -1774,7 +1789,7 @@ namespace PediatricSoft
         private void SendCommandsHoldCurrentTransmission(PediatricSoftConstants.SensorState correctState)
         {
 
-            Thread.Sleep(PediatricSoftConstants.StateHandlerTransmissionAveragingTime);
+            Thread.Sleep(PediatricSoftConstants.TransmissionAveragingTime);
 
             double targetADCValue = 0;
 
@@ -1782,7 +1797,7 @@ namespace PediatricSoft
             lock (dataLock)
             {
                 targetADCValue = dataPoints.Select(x => x.ADC)
-                                         .Skip(dataPoints.Length - PediatricSoftConstants.StateHandlerTransmissionAveragingTime)
+                                         .Skip(dataPoints.Length - PediatricSoftConstants.TransmissionAveragingTime)
                                          .Average();
             }
 
@@ -2104,12 +2119,12 @@ namespace PediatricSoft
                 Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
             }
 
-            Thread.Sleep(PediatricSoftConstants.StateHandlerTransmissionAveragingTime);
+            Thread.Sleep(PediatricSoftConstants.TransmissionAveragingTime);
 
             lock (dataLock)
             {
                 plusValue = dataPoints.Select(x => x.BzDemodRAW)
-                                         .Skip(dataPoints.Length - PediatricSoftConstants.StateHandlerTransmissionAveragingTime)
+                                         .Skip(dataPoints.Length - PediatricSoftConstants.TransmissionAveragingTime)
                                          .Average();
             }
 
@@ -2120,12 +2135,12 @@ namespace PediatricSoft
                 Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
             }
 
-            Thread.Sleep(PediatricSoftConstants.StateHandlerTransmissionAveragingTime);
+            Thread.Sleep(PediatricSoftConstants.TransmissionAveragingTime);
 
             lock (dataLock)
             {
                 minusValue = dataPoints.Select(x => x.BzDemodRAW)
-                                         .Skip(dataPoints.Length - PediatricSoftConstants.StateHandlerTransmissionAveragingTime)
+                                         .Skip(dataPoints.Length - PediatricSoftConstants.TransmissionAveragingTime)
                                          .Average();
             }
 
