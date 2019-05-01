@@ -1,7 +1,6 @@
 ﻿using FTD2XX_NET;
 using Prism.Mvvm;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -125,26 +124,26 @@ namespace PediatricSoft
                     CanSendCommands = false;
 
                     // Remove all failed sensors
-                    Parallel.ForEach(Sensors, sensor =>
+                    for (int i = Sensors.Count - 1; i >= 0; i--)
+                    {
+                        if (Sensors[i].State == PediatricSoftConstants.SensorState.Failed)
                         {
-                            if (sensor.State == PediatricSoftConstants.SensorState.Failed)
+                            Sensors[i].Dispose();
+                            while (!Sensors[i].IsDisposed)
                             {
-                                sensor.Dispose();
-                                while (!sensor.IsDisposed)
-                                {
-                                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
-                                }
-                                App.Current.Dispatcher.Invoke(() => Sensors.Remove(sensor));
+                                Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                             }
-                        });
-                    
+                            App.Current.Dispatcher.Invoke(() => Sensors.RemoveAt(i));
+                        }
+                    }
+
                     RaisePropertyChanged("SensorCount");
 
                     string[] potentialSensorSerialNumbers = GetPotentialSensorSerialNumbers();
                     string[] currentSensorSerialNumbers = Sensors.Select(x => x.SN).ToArray();
 
                     // Try to add all potential sensors that are not on the list currently
-                    Parallel.ForEach(potentialSensorSerialNumbers, serial =>
+                    foreach (string serial in potentialSensorSerialNumbers)
                     {
                         if (!currentSensorSerialNumbers.Contains(serial))
                         {
@@ -167,7 +166,7 @@ namespace PediatricSoft
                         {
                             DebugLog.Enqueue($"Sensor with serial number {serial} is already on the list - skipping");
                         }
-                    });
+                    }
 
                     if (Sensors.Count > 0)
                     {
@@ -292,6 +291,7 @@ namespace PediatricSoft
                         IsRunning = true;
 
                         if (SaveDataEnabled) CreateDataFolder();
+
                         Parallel.ForEach(Sensors, sensor =>
                         {
                             if (sensor.State != PediatricSoftConstants.SensorState.Failed)
@@ -360,10 +360,10 @@ namespace PediatricSoft
 
         public void ClearAll()
         {
-            Parallel.ForEach(Sensors, _PediatricSensor =>
+            Parallel.ForEach(Sensors, sensor =>
             {
-                _PediatricSensor.Dispose();
-                while (!_PediatricSensor.IsDisposed)
+                sensor.Dispose();
+                while (!sensor.IsDisposed)
                 {
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
                 }
@@ -374,13 +374,13 @@ namespace PediatricSoft
 
         public void ClearFFTAll()
         {
-            foreach (PediatricSensor sensor in Sensors)
+            Parallel.ForEach(Sensors, sensor =>
             {
                 if (sensor.IsPlotted)
                 {
                     sensor.InitializeDataFFTSingleSided();
                 }
-            }
+            });
         }
 
         private string[] GetPotentialSensorSerialNumbers()
@@ -430,7 +430,6 @@ namespace PediatricSoft
                     {
                         if (ftdiDeviceList[i].Description.ToString() == PediatricSoftConstants.ValidIDN)
                         {
-                            DebugLog.Enqueue("Adding a potential sensor with S/N: " + ftdiDeviceList[i].SerialNumber.ToString());
                             SerialNumbers.Add(ftdiDeviceList[i].SerialNumber.ToString());
                         }
                     }
@@ -452,7 +451,6 @@ namespace PediatricSoft
 
         private void ClearAllPlotCheckBox()
         {
-
             Parallel.ForEach(Sensors, sensor =>
             {
                 if (sensor.IsPlotted)
@@ -460,7 +458,6 @@ namespace PediatricSoft
                     sensor.IsPlotted = false;
                 }
             });
-
         }
 
         private void DataLayerEventHandler(string eventString)
@@ -485,8 +482,8 @@ namespace PediatricSoft
             if (String.IsNullOrEmpty(SaveSuffix))
             {
                 SaveFolderCurrentRun = System.IO.Path.Combine(
-                SaveFolder,
-                DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
+                    SaveFolder,
+                    DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
             }
             else
             {

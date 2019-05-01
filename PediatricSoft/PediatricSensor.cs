@@ -23,7 +23,7 @@ namespace PediatricSoft
         private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
         private DebugLog DebugLog = DebugLog.Instance;
         private PediatricSensorConfig pediatricSensorConfigOnLoad;
-        private string configPath;
+        private readonly string configPath;
 
         private FTDI _FTDI;
         private Task streamingTask;
@@ -67,9 +67,21 @@ namespace PediatricSoft
         public PediatricSensor(string serial)
         {
             PediatricSensorConstructorMethod(serial);
-            if (!IsDisposed)
+            if (IsValid)
             {
                 InitializeDataFFTSingleSided();
+                SN = serial;
+                configPath = System.IO.Path.Combine(PediatricSensorData.Instance.SensorConfigFolderAbsolute, SN) + ".xml";
+                LoadConfig();
+            }
+            else
+            {
+                DebugLog.Enqueue($"Sensor {serial}: Didn't get a response from the board: not valid");
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Failed;
+                }
+                Dispose();
             }
         }
 
@@ -925,134 +937,105 @@ namespace PediatricSoft
 
             _FTDI = new FTDI();
 
-            SN = serial;
-
-            configPath = System.IO.Path.Combine(PediatricSensorData.Instance.SensorConfigFolderAbsolute, SN) + ".xml";
-            LoadConfig();
-
             const string checkString = "?\n";
             UInt32 numBytes = 0;
 
-            for (int i = 0; i < PediatricSoftConstants.SerialPortMaxRetries; i++)
+            // Open the device by serial number
+            ftStatus = _FTDI.OpenBySerialNumber(serial);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {
-
-                // If we failed to open the device previously - try resetting it
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    _FTDI = new FTDI();
-
-                    // Sleep a bit
-                    Thread.Sleep(PediatricSoftConstants.SerialPortSleepAfterFail);
-                }
-
-                // Open the device by serial number
-                ftStatus = _FTDI.OpenBySerialNumber(serial);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-
-                    // May be device already opened?
-                    if (!_FTDI.IsOpen)
-                    {
-                        _FTDI.Close();
-                        continue;
-                    }
-                }
-
-                // Set Baud rate
-                ftStatus = _FTDI.SetBaudRate(PediatricSoftConstants.SerialPortBaudRate);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Set data characteristics - Data bits, Stop bits, Parity
-                ftStatus = _FTDI.SetDataCharacteristics(FTDI.FT_DATA_BITS.FT_BITS_8, FTDI.FT_STOP_BITS.FT_STOP_BITS_1, FTDI.FT_PARITY.FT_PARITY_NONE);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Set flow control - set RTS/CTS flow control - we don't have flow control
-                ftStatus = _FTDI.SetFlowControl(FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0x11, 0x13);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Set timeouts
-                ftStatus = _FTDI.SetTimeouts(PediatricSoftConstants.SerialPortReadTimeout, PediatricSoftConstants.SerialPortWriteTimeout);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Set latency
-                ftStatus = _FTDI.SetLatency(PediatricSoftConstants.SerialPortLatency);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to set latency on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Purge port buffers
-                ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Write ? into the port to see if we have a working board
-                ftStatus = _FTDI.Write(checkString, checkString.Length, ref numBytes);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to write to FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Wait a bit
-                Thread.Sleep((int)PediatricSoftConstants.SerialPortWriteTimeout);
-
-                // Check if the board responded
-                ftStatus = _FTDI.GetRxBytesAvailable(ref numBytes);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                // Purge port buffers
-                ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
-                if (ftStatus != FTDI.FT_STATUS.FT_OK)
-                {
-                    DebugLog.Enqueue($"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
-                    continue;
-                }
-
-                if (numBytes > 0)
-                {
-                    if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Valid");
-                    lock (stateLock)
-                    {
-                        State = PediatricSoftConstants.SensorState.Valid;
-                    }
-                    IsValid = true;
-                    return;
-                }
-
+                DebugLog.Enqueue($"Failed to open FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
             }
 
-            DebugLog.Enqueue($"Sensor {SN}: Didn't get a response from the board: not valid");
-            lock (stateLock)
+            // Set Baud rate
+            ftStatus = _FTDI.SetBaudRate(PediatricSoftConstants.SerialPortBaudRate);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
             {
-                State = PediatricSoftConstants.SensorState.Failed;
+                DebugLog.Enqueue($"Failed to set Baud rate on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
             }
-            Dispose();
+
+            // Set data characteristics - Data bits, Stop bits, Parity
+            ftStatus = _FTDI.SetDataCharacteristics(FTDI.FT_DATA_BITS.FT_BITS_8, FTDI.FT_STOP_BITS.FT_STOP_BITS_1, FTDI.FT_PARITY.FT_PARITY_NONE);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to set data characteristics on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set flow control - set RTS/CTS flow control - we don't have flow control
+            ftStatus = _FTDI.SetFlowControl(FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0x11, 0x13);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to set flow control on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set timeouts
+            ftStatus = _FTDI.SetTimeouts(PediatricSoftConstants.SerialPortReadTimeout, PediatricSoftConstants.SerialPortWriteTimeout);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to set timeouts on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Set latency
+            ftStatus = _FTDI.SetLatency(PediatricSoftConstants.SerialPortLatency);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to set latency on FTDI device with S/N {serial}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Purge port buffers
+            ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Write ? into the port to see if we have a working board
+            ftStatus = _FTDI.Write(checkString, checkString.Length, ref numBytes);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to write to FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Wait a bit
+            Thread.Sleep((int)PediatricSoftConstants.SerialPortWriteTimeout);
+
+            // Check if the board responded
+            ftStatus = _FTDI.GetRxBytesAvailable(ref numBytes);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to get number of available bytes in Rx buffer on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            // Purge port buffers
+            ftStatus = _FTDI.Purge(FTDI.FT_PURGE.FT_PURGE_RX + FTDI.FT_PURGE.FT_PURGE_TX);
+            if (ftStatus != FTDI.FT_STATUS.FT_OK)
+            {
+                DebugLog.Enqueue($"Failed to purge buffers on FTDI device with S/N {SN}. Error: {ftStatus.ToString()}");
+                return;
+            }
+
+            if (numBytes > 0)
+            {
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Valid");
+                }
+
+                lock (stateLock)
+                {
+                    State = PediatricSoftConstants.SensorState.Valid;
+                }
+                IsValid = true;
+            }
 
         }
 
@@ -2167,7 +2150,10 @@ namespace PediatricSoft
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Dispose() was called");
 
-            SaveConfig();
+            if (IsValid)
+            {
+                SaveConfig();
+            }
 
             lock (stateLock)
             {
