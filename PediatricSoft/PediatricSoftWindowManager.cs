@@ -91,8 +91,10 @@ namespace PediatricSoft
                     break;
 
                 case "ClosePlotWindow":
-                    PlotWindow?.Close();
-
+                    if (PlotWindow != null)
+                    {
+                        App.Current.Dispatcher.Invoke(() => PlotWindow.Close());
+                    }
                     break;
 
                 default:
@@ -106,8 +108,14 @@ namespace PediatricSoft
         private void MainWindowOnClosing(object sender, CancelEventArgs e)
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Closing Main Window");
-            SendCommandsWindow?.Close();
-            PlotWindow?.Close();
+            if (SendCommandsWindow != null)
+            {
+                App.Current.Dispatcher.Invoke(() => SendCommandsWindow.Close());
+            }
+            if (PlotWindow != null)
+            {
+                App.Current.Dispatcher.Invoke(() => PlotWindow.Close());
+            }
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("Shutdown");
             while (!PediatricSensorData.IsDisposed) Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
             MainWindow = null;
@@ -116,13 +124,13 @@ namespace PediatricSoft
         private void SendCommandsWindowOnClosing(object sender, CancelEventArgs e)
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Closing Send Commands window");
-            SendCommandsWindow = null;
+            App.Current.Dispatcher.Invoke(() => SendCommandsWindow = null);
         }
 
         private void PlotWindowOnClosing(object sender, CancelEventArgs e)
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue("Window Manager: Closing Plot Window");
-            PlotWindow = null;
+            App.Current.Dispatcher.Invoke(() => PlotWindow = null);
             PediatricSoftEventGlue.eventAggregator.GetEvent<EventDataLayer>().Publish("ClearAllPlotCheckBox");
         }
 
