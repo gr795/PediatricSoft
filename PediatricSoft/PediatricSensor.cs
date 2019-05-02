@@ -451,6 +451,37 @@ namespace PediatricSoft
             }
         }
 
+        public void SwitchMagnetometerMode()
+        {
+            PediatricSoftConstants.SensorState currentState;
+            bool canRun = false;
+
+            lock (stateLock)
+            {
+                currentState = State;
+
+                if (currentState == PediatricSoftConstants.SensorState.Idle)
+                {
+                    State = PediatricSoftConstants.SensorState.SwitchMagnetometerMode;
+                    currentState = State;
+                    canRun = true;
+                }
+            }
+
+            if (canRun)
+            {
+                while (currentState != PediatricSoftConstants.SensorState.Idle &&
+                       currentState != PediatricSoftConstants.SensorState.Failed)
+                {
+                    Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
+                    lock (stateLock)
+                    {
+                        currentState = State;
+                    }
+                }
+            }
+        }
+
         public void SendCommand(string command)
         {
             command = Regex.Replace(command, @"[^\w@#?+-]", "");
@@ -873,6 +904,10 @@ namespace PediatricSoft
 
                         case PediatricSoftConstants.SensorState.HoldCurrentTransmission:
                             SendCommandsHoldCurrentTransmission(currentState);
+                            break;
+
+                        case PediatricSoftConstants.SensorState.SwitchMagnetometerMode:
+                            SendCommandsSwitchMagnetometerMode(currentState);
                             break;
 
                         case PediatricSoftConstants.SensorState.Start:
@@ -1817,6 +1852,50 @@ namespace PediatricSoft
                                                             PediatricSoftConstants.SensorLockBy |
                                                             PediatricSoftConstants.SensorLockCellTemperature)));
 
+            while (commandQueue.TryPeek(out string dummy))
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                if (State != correctState)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                    return;
+                }
+            }
+
+            lock (stateLock)
+            {
+                if (State == correctState)
+                {
+                    State++;
+                }
+                else
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
+                }
+            }
+
+        }
+
+        private void SendCommandsSwitchMagnetometerMode(PediatricSoftConstants.SensorState correctState)
+        {
+            SendCommand(PediatricSoftConstants.SensorCommandLED);
+            SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDRed)));
+
+            if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.OpenLoop)
+            {
+                zeroBy = SendCommandsHoldCurrentParameter(correctState, PediatricSoftConstants.SensorCommandByOffset, PediatricSoftConstants.SensorLockBy);
+                zeroBz = SendCommandsHoldCurrentParameter(correctState, PediatricSoftConstants.SensorCommandBzOffset, PediatricSoftConstants.SensorLockBz);
+            }
+
+            if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ClosedLoop)
+            {
+                SendCommand(PediatricSoftConstants.SensorCommandLock);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockOpticalResonance |
+                                                                PediatricSoftConstants.SensorLockBz |
+                                                                PediatricSoftConstants.SensorLockBy |
+                                                                PediatricSoftConstants.SensorLockCellTemperature)));
+            }
+
             SendCommand(PediatricSoftConstants.SensorCommandLED);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDBlue)));
 
@@ -1841,7 +1920,6 @@ namespace PediatricSoft
                     DebugLog.Enqueue($"Sensor {SN}: Procedure was aborted or something failed. Returning.");
                 }
             }
-
         }
 
         private void SendCommandsStartDataSave(PediatricSoftConstants.SensorState correctState)

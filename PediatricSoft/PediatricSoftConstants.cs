@@ -200,6 +200,7 @@ namespace PediatricSoft
             HoldCurrentBz,
             ZeroFieldX,
             HoldCurrentTransmission,
+            SwitchMagnetometerMode,
             Idle,
             Start,
             SyncTimers,

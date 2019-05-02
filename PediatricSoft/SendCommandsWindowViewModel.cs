@@ -19,6 +19,7 @@ namespace PediatricSoft
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
         public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
         public DelegateCommand ButtonSendVCSELBurnInCommandsCommand { get; private set; }
+        public DelegateCommand ButtonSwitchMagnetometerModeCommand { get; private set; }
 
         public TextBoxSensorConfig TextBoxChassis { get; private set; }
         public TextBoxSensorConfig TextBoxPort { get; private set; }
@@ -128,6 +129,7 @@ namespace PediatricSoft
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
             ButtonSendSetupCommandsCommand = new DelegateCommand(ButtonSendSetupCommandsOnClick, () => PediatricSensorData.DebugMode);
             ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick, () => PediatricSensorData.DebugMode);
+            ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
         }
 
         private void ComboBoxCommandOnSelectionChanged()
@@ -270,6 +272,14 @@ namespace PediatricSoft
             {
                 sensor.SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
                 sensor.SendCommand(String.Concat("#", PediatricSensor.UInt16ToStringBE(ushort.MaxValue)));
+            }
+        }
+
+        private void ButtonSwitchMagnetometerModeOnClick()
+        {
+            foreach (PediatricSensor sensor in PediatricSensorData.Sensors)
+            {
+                sensor.SwitchMagnetometerMode();
             }
         }
 
