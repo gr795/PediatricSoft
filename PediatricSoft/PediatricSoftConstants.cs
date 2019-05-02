@@ -21,7 +21,7 @@ namespace PediatricSoft
 
         public const int SerialPortMaxRetries = 3;
         public const int SerialPortSleepAfterFail = 5000;
-        public const UInt32 SerialPortBaudRate = 921600;
+        public const UInt32 SerialPortBaudRate = 460800;
         public const UInt32 SerialPortWriteTimeout = 1000;
         public const UInt32 SerialPortReadTimeout = 10;
         public const byte SerialPortLatency = 2;
