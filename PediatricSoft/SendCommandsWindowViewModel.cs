@@ -129,7 +129,7 @@ namespace PediatricSoft
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
             ButtonSendSetupCommandsCommand = new DelegateCommand(ButtonSendSetupCommandsOnClick, () => PediatricSensorData.DebugMode);
             ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick, () => PediatricSensorData.DebugMode);
-            ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
+            ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ButtonSwitchMagnetometerModeOnClick);
         }
 
         private void ComboBoxCommandOnSelectionChanged()
