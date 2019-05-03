@@ -46,7 +46,7 @@
 
                 <ComboBox
                     VerticalAlignment="Center"
-                    ItemsSource="{Binding Sensors}"
+                    ItemsSource="{Binding PediatricSensorData.Sensors}"
                     DisplayMemberPath="UserFriendlyName"
                     SelectedItem="{Binding CurrentSensor}">
 
@@ -63,10 +63,11 @@
 
             </StackPanel>
 
-            <TextBox Name="TextBoxCommandString"
-                     Margin="0,5"
-                     DockPanel.Dock="Top"
-                     Text="{Binding TextBoxCommandStringText, UpdateSourceTrigger=PropertyChanged}">
+            <TextBox
+                Name="TextBoxCommandString"
+                Margin="0,5"
+                DockPanel.Dock="Top"
+                Text="{Binding TextBoxCommandStringText, UpdateSourceTrigger=PropertyChanged}">
 
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="KeyDown">
@@ -79,9 +80,10 @@
 
             </TextBox>
 
-            <ListView Margin="0,5"
-                     DockPanel.Dock="Top"
-                     ItemsSource="{Binding CommandHistory}">
+            <ListView
+                Margin="0,5"
+                DockPanel.Dock="Top"
+                ItemsSource="{Binding CommandHistory}">
             </ListView>
 
         </DockPanel>
@@ -307,6 +309,11 @@
 
                 </DockPanel>
 
+                <Button
+                    Margin="0,5">
+                    Verify
+                </Button>
+
             </StackPanel>
 
         </StackPanel>
@@ -316,6 +323,15 @@
             Grid.Row="0"
             Grid.Column="2"
             Orientation="Vertical">
+
+            <CheckBox
+                    Margin="0,0,0,5"
+                    VerticalAlignment="Center"
+                    IsChecked="{Binding PediatricSensorData.DebugMode}"
+                    Content="Debug Mode">
+            </CheckBox>
+
+            <Separator/>
 
             <TextBlock
                     Margin="0,5"
@@ -354,21 +370,43 @@
                 Switch Magnetometer Mode
             </Button>
 
+            <StackPanel
+                    Orientation="Horizontal"
+                    Margin="0,5">
+
+                <TextBlock
+                        Text="Current Mode: ">
+                </TextBlock>
+
+                <TextBlock
+                        Text="{Binding PediatricSensorData.MagnetometerMode}">
+                </TextBlock>
+
+            </StackPanel>
+
             <Separator/>
 
             <TextBlock Margin="0,5"
-                       Text="Debug Mode Commands">
+                       Text="Debug Mode Commands (Individual)">
             </TextBlock>
 
             <Button
                 Margin="0,5"
-                Command="{Binding ButtonSendSetupCommandsCommand}">
-                Send Setup Commands
+                Command="{Binding ButtonSensorStandbyCommand}"
+                IsEnabled="{Binding PediatricSensorData.DebugMode}">
+                Standby
             </Button>
+            
+            <Separator/>
+
+            <TextBlock Margin="0,5"
+                       Text="Debug Mode Commands (All Sensors)">
+            </TextBlock>
 
             <Button
                 Margin="0,5"
-                Command="{Binding ButtonSendVCSELBurnInCommandsCommand}">
+                Command="{Binding ButtonSendVCSELBurnInCommandsCommand}"
+                IsEnabled="{Binding PediatricSensorData.DebugMode}">
                 Burn-in ALL VCSELs
             </Button>
 

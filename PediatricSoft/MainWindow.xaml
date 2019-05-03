@@ -24,12 +24,21 @@
             ItemsSource="{Binding DebugLog.StringArray}">
         </ListView>
 
-        <TextBlock
+        <StackPanel
             DockPanel.Dock="Bottom"
-            Name="TextBlockSaveFolder"
             Margin="10,0"
-            Text="{Binding TextBlockSaveFolderText}">
-        </TextBlock>
+            Orientation="Horizontal">
+
+            <TextBlock
+                Text="Data Save Folder: ">
+            </TextBlock>
+
+            <TextBlock
+                Name="TextBlockSaveFolder"
+                Text="{Binding PediatricSensorData.SaveFolder}">
+            </TextBlock>
+
+        </StackPanel>
 
         <DockPanel
             DockPanel.Dock="Top">
@@ -40,77 +49,80 @@
                 DockPanel.Dock="Right"
                 Orientation="Vertical">
 
-                <CheckBox
-                    Margin="0,0,0,10"
-                    VerticalAlignment="Center"
-                    IsEnabled="{Binding CheckBoxDebugModeIsEnabled}"
-                    IsChecked="{Binding CheckBoxDebugModeIsChecked}"
-                    Content="Debug Mode">
-                </CheckBox>
-
                 <Button
                     Name="ButtonScanPorts"
-                    Margin="0,0,0,10"
+                    Margin="0,0,0,5"
                     Height="20"
                     Command="{Binding ButtonScanPortsCommand}"
+                    IsEnabled="{Binding PediatricSensorData.CanScan}"
                     Content="Scan Ports">
                 </Button>
 
                 <Button
                     Name="ButtonSendCommands"
-                    Margin="0,0,0,10"
+                    Margin="0,5"
                     Height="20"
-                    IsEnabled="{Binding ButtonSendCommandsIsEnabled}"
                     Command="{Binding ButtonSendCommandsCommand}"
                     Content="Configuration">
                 </Button>
 
-                <TextBlock
-                    Name="TextBlockSensorCount"
-                    Margin="0,0,0,10"
-                    Height="20"
-                    Text="{Binding TextBlockSensorCountText}">
-                </TextBlock>
+                <StackPanel
+                    Orientation="Horizontal"
+                    Margin="0,5">
+
+                    <TextBlock
+                        Text="Sensor Count: ">
+                    </TextBlock>
+
+                    <TextBlock
+                        Name="TextBlockSensorCount"
+                        Text="{Binding PediatricSensorData.SensorCount}">
+                    </TextBlock>
+
+                </StackPanel>
 
                 <Button
                     Name="ButtonStandbySensors"
-                    Margin="0,0,0,10"
+                    Margin="0,5"
                     Height="20"
                     Command="{Binding ButtonStandbySensorsCommand}"
+                    IsEnabled="{Binding PediatricSensorData.CanLock}"
                     Content="Standby">
                 </Button>
 
                 <Button
                     Name="ButtonLockSensors"
-                    Margin="0,0,0,10"
+                    Margin="0,5"
                     Height="20"
                     Command="{Binding ButtonLockSensorsCommand}"
+                    IsEnabled="{Binding PediatricSensorData.CanLock}"
                     Content="Lock Sensors">
                 </Button>
 
                 <Button
                     Name="ButtonZeroFields"
-                    Margin="0,0,0,10"
+                    Margin="0,5"
                     Height="20"
                     Command="{Binding ButtonZeroFieldsCommand}"
+                    IsEnabled="{Binding PediatricSensorData.CanZeroFields}"
                     Content="Zero Fields">
                 </Button>
 
                 <Button
                     Name="ButtonStartStopSensors"
-                    Margin="0,0,0,10"
+                    Margin="0,5"
                     Height="20"
                     Command="{Binding ButtonStartStopSensorsCommand}"
+                    IsEnabled="{Binding PediatricSensorData.CanStartStop}"
                     Content="{Binding ButtonStartStopSensorsContent}">
                 </Button>
 
                 <DockPanel
-                    Margin="0,0,0,10">
+                    Margin="0,5">
 
                     <CheckBox
                     Name="CheckBoxSaveData"
-                    IsEnabled="{Binding CheckBoxSaveDataIsEnabled}"
-                    IsChecked="{Binding CheckBoxSaveDataIsChecked}"
+                    IsChecked="{Binding PediatricSensorData.SaveDataEnabled}"
                     Command="{Binding CheckBoxSaveDataCommand}"
                     Content="Save Data"
                     VerticalAlignment="Center">
@@ -119,7 +131,6 @@
                     <Button
                         Margin="10,0,0,0"
                         Content="Folder.."
-                        IsEnabled="{Binding CheckBoxSaveDataIsEnabled}"
                         Command="{Binding ButtonChooseSaveDataFolderCommand}">
                     </Button>
 
@@ -128,29 +139,29 @@
 
                 <CheckBox
                     Name="CheckBoxSaveRAWValues"
-                    Margin="20,0,0,10"
-                    IsEnabled="{Binding CheckBoxSaveRAWValuesIsEnabled}"
-                    IsChecked="{Binding CheckBoxSaveRAWValuesIsChecked}"
+                    Margin="20,5,0,5"
+                    IsEnabled="{Binding PediatricSensorData.SaveDataEnabled}"
+                    IsChecked="{Binding PediatricSensorData.SaveRAWValues}"
                     Content="RAW Data">
                 </CheckBox>
 
                 <TextBlock
-                    Margin="20,0,0,10"
+                    Margin="20,5,0,5"
                     Text="Optional Suffix:">
                 </TextBlock>
 
                 <TextBox
                     Name="TextBlockSaveSuffix"
-                    Margin="20,0,0,10"
-                    IsEnabled="{Binding TextBlockSaveSuffixIsEnabled}"
-                    Text="{Binding TextBlockSaveSuffixText}">
+                    Margin="20,5,0,5"
+                    IsEnabled="{Binding PediatricSensorData.SaveDataEnabled}"
+                    Text="{Binding PediatricSensorData.SaveSuffix}">
                 </TextBox>
 
             </StackPanel>
 
             <ListView
                 Margin="10"
-                ItemsSource="{Binding Sensors}">
+                ItemsSource="{Binding PediatricSensorData.Sensors}">
 
                 <ListView.View>
 

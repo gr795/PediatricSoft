@@ -1,23 +1,21 @@
 ﻿using Prism.Commands;
 using Prism.Mvvm;
 using System;
-using System.Collections.ObjectModel;
 using System.Windows.Input;
 
 namespace PediatricSoft
 {
     public class SendCommandsWindowViewModel : BindableBase
     {
-        private PediatricSensorData PediatricSensorData;
-        private DebugLog DebugLog = DebugLog.Instance;
+        public PediatricSensorData PediatricSensorData { get { return PediatricSensorData.Instance; } }
+        public DebugLog DebugLog { get { return DebugLog.Instance; } }
 
-        public ObservableCollection<PediatricSensor> Sensors { get { return PediatricSensorData.Sensors; } }
         public PediatricSensor CurrentSensor { get; set; }
 
         public DelegateCommand<object> TextBoxCommandStringKeyDownCommand { get; private set; }
         public DelegateCommand<object> TextBoxCommandStringKeyUpCommand { get; private set; }
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
-        public DelegateCommand ButtonSendSetupCommandsCommand { get; private set; }
+        public DelegateCommand ButtonSensorStandbyCommand { get; private set; }
         public DelegateCommand ButtonSendVCSELBurnInCommandsCommand { get; private set; }
         public DelegateCommand ButtonSwitchMagnetometerModeCommand { get; private set; }
 
@@ -39,10 +37,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ADC)
-                    return true;
-                else
-                    return false;
+                return PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ADC;
             }
             set
             {
@@ -55,10 +50,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.OpenLoop)
-                    return true;
-                else
-                    return false;
+                return PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.OpenLoop;
             }
             set
             {
@@ -71,10 +63,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ClosedLoop)
-                    return true;
-                else
-                    return false;
+                return PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ClosedLoop;
             }
             set
             {
@@ -87,10 +76,7 @@ namespace PediatricSoft
         {
             get
             {
-                if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.DoubleF)
-                    return true;
-                else
-                    return false;
+                return PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.DoubleF;
             }
             set
             {
@@ -99,12 +85,13 @@ namespace PediatricSoft
             }
         }
 
-        public bool RadioButtonDataSelectIsEnabled
+        private string textBoxCommandStringText = String.Empty;
+        public string TextBoxCommandStringText
         {
-            get { return PediatricSensorData.DebugMode || (!PediatricSensorData.IsRunning && PediatricSensorData.CanStartStop); }
+            get { return textBoxCommandStringText; }
+            set { textBoxCommandStringText = value; RaisePropertyChanged(); }
         }
 
-        public string TextBoxCommandStringText { get; set; } = String.Empty;
         public string[] CommandHistory
         {
             get
@@ -116,19 +103,20 @@ namespace PediatricSoft
                     return result;
                 }
                 else
+                {
                     return new string[] { string.Empty };
+                }
             }
         }
 
         public SendCommandsWindowViewModel()
         {
-            PediatricSensorData = PediatricSensorData.Instance;
 
             TextBoxCommandStringKeyDownCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyDown);
             TextBoxCommandStringKeyUpCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyUp);
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
-            ButtonSendSetupCommandsCommand = new DelegateCommand(ButtonSendSetupCommandsOnClick, () => PediatricSensorData.DebugMode);
-            ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick, () => PediatricSensorData.DebugMode);
+            ButtonSensorStandbyCommand = new DelegateCommand(ButtonSensorStandbyOnClick);
+            ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick);
             ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ButtonSwitchMagnetometerModeOnClick);
         }
 
@@ -181,48 +169,52 @@ namespace PediatricSoft
         {
             KeyEventArgs e = (KeyEventArgs)parameter;
 
-            switch (e.Key)
+            if (CurrentSensor != null && PediatricSensorData.CanSendCommands)
             {
-                case Key.Add:
-                    if (CurrentSensor != null)
+                switch (e.Key)
+                {
+                    case Key.Add:
                         CurrentSensor.SendCommand("+");
-                    TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
-                    break;
+                        TextBoxCommandStringText = String.Empty;
+                        break;
 
-                case Key.Subtract:
-                    if (CurrentSensor != null)
+                    case Key.Subtract:
                         CurrentSensor.SendCommand("-");
-                    TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
-                    break;
+                        TextBoxCommandStringText = String.Empty;
+                        break;
 
-                case Key.OemPlus:
-                    if (CurrentSensor != null)
+                    case Key.OemPlus:
                         CurrentSensor.SendCommand("+");
-                    TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
-                    break;
+                        TextBoxCommandStringText = String.Empty;
+                        break;
 
-                case Key.OemMinus:
-                    if (CurrentSensor != null)
+                    case Key.OemMinus:
                         CurrentSensor.SendCommand("-");
-                    TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
-                    break;
+                        TextBoxCommandStringText = String.Empty;
+                        break;
 
-                case Key.Enter:
-                    if (CurrentSensor != null)
+                    case Key.Enter:
                         CurrentSensor.SendCommand(TextBoxCommandStringText);
-                    else
-                        if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Can't send commands - sensor sensor not selected");
-                    TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
-                    RaisePropertyChanged("CommandHistory");
-                    break;
+                        TextBoxCommandStringText = String.Empty;
+                        RaisePropertyChanged("CommandHistory");
+                        break;
 
-                default:
-                    break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                if (e.Key == Key.Enter && CurrentSensor == null)
+                {
+                    DebugLog.Enqueue($"Can't send commands - sensor sensor not selected");
+                    TextBoxCommandStringText = String.Empty;
+                }
+                if (e.Key == Key.Enter && !PediatricSensorData.CanSendCommands)
+                {
+                    DebugLog.Enqueue($"Can't send commands - other operations are running");
+                    TextBoxCommandStringText = String.Empty;
+                }
             }
         }
 
@@ -234,22 +226,18 @@ namespace PediatricSoft
             {
                 case Key.Add:
                     TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 case Key.Subtract:
                     TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 case Key.OemPlus:
                     TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 case Key.OemMinus:
                     TextBoxCommandStringText = String.Empty;
-                    RaisePropertyChanged("TextBoxCommandStringText");
                     break;
 
                 default:
@@ -258,11 +246,15 @@ namespace PediatricSoft
             }
         }
 
-        private void ButtonSendSetupCommandsOnClick()
+        private void ButtonSensorStandbyOnClick()
         {
             if (CurrentSensor != null)
             {
                 CurrentSensor.Standby();
+            }
+            else
+            {
+                DebugLog.Enqueue("Error: sensor not selected");
             }
         }
 

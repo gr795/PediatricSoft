@@ -294,9 +294,7 @@ namespace PediatricSoft
             {
                 currentState = State;
 
-                if (currentState == PediatricSoftConstants.SensorState.Valid ||
-                    currentState == PediatricSoftConstants.SensorState.Standby ||
-                    currentState == PediatricSoftConstants.SensorState.Idle)
+                if (currentState < PediatricSoftConstants.SensorState.Start)
                 {
                     State = PediatricSoftConstants.SensorState.Setup;
                     currentState = State;

@@ -38,14 +38,44 @@ namespace PediatricSoft
         }
 
         public bool IsDisposed { get; private set; } = false;
-
-        public bool DebugMode { get; set; } = false;
         public bool CanUpdateSeriesCollection { get; private set; } = true;
-        public bool SaveDataEnabled { get; set; } = false;
-        public bool SaveRAWValues { get; set; } = false;
-        public string SaveFolder { get; set; } = String.Empty;
+
+        private bool debugMode = false;
+        public bool DebugMode
+    {
+            get { return debugMode; }
+            set { debugMode = value; RaisePropertyChanged(""); }
+        }
+
+        private bool saveDataEnabled = false;
+        public bool SaveDataEnabled
+        {
+            get { return saveDataEnabled; }
+            set { saveDataEnabled = value; RaisePropertyChanged(); }
+        }
+
+        private bool saveRAWValues = false;
+        public bool SaveRAWValues
+        {
+            get { return saveRAWValues; }
+            set { saveRAWValues = value; RaisePropertyChanged(); }
+        }
+
+        private string saveFolder = String.Empty;
+        public string SaveFolder
+        {
+            get { return saveFolder; }
+            set { saveFolder = value; RaisePropertyChanged(); }
+        }
+
+        private string saveSuffix = String.Empty;
+        public string SaveSuffix
+        {
+            get { return saveSuffix; }
+            set { saveSuffix = Regex.Replace(value, @"[^\w]", ""); RaisePropertyChanged(); }
+        }
+
         public string SaveFolderCurrentRun { get; set; } = String.Empty;
-        public string SaveSuffix { get; set; } = String.Empty;
         public string SensorConfigFolderAbsolute { get; private set; } =
             System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -298,7 +328,10 @@ namespace PediatricSoft
 
                         IsRunning = true;
 
-                        if (SaveDataEnabled) CreateDataFolder();
+                        if (SaveDataEnabled)
+                        {
+                            CreateDataFolder();
+                        }
 
                         Parallel.ForEach(Sensors, sensor =>
                         {
@@ -502,7 +535,7 @@ namespace PediatricSoft
             {
                 SaveFolderCurrentRun = System.IO.Path.Combine(
                     SaveFolder,
-                    String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", Regex.Replace(SaveSuffix, @"[^\w]", "")));
+                    String.Concat(DateTime.Now.ToString("yyyy-MM-dd_HHmmss"), "_", SaveSuffix));
             }
             System.IO.Directory.CreateDirectory(SaveFolderCurrentRun);
         }
