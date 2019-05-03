@@ -346,11 +346,15 @@
                     IsChecked="{Binding RadioButtonDataSelectDoubleFIsChecked}">
             </RadioButton>
 
+            <Separator/>
+
             <Button
                 Margin="0,5"
                 Command="{Binding ButtonSwitchMagnetometerModeCommand}">
                 Switch Magnetometer Mode
             </Button>
+
+            <Separator/>
 
             <TextBlock Margin="0,5"
                        Text="Debug Mode Commands">

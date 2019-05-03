@@ -268,7 +268,7 @@ namespace PediatricSoft
 
         private void ButtonSendVCSELBurnInCommandsOnClick()
         {
-            foreach(PediatricSensor sensor in PediatricSensorData.Sensors)
+            foreach (PediatricSensor sensor in PediatricSensorData.Sensors)
             {
                 sensor.SendCommand(PediatricSoftConstants.SensorCommandLaserCurrent);
                 sensor.SendCommand(String.Concat("#", PediatricSensor.UInt16ToStringBE(ushort.MaxValue)));
@@ -277,6 +277,15 @@ namespace PediatricSoft
 
         private void ButtonSwitchMagnetometerModeOnClick()
         {
+            if (PediatricSensorData.MagnetometerMode == PediatricSoftConstants.MagnetometerMode.OpenLoop)
+            {
+                PediatricSensorData.MagnetometerMode = PediatricSoftConstants.MagnetometerMode.ClosedLoop;
+            }
+            else
+            {
+                PediatricSensorData.MagnetometerMode = PediatricSoftConstants.MagnetometerMode.OpenLoop;
+            }
+
             foreach (PediatricSensor sensor in PediatricSensorData.Sensors)
             {
                 sensor.SwitchMagnetometerMode();

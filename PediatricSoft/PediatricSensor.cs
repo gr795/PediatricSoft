@@ -120,8 +120,16 @@ namespace PediatricSoft
         {
             get
             {
-                double result = Math.Round(1000 * lastDataPoint.ADC / coldSensorADCValue) / 10;
-                return string.Concat(result.ToString(), "%");
+                double transmission = lastDataPoint.ADC / coldSensorADCValue;
+                if (transmission >= 0 && transmission < double.MaxValue)
+                {
+                    double result = Math.Round(1000 * transmission) / 10;
+                    return string.Concat(result.ToString(), "%");
+                }
+                else
+                {
+                    return string.Empty;
+                }
             }
         }
 
@@ -1232,6 +1240,9 @@ namespace PediatricSoft
                 }
             }
 
+            CalibrationBzDemod = 0;
+            coldSensorADCValue = 0;
+
             lock (stateLock)
             {
                 if (State == PediatricSoftConstants.SensorState.Setup)
@@ -1881,13 +1892,12 @@ namespace PediatricSoft
             SendCommand(PediatricSoftConstants.SensorCommandLED);
             SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLEDRed)));
 
-            if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.OpenLoop)
+            if (PediatricSensorData.MagnetometerMode == PediatricSoftConstants.MagnetometerMode.OpenLoop)
             {
                 zeroBy = SendCommandsHoldCurrentParameter(correctState, PediatricSoftConstants.SensorCommandByOffset, PediatricSoftConstants.SensorLockBy);
                 zeroBz = SendCommandsHoldCurrentParameter(correctState, PediatricSoftConstants.SensorCommandBzOffset, PediatricSoftConstants.SensorLockBz);
             }
-
-            if (PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.ClosedLoop)
+            else
             {
                 SendCommand(PediatricSoftConstants.SensorCommandLock);
                 SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorLockOpticalResonance |

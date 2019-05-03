@@ -107,6 +107,13 @@ namespace PediatricSoft
             set { dataSelect = value; RaisePropertyChanged(); }
         }
 
+        private PediatricSoftConstants.MagnetometerMode magnetometerMode = PediatricSoftConstants.MagnetometerMode.ClosedLoop;
+        public PediatricSoftConstants.MagnetometerMode MagnetometerMode
+        {
+            get { return magnetometerMode; }
+            set { magnetometerMode = value; RaisePropertyChanged(); }
+        }
+
         // Methods
         public static PediatricSensorData GetInstance() { return instance; }
 

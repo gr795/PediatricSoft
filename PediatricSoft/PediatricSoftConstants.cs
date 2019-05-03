@@ -223,5 +223,11 @@ namespace PediatricSoft
             DoubleF
         }
 
+        public enum MagnetometerMode
+        {
+            OpenLoop,
+            ClosedLoop
+        }
+
     }
 }
