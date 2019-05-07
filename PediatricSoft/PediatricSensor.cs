@@ -239,7 +239,7 @@ namespace PediatricSoft
         {
             get
             {
-                return $"C{Chassis}-P{Port}-{SN}";
+                return $"C{Chassis}-P{Port}-H{Head}-{SN}";
             }
         }
 
