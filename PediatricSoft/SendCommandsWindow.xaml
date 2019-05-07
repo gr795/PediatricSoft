@@ -308,6 +308,7 @@
                 </DockPanel>
 
                 <Button
+                    Command="{Binding ButtonValidateAndSaveCommand}"
                     Margin="0,5">
                     Verify
                 </Button>

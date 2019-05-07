@@ -22,6 +22,7 @@ namespace PediatricSoft
         public DelegateCommand ButtonSensorZeroFieldsCommand { get; private set; }
         public DelegateCommand ButtonSendVCSELBurnInCommandsCommand { get; private set; }
         public DelegateCommand ButtonSwitchMagnetometerModeCommand { get; private set; }
+        public DelegateCommand ButtonValidateAndSaveCommand { get; private set; }
 
         public TextBoxSensorConfig TextBoxChassis { get; private set; }
         public TextBoxSensorConfig TextBoxPort { get; private set; }
@@ -147,6 +148,7 @@ namespace PediatricSoft
             ButtonSensorZeroFieldsCommand = new DelegateCommand(ButtonSensorZeroFieldsOnClickAsync);
             ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick);
             ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ButtonSwitchMagnetometerModeOnClick);
+            ButtonValidateAndSaveCommand = new DelegateCommand(ButtonValidateAndSaveOnClick);
         }
 
         private void ComboBoxCommandOnSelectionChanged()
@@ -311,6 +313,10 @@ namespace PediatricSoft
             {
                 sensor.SwitchMagnetometerMode();
             }
+        }
+
+        private void ButtonValidateAndSaveOnClick()
+        {
         }
 
         private void RadioButtonsRaisePropertyChanged()
