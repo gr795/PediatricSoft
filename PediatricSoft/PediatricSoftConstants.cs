@@ -42,7 +42,7 @@ namespace PediatricSoft
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
         public const int StabilizeCellHeatFailAfter = 600000; // 10 minutes
         public const int StabilizeCellHeatMeasurementInterval = 1000; // Measure every 1 second
-        public const double StabilizeCellHeatTolerance = 0.005; // 0.5%
+        public const double StabilizeCellHeatTolerance = 0.01; // 1%
 
         public const double SensorTargetLaserTransmissionStep = 0.1;
         public const double SensorMinLaserTransmissionRun = 0.15;
