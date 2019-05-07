@@ -17,6 +17,8 @@ namespace PediatricSoft
         public DelegateCommand<object> TextBoxCommandStringKeyUpCommand { get; private set; }
         public DelegateCommand ComboBoxCommandSelectionChangedCommand { get; private set; }
         public DelegateCommand ButtonSensorStandbyCommand { get; private set; }
+        public DelegateCommand ButtonSensorLockCommand { get; private set; }
+        public DelegateCommand ButtonSensorZeroFieldsCommand { get; private set; }
         public DelegateCommand ButtonSendVCSELBurnInCommandsCommand { get; private set; }
         public DelegateCommand ButtonSwitchMagnetometerModeCommand { get; private set; }
 
@@ -140,6 +142,8 @@ namespace PediatricSoft
             TextBoxCommandStringKeyUpCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyUp);
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
             ButtonSensorStandbyCommand = new DelegateCommand(ButtonSensorStandbyOnClick);
+            ButtonSensorLockCommand = new DelegateCommand(ButtonSensorLockOnClick);
+            ButtonSensorZeroFieldsCommand = new DelegateCommand(ButtonSensorZeroFieldsOnClick);
             ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick);
             ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ButtonSwitchMagnetometerModeOnClick);
         }
@@ -251,6 +255,30 @@ namespace PediatricSoft
             if (CurrentSensor != null)
             {
                 CurrentSensor.Standby();
+            }
+            else
+            {
+                DebugLog.Enqueue("Error: sensor not selected");
+            }
+        }
+
+        private void ButtonSensorLockOnClick()
+        {
+            if (CurrentSensor != null)
+            {
+                CurrentSensor.Lock();
+            }
+            else
+            {
+                DebugLog.Enqueue("Error: sensor not selected");
+            }
+        }
+
+        private void ButtonSensorZeroFieldsOnClick()
+        {
+            if (CurrentSensor != null)
+            {
+                CurrentSensor.ZeroFields();
             }
             else
             {

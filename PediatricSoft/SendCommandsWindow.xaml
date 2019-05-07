@@ -394,7 +394,21 @@
                 IsEnabled="{Binding PediatricSensorData.DebugMode}">
                 Standby
             </Button>
-            
+
+            <Button
+                Margin="0,5"
+                Command="{Binding ButtonSensorLockCommand}"
+                IsEnabled="{Binding PediatricSensorData.DebugMode}">
+                Lock
+            </Button>
+
+            <Button
+                Margin="0,5"
+                Command="{Binding ButtonSensorZeroFieldsCommand}"
+                IsEnabled="{Binding PediatricSensorData.DebugMode}">
+                Zero Fields
+            </Button>
+
             <Separator/>
 
             <TextBlock Margin="0,5"
