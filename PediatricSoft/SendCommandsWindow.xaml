@@ -105,7 +105,7 @@
 
                     <TextBox
                         DockPanel.Dock="Right"
-                        Width="150"
+                        Width="75"
                         Text="{Binding TextBoxSensorName}">
                     </TextBox>
 

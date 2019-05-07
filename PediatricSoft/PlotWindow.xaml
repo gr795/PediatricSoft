@@ -48,10 +48,14 @@
                 Series="{Binding SeriesCollection}">
 
                 <lvc:CartesianChart.AxisX>
-                    <lvc:Axis ShowLabels="False"></lvc:Axis>
+                    <lvc:Axis
+                        Title="Time"
+                        ShowLabels="False">
+                    </lvc:Axis>
                 </lvc:CartesianChart.AxisX>
                 <lvc:CartesianChart.AxisY>
-                    <lvc:Axis>
+                    <lvc:Axis
+                        Title="Value">
                         <lvc:Axis.Sections>
                             <lvc:AxisSection Value="0" StrokeThickness="1" Stroke="#303030"></lvc:AxisSection>
                         </lvc:Axis.Sections>
@@ -64,13 +68,19 @@
                 Grid.Row="0"
                 Grid.Column="1"
                 DisableAnimations="True"
+                LegendLocation="Right"
+                
                 Series="{Binding SeriesCollectionFFT}">
 
                 <lvc:CartesianChart.AxisX>
-                    <lvc:Axis ShowLabels="False"></lvc:Axis>
+                    <lvc:Axis
+                        Title="Frequency, Hz"
+                        ShowLabels="True">
+                    </lvc:Axis>
                 </lvc:CartesianChart.AxisX>
                 <lvc:CartesianChart.AxisY>
                     <lvc:LogarithmicAxis
+                        Title="Amplitude spectral density, Value/sqrtHz"
                         LabelFormatter="{Binding Formatter}"
                         Base="{Binding Base}">
                         <lvc:LogarithmicAxis.Separator>

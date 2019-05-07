@@ -87,7 +87,8 @@ namespace PediatricSoft
                     {
                         Values = sensor.ChartValuesFFT,
                         Fill = Brushes.Transparent,
-                        PointGeometry = DefaultGeometries.None
+                        PointGeometry = DefaultGeometries.None,
+                        Title = sensor.Name
                     });
                 }
             }
