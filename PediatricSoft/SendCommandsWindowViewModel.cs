@@ -2,6 +2,7 @@
 using Prism.Mvvm;
 using System;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace PediatricSoft
@@ -141,9 +142,9 @@ namespace PediatricSoft
             TextBoxCommandStringKeyDownCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyDown);
             TextBoxCommandStringKeyUpCommand = new DelegateCommand<object>(TextBoxCommandStringOnKeyUp);
             ComboBoxCommandSelectionChangedCommand = new DelegateCommand(ComboBoxCommandOnSelectionChanged);
-            ButtonSensorStandbyCommand = new DelegateCommand(ButtonSensorStandbyOnClick);
-            ButtonSensorLockCommand = new DelegateCommand(ButtonSensorLockOnClick);
-            ButtonSensorZeroFieldsCommand = new DelegateCommand(ButtonSensorZeroFieldsOnClick);
+            ButtonSensorStandbyCommand = new DelegateCommand(ButtonSensorStandbyOnClickAsync);
+            ButtonSensorLockCommand = new DelegateCommand(ButtonSensorLockOnClickAsync);
+            ButtonSensorZeroFieldsCommand = new DelegateCommand(ButtonSensorZeroFieldsOnClickAsync);
             ButtonSendVCSELBurnInCommandsCommand = new DelegateCommand(ButtonSendVCSELBurnInCommandsOnClick);
             ButtonSwitchMagnetometerModeCommand = new DelegateCommand(ButtonSwitchMagnetometerModeOnClick);
         }
@@ -250,11 +251,11 @@ namespace PediatricSoft
             }
         }
 
-        private void ButtonSensorStandbyOnClick()
+        private void ButtonSensorStandbyOnClickAsync()
         {
             if (CurrentSensor != null)
             {
-                CurrentSensor.Standby();
+                Task.Run(() => CurrentSensor.Standby());
             }
             else
             {
@@ -262,11 +263,11 @@ namespace PediatricSoft
             }
         }
 
-        private void ButtonSensorLockOnClick()
+        private void ButtonSensorLockOnClickAsync()
         {
             if (CurrentSensor != null)
             {
-                CurrentSensor.Lock();
+                Task.Run(() => CurrentSensor.Lock());
             }
             else
             {
@@ -274,11 +275,11 @@ namespace PediatricSoft
             }
         }
 
-        private void ButtonSensorZeroFieldsOnClick()
+        private void ButtonSensorZeroFieldsOnClickAsync()
         {
             if (CurrentSensor != null)
             {
-                CurrentSensor.ZeroFields();
+                Task.Run(() => CurrentSensor.ZeroFields());
             }
             else
             {
