@@ -1937,7 +1937,14 @@ namespace PediatricSoft
             {
                 lock (dataLock)
                 {
-                    filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, SN);
+                    if (string.IsNullOrEmpty(Name))
+                    {
+                        filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, SN);
+                    }
+                    else
+                    {
+                        filePath = System.IO.Path.Combine(PediatricSensorData.SaveFolderCurrentRun, Name);
+                    }
                     filePath += ".txt";
 
                     dataSaveBuffer.Clear();
