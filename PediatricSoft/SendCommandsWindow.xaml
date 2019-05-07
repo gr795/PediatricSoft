@@ -106,9 +106,7 @@
                     <TextBox
                         DockPanel.Dock="Right"
                         Width="150"
-                        Text="not implemented"
-                        IsEnabled="False"
-                        Foreground="{Binding TextBoxLaserCurrent.Color}">
+                        Text="{Binding TextBoxSensorName}">
                     </TextBox>
 
                     <TextBlock VerticalAlignment="Center">

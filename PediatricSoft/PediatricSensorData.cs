@@ -42,7 +42,7 @@ namespace PediatricSoft
 
         private bool debugMode = false;
         public bool DebugMode
-    {
+        {
             get { return debugMode; }
             set { debugMode = value; RaisePropertyChanged(""); }
         }

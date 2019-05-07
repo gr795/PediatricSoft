@@ -1,6 +1,7 @@
 ﻿using Prism.Commands;
 using Prism.Mvvm;
 using System;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 
 namespace PediatricSoft
@@ -32,6 +33,29 @@ namespace PediatricSoft
         public TextBoxSensorConfig TextBoxDefaultCellHeat { get; private set; }
         public TextBoxSensorConfig TextBoxMaxCellHeat { get; private set; }
         public TextBoxSensorConfig TextBoxCellHeatKI { get; private set; }
+
+        public string TextBoxSensorName
+        {
+            get
+            {
+                if (CurrentSensor != null)
+                {
+                    return CurrentSensor.PediatricSensorConfig.Name;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            set
+            {
+                if (CurrentSensor != null)
+                {
+                    CurrentSensor.PediatricSensorConfig.Name = Regex.Replace(value, @"[^\w]", "");
+                    RaisePropertyChanged();
+                }
+            }
+        }
 
         public bool RadioButtonDataSelectADCIsChecked
         {
@@ -122,46 +146,22 @@ namespace PediatricSoft
 
         private void ComboBoxCommandOnSelectionChanged()
         {
-            RaisePropertyChanged("CommandHistory");
-
             if (CurrentSensor != null)
             {
                 TextBoxChassis = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "Chassis", false);
-                RaisePropertyChanged("TextBoxChassis");
-
                 TextBoxPort = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "Port", false);
-                RaisePropertyChanged("TextBoxPort");
-
                 TextBoxHead = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "Head", false);
-                RaisePropertyChanged("TextBoxHead");
-
                 TextBoxLaserCurrent = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrent");
-                RaisePropertyChanged("TextBoxLaserCurrent");
-
                 TextBoxLaserCurrentModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrentModulation");
-                RaisePropertyChanged("TextBoxLaserCurrentModulation");
-
                 TextBoxLaserCurrentKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserCurrentKI");
-                RaisePropertyChanged("TextBoxLaserCurrentKI");
-
                 TextBoxLaserHeatKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "LaserHeatKI");
-                RaisePropertyChanged("TextBoxLaserHeatKI");
-
                 TextBoxBzModulation = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "BzModulation");
-                RaisePropertyChanged("TextBoxBzModulation");
-
                 TextBoxBzKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "BzKI");
-                RaisePropertyChanged("TextBoxBzKI");
-
                 TextBoxDefaultCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "DefaultCellHeat");
-                RaisePropertyChanged("TextBoxDefaultCellHeat");
-
                 TextBoxMaxCellHeat = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "MaxCellHeat");
-                RaisePropertyChanged("TextBoxMaxCellHeat");
-
                 TextBoxCellHeatKI = new TextBoxSensorConfig(CurrentSensor.PediatricSensorConfig, "CellHeatKI");
-                RaisePropertyChanged("TextBoxCellHeatKI");
 
+                RaisePropertyChanged("");
             }
         }
 
