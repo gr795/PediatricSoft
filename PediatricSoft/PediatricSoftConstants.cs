@@ -84,7 +84,7 @@ namespace PediatricSoft
         public const ushort SensorDefaultLaserCurrentModulation = 0x0100;
 
         public const string SensorCommandLaserHeat = "@5";
-        public const ushort SensorDefaultLaserHeat = 0x0800;
+        public const ushort SensorDefaultLaserHeat = 0x0000;
         public const ushort SensorColdLaserHeat = 0x0000;
         public const ushort SensorMinLaserHeat = 0x0000;
         public const ushort SensorMaxLaserHeat = 0x2000;
