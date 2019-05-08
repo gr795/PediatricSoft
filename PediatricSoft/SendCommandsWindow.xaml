@@ -357,8 +357,8 @@
 
             <RadioButton
                     Margin="10,2"
-                    Content="2f"
-                    IsChecked="{Binding RadioButtonDataSelectDoubleFIsChecked}">
+                    Content="Trigger"
+                    IsChecked="{Binding RadioButtonDataSelectTriggerIsChecked}">
             </RadioButton>
 
             <Separator/>

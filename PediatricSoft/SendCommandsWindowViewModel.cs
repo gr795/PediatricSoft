@@ -100,15 +100,15 @@ namespace PediatricSoft
             }
         }
 
-        public bool RadioButtonDataSelectDoubleFIsChecked
+        public bool RadioButtonDataSelectTriggerIsChecked
         {
             get
             {
-                return PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.DoubleF;
+                return PediatricSensorData.DataSelect == PediatricSoftConstants.DataSelect.Trigger;
             }
             set
             {
-                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.DoubleF;
+                PediatricSensorData.DataSelect = PediatricSoftConstants.DataSelect.Trigger;
                 RadioButtonsRaisePropertyChanged();
             }
         }
@@ -324,7 +324,7 @@ namespace PediatricSoft
             RaisePropertyChanged("RadioButtonDataSelectADCIsChecked");
             RaisePropertyChanged("RadioButtonDataSelectOpenLoopIsChecked");
             RaisePropertyChanged("RadioButtonDataSelectClosedLoopIsChecked");
-            RaisePropertyChanged("RadioButtonDataSelectDoubleFIsChecked");
+            RaisePropertyChanged("RadioButtonDataSelectTriggerIsChecked");
         }
 
     }

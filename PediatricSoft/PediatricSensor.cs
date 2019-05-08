@@ -148,8 +148,8 @@ namespace PediatricSoft
                     case PediatricSoftConstants.DataSelect.ClosedLoop:
                         return lastDataPoint.BzFeedbackRAW;
 
-                    case PediatricSoftConstants.DataSelect.DoubleF:
-                        return lastDataPoint.Bz2fRAW;
+                    case PediatricSoftConstants.DataSelect.Trigger:
+                        return lastDataPoint.TriggerRAW;
 
                     default:
                         return 0;
@@ -172,8 +172,8 @@ namespace PediatricSoft
                     case PediatricSoftConstants.DataSelect.ClosedLoop:
                         return lastDataPoint.BzFeedback.ToString("+0.000E+00;-0.000E+00");
 
-                    case PediatricSoftConstants.DataSelect.DoubleF:
-                        return lastDataPoint.Bz2f.ToString("+0.000E+00;-0.000E+00");
+                    case PediatricSoftConstants.DataSelect.Trigger:
+                        return lastDataPoint.Trigger.ToString();
 
                     default:
                         return "";
@@ -196,8 +196,8 @@ namespace PediatricSoft
                     case PediatricSoftConstants.DataSelect.ClosedLoop:
                         return lastDataPoint.BzFeedback;
 
-                    case PediatricSoftConstants.DataSelect.DoubleF:
-                        return lastDataPoint.Bz2f;
+                    case PediatricSoftConstants.DataSelect.Trigger:
+                        return lastDataPoint.Trigger;
 
                     default:
                         return 0;
@@ -562,7 +562,7 @@ namespace PediatricSoft
                 int _ADCRAW = 0;
                 int _BzDemodRAW = 0;
                 int _BzFeedbackRAW = 0;
-                int _Bz2fRAW = 0;
+                int _TriggerRAW = 0;
 
                 if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Streaming starting");
 
@@ -713,7 +713,7 @@ namespace PediatricSoft
                                     _ADCRAW = BitConverter.ToInt32(data, 0);
                                     _BzDemodRAW = BitConverter.ToInt32(data, 4);
                                     _BzFeedbackRAW = BitConverter.ToInt32(data, 12);
-                                    _Bz2fRAW = BitConverter.ToInt32(data, 8);
+                                    _TriggerRAW = BitConverter.ToInt32(data, 8);
 
 
                                     lastDataPoint = new DataPoint
@@ -722,12 +722,12 @@ namespace PediatricSoft
                                         _ADCRAW,
                                         _BzDemodRAW,
                                         _BzFeedbackRAW,
-                                        _Bz2fRAW,
+                                        _TriggerRAW,
                                         PediatricSoftConstants.ConversionTime * _TimeRAW,
                                         PediatricSoftConstants.ConversionADC * _ADCRAW,
                                         CalibrationBzDemod * _BzDemodRAW,
                                         PediatricSoftConstants.SensorZCoilCalibrationTeslaPerHex * (_BzFeedbackRAW / PediatricSoftConstants.FeedbackStreamingScalingFactor),
-                                        _Bz2fRAW
+                                        _TriggerRAW
                                     );
 
                                     Array.Copy(dataPoints, 1, dataPoints, 0, PediatricSoftConstants.DataQueueLength - 1);
@@ -789,11 +789,11 @@ namespace PediatricSoft
                                     {
                                         if (dataSaveRAW)
                                         {
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW)));
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
                                         }
                                         else
                                         {
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(LastValue)));
+                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
                                         }
                                     }
 

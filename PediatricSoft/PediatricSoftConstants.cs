@@ -220,7 +220,7 @@ namespace PediatricSoft
             ADC,
             OpenLoop,
             ClosedLoop,
-            DoubleF
+            Trigger
         }
 
         public enum MagnetometerMode
