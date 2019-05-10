@@ -46,6 +46,9 @@ namespace PediatricSoft
 
         private DataPoint lastDataPoint;
 
+        private bool timerSelfSync = false;
+        private DataPoint timerSelfSyncOffset;
+
         private bool dataUpdated = false;
 
         private bool dataSaveEnable = false;
@@ -789,11 +792,25 @@ namespace PediatricSoft
                                     {
                                         if (dataSaveRAW)
                                         {
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                            if (timerSelfSync)
+                                            {
+                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW - timerSelfSyncOffset.TimeRAW), "\t", Convert.ToString(LastValueRAW), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                            }
+                                            else
+                                            {
+                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                            }
                                         }
                                         else
                                         {
-                                            dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                            if (timerSelfSync)
+                                            {
+                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time - timerSelfSyncOffset.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                            }
+                                            else
+                                            {
+                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                            }
                                         }
                                     }
 
@@ -1971,6 +1988,7 @@ namespace PediatricSoft
         private void SendCommandsSyncTimers(PediatricSoftConstants.SensorState correctState)
         {
             PediatricSoftConstants.SensorState currentState = correctState;
+            Stopwatch stopwatch = new Stopwatch();
 
             double startTime = 0;
             double currentTime = double.MaxValue;
@@ -2000,8 +2018,12 @@ namespace PediatricSoft
                     }
                 }
 
+                stopwatch.Start();
+
                 // Wait for the clocks to reset
-                while (currentTime > startTime && currentState == correctState)
+                while (currentTime > startTime &&
+                       currentState == correctState &&
+                       stopwatch.ElapsedMilliseconds < PediatricSoftConstants.SyncTimersMaxWait)
                 {
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
                     lock (dataLock)
@@ -2013,6 +2035,26 @@ namespace PediatricSoft
                         currentState = State;
                     }
                 }
+
+                // Check if we failed to sync timers
+                if (currentTime > startTime)
+                {
+                    lock (dataLock)
+                    {
+                        timerSelfSync = true;
+                        timerSelfSyncOffset = lastDataPoint;
+                    }
+                    DebugLog.Enqueue($"Sensor {SN}: Failed to sync the clocks. Timing will be inaccurate.");
+                }
+                else
+                {
+                    lock (dataLock)
+                    {
+                        timerSelfSync = false;
+                    } 
+                }
+
+                stopwatch.Stop();
 
             }
 

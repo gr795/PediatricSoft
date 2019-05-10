@@ -38,6 +38,7 @@ namespace PediatricSoft
         public const int CellHeatInitialTime = 60000; // 60 seconds
         public const int LaserLockWaitBetweenIterations = 10000; // 10 seconds
         public const int TransmissionAveragingTime = 1000; // in ms
+        public const int SyncTimersMaxWait = 1000;
 
         public const int StabilizeCellHeatTimeWindow = 60000; // 60 seconds
         public const int StabilizeCellHeatFailAfter = 600000; // 10 minutes
