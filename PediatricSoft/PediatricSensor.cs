@@ -805,11 +805,11 @@ namespace PediatricSoft
                                         {
                                             if (timerSelfSync)
                                             {
-                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time - timerSelfSyncOffset.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                                dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time - timerSelfSyncOffset.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
                                             }
                                             else
                                             {
-                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                                dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
                                             }
                                         }
                                     }
@@ -1993,70 +1993,65 @@ namespace PediatricSoft
             double startTime = 0;
             double currentTime = double.MaxValue;
 
-            // If master card is present - sync timers
-            if (PediatricSensorData.IsMasterCardPresent)
+            lock (dataLock)
             {
+                startTime = lastDataPoint.Time;
+            }
 
-                lock (dataLock)
-                {
-                    startTime = lastDataPoint.Time;
-                }
+            // If we are the master board - send out the sync pulse
+            if (IsMasterCard)
+            {
+                SendCommand(PediatricSoftConstants.SensorCommandTriggers);
+                SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorSyncTimers)));
 
-                // If we are the master board - send out the sync pulse
-                if (IsMasterCard)
-                {
-                    SendCommand(PediatricSoftConstants.SensorCommandTriggers);
-                    SendCommand(String.Concat("#", UInt16ToStringBE(PediatricSoftConstants.SensorSyncTimers)));
-
-                    while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
-                    {
-                        Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                        lock (stateLock)
-                        {
-                            currentState = State;
-                        }
-                    }
-                }
-
-                stopwatch.Start();
-
-                // Wait for the clocks to reset
-                while (currentTime > startTime &&
-                       currentState == correctState &&
-                       stopwatch.ElapsedMilliseconds < PediatricSoftConstants.SyncTimersMaxWait)
+                while (commandQueue.TryPeek(out string dummy) && currentState == correctState)
                 {
                     Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
-                    lock (dataLock)
-                    {
-                        currentTime = lastDataPoint.Time;
-                    }
                     lock (stateLock)
                     {
                         currentState = State;
                     }
                 }
-
-                // Check if we failed to sync timers
-                if (currentTime > startTime)
-                {
-                    lock (dataLock)
-                    {
-                        timerSelfSync = true;
-                        timerSelfSyncOffset = lastDataPoint;
-                    }
-                    DebugLog.Enqueue($"Sensor {SN}: Failed to sync the clocks. Timing will be inaccurate.");
-                }
-                else
-                {
-                    lock (dataLock)
-                    {
-                        timerSelfSync = false;
-                    } 
-                }
-
-                stopwatch.Stop();
-
             }
+
+            stopwatch.Start();
+
+            // Wait for the clocks to reset if the master board is present
+            while (PediatricSensorData.IsMasterCardPresent &&
+                   currentTime >= startTime &&
+                   currentState == correctState &&
+                   stopwatch.ElapsedMilliseconds < PediatricSoftConstants.SyncTimersMaxWait)
+            {
+                Thread.Sleep((int)PediatricSoftConstants.SerialPortReadTimeout);
+                lock (dataLock)
+                {
+                    currentTime = lastDataPoint.Time;
+                }
+                lock (stateLock)
+                {
+                    currentState = State;
+                }
+            }
+
+            // Check if we failed to sync timers - this is also executed if the master board is not present
+            if (currentTime >= startTime)
+            {
+                lock (dataLock)
+                {
+                    timerSelfSync = true;
+                    timerSelfSyncOffset = lastDataPoint;
+                }
+                DebugLog.Enqueue($"Sensor {SN}: Failed to sync the clocks. Timing will be inaccurate.");
+            }
+            else
+            {
+                lock (dataLock)
+                {
+                    timerSelfSync = false;
+                }
+            }
+
+            stopwatch.Stop();
 
             lock (stateLock)
             {
