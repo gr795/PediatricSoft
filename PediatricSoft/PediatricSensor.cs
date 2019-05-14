@@ -819,6 +819,7 @@ namespace PediatricSoft
                                         {
                                             File.AppendAllLines(filePath, dataSaveBuffer);
                                             dataSaveBuffer.Clear();
+                                            dataSaveStopwatch.Restart();
                                         }
                                     }
 
