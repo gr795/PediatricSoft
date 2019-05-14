@@ -794,22 +794,22 @@ namespace PediatricSoft
                                         {
                                             if (timerSelfSync)
                                             {
-                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW - timerSelfSyncOffset.TimeRAW), "\t", Convert.ToString(LastValueRAW), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW - timerSelfSyncOffset.TimeRAW), "\t", Convert.ToString(LastValueRAW)));
                                             }
                                             else
                                             {
-                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                                dataSaveBuffer.Add(String.Concat(Convert.ToString(lastDataPoint.TimeRAW), "\t", Convert.ToString(LastValueRAW)));
                                             }
                                         }
                                         else
                                         {
                                             if (timerSelfSync)
                                             {
-                                                dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time - timerSelfSyncOffset.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                                dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time - timerSelfSyncOffset.Time), "\t", Convert.ToString(LastValue)));
                                             }
                                             else
                                             {
-                                                dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time), "\t", Convert.ToString(LastValue), "\t", Convert.ToString(lastDataPoint.TriggerRAW)));
+                                                dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time), "\t", Convert.ToString(LastValue)));
                                             }
                                         }
                                     }
