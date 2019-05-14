@@ -53,6 +53,7 @@ namespace PediatricSoft
 
         private bool dataSaveEnable = false;
         private bool dataSaveRAW = true;
+        private Stopwatch dataSaveStopwatch = new Stopwatch();
 
         private List<string> dataSaveBuffer = new List<string>();
         private string filePath = string.Empty;
@@ -811,6 +812,13 @@ namespace PediatricSoft
                                             {
                                                 dataSaveBuffer.Add(String.Concat(String.Format("{0:0.000}", lastDataPoint.Time), "\t", Convert.ToString(LastValue)));
                                             }
+                                        }
+
+                                        // Flush the buffer if needed
+                                        if (dataSaveStopwatch.ElapsedMilliseconds > PediatricSoftConstants.DataSavePeriod)
+                                        {
+                                            File.AppendAllLines(filePath, dataSaveBuffer);
+                                            dataSaveBuffer.Clear();
                                         }
                                     }
 
@@ -1965,9 +1973,10 @@ namespace PediatricSoft
                     filePath += ".txt";
 
                     dataSaveBuffer.Clear();
-
+                    
                     dataSaveEnable = PediatricSensorData.SaveDataEnabled;
                     dataSaveRAW = PediatricSensorData.SaveRAWValues;
+                    dataSaveStopwatch.Restart();
                 }
             }
 
@@ -2078,6 +2087,7 @@ namespace PediatricSoft
                     File.AppendAllLines(filePath, dataSaveBuffer);
                     dataSaveBuffer.Clear();
                     dataSaveEnable = false;
+                    dataSaveStopwatch.Stop();
                 }
             }
 
