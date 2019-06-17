@@ -16,12 +16,13 @@ namespace PediatricSoft
         public const string ValidIDN = "Arrow USB Blaster B";
         public const string PediatricSoftFolderRelative = "PediatricSoft";
         public const string SensorConfigFolderRelative = "SensorConfig";
-        public const ushort MasterCardChassis = 3;
+        public const ushort MasterCardChassis = 1;
         public const ushort MasterCardPort = 1;
 
         public const int SerialPortMaxRetries = 3;
         public const int SerialPortSleepAfterFail = 5000;
         public const UInt32 SerialPortBaudRate = 460800;
+        //public const UInt32 SerialPortBaudRate = 921600;
         public const UInt32 SerialPortWriteTimeout = 1000;
         public const UInt32 SerialPortReadTimeout = 10;
         public const byte SerialPortLatency = 2;
