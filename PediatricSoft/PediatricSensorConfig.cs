@@ -3,6 +3,9 @@ using System.Reflection;
 
 namespace PediatricSoft
 {
+    // This class contains configuration parameters that are individual to each sensor
+    // Name, Chassis, Port and Head properties raise events on change. This is to auto update the main window table.
+
     public class PediatricSensorConfig : BindableBase
     {
 
@@ -44,6 +47,7 @@ namespace PediatricSoft
         public ushort MaxCellHeat { get; set; }
         public ushort CellHeatKI { get; set; }
 
+        // We assign default parameters on creation.
         public PediatricSensorConfig()
         {
             Name = string.Empty;
@@ -63,6 +67,8 @@ namespace PediatricSoft
             CellHeatKI = PediatricSoftConstants.SensorDefaultPIDCellHeaterI;
         }
 
+        // We overload Equals method to get a value-based comparison
+        // Use Reflection to iterate over all public properties
         public bool Equals(PediatricSensorConfig config)
         {
             bool result = true;
@@ -73,6 +79,7 @@ namespace PediatricSoft
             return result;
         }
 
+        // This method returns a new instance of PediatricSensorConfig class with the same values of all public properties
         public PediatricSensorConfig GetValueCopy()
         {
             PediatricSensorConfig config = new PediatricSensorConfig();

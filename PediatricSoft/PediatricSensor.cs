@@ -17,13 +17,19 @@ using System.Diagnostics;
 
 namespace PediatricSoft
 {
+    // This is the core class responsible for the operation of an individual sensor
+    // One instance of this class represents one physical sensor
+    // PediatricSensorData class contains a representation of the system and deals with 'global' properties of the system
+
     public sealed class PediatricSensor : BindableBase, IDisposable
     {
         // Fields
+
         private PediatricSensorData PediatricSensorData = PediatricSensorData.Instance;
         private DebugLog DebugLog = DebugLog.Instance;
+
         private PediatricSensorConfig pediatricSensorConfigOnLoad;
-        private readonly string configPath;
+        private readonly string configPath; // Path to the saved configuration file (.xml)
 
         private FTDI _FTDI;
         private Task streamingTask;
@@ -67,12 +73,15 @@ namespace PediatricSoft
         private double dataFFTWindowNoisePowerBandwidth;
 
         // Constructors
-        private PediatricSensor() { }
+        private PediatricSensor() { } // default constructor is private - we need the FTDI chip serial number 
         public PediatricSensor(string serial)
         {
+            // Establish the communication and validate the sensor card
             PediatricSensorConstructorMethod(serial);
+
             if (IsValid)
             {
+                // Initialize the FFT stuff and load config
                 InitializeDataFFTSingleSided();
                 SN = serial;
                 configPath = System.IO.Path.Combine(PediatricSensorData.Instance.SensorConfigFolderAbsolute, SN) + ".xml";
@@ -80,6 +89,7 @@ namespace PediatricSoft
             }
             else
             {
+                // If the sensor board failed to communicate - set the state to failed and clean up
                 _FTDI.GetCOMPort(out string comPort);
                 DebugLog.Enqueue($"Sensor {serial}: Didn't get a response from the board. Windows port name {comPort}.");
                 lock (stateLock)
@@ -92,6 +102,7 @@ namespace PediatricSoft
 
         // Properties
 
+        // Individual sensor configuration. See PediatricSensorConfig class
         private PediatricSensorConfig pediatricSensorConfig;
         public PediatricSensorConfig PediatricSensorConfig
         {
@@ -99,6 +110,7 @@ namespace PediatricSoft
             set { pediatricSensorConfig = value; }
         }
 
+        // Sensor state. Access to this property should be wrapped in lock(stateLock) {} as it is accessed from multiple threads
         private PediatricSoftConstants.SensorState state = PediatricSoftConstants.SensorState.Init;
         public PediatricSoftConstants.SensorState State
         {
@@ -137,6 +149,7 @@ namespace PediatricSoft
             }
         }
 
+        // Uncalibrated last value 
         public int LastValueRAW
         {
             get
@@ -161,6 +174,7 @@ namespace PediatricSoft
             }
         }
 
+        // Calibrated last value converted to a string (custom formating for different DataSelect)
         public string LastValueDisplay
         {
             get
@@ -185,6 +199,7 @@ namespace PediatricSoft
             }
         }
 
+        // Calibrated last value
         public double LastValue
         {
             get
@@ -279,6 +294,8 @@ namespace PediatricSoft
         public ChartValues<XYPoint> ChartValuesFFT { get; private set; } = new ChartValues<XYPoint>();
 
         // Methods
+
+        // This method is called to start the background tasks
         public void KickOffTasks()
         {
             streamingTask = StreamDataAsync();
@@ -289,6 +306,7 @@ namespace PediatricSoft
             uiUpdateTimer.Enabled = true;
         }
 
+        // Put the sensor into Standby
         public void Standby()
         {
             PediatricSoftConstants.SensorState currentState;
@@ -324,6 +342,7 @@ namespace PediatricSoft
             }
         }
 
+        // Start the lock procedure
         public void Lock()
         {
             PediatricSoftConstants.SensorState currentState;
@@ -360,6 +379,7 @@ namespace PediatricSoft
             }
         }
 
+        // Start the data save
         public void Start()
         {
             PediatricSoftConstants.SensorState currentState;
@@ -400,6 +420,7 @@ namespace PediatricSoft
             }
         }
 
+        // Stop the data save
         public void Stop()
         {
             PediatricSoftConstants.SensorState currentState;
@@ -428,6 +449,7 @@ namespace PediatricSoft
             }
         }
 
+        // Start the field zeroing procedure
         public void ZeroFields()
         {
             PediatricSoftConstants.SensorState currentState;
@@ -459,6 +481,7 @@ namespace PediatricSoft
             }
         }
 
+        // Switch between open loop and closed loop modes
         public void SwitchMagnetometerMode()
         {
             PediatricSoftConstants.SensorState currentState;
@@ -490,19 +513,26 @@ namespace PediatricSoft
             }
         }
 
+        // Send command
+        // Actually this simply enqueues the command. It is send in the streaming loop.
         public void SendCommand(string command)
         {
             command = Regex.Replace(command, @"[^\w@#?+-]", "");
 
             if (!String.IsNullOrEmpty(command))
             {
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Sending command \"{command}\"");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Sending command \"{command}\"");
+                }
+
                 commandQueue.Enqueue(command + "\n");
                 CommandHistory.Enqueue(command);
                 RaisePropertyChanged("CommandHistory");
             }
         }
 
+        // Convert a ushort (unsigned 16bit int) into a string representation with Big Endian byte order
         public static string UInt16ToStringBE(ushort value)
         {
             byte[] t = BitConverter.GetBytes(value);
@@ -512,22 +542,35 @@ namespace PediatricSoft
             return s;
         }
 
+        // Increases ushot value by step, capped by max
         private static ushort UShortSafeInc(ushort value, ushort step, ushort max)
         {
-            int newValue = value + step;
+            int newValue = value + step; // int because '+' isn't defined for ushort
             if (newValue < max)
+            {
                 return (ushort)newValue;
-            else return max;
+            }
+            else
+            {
+                return max;
+            }
         }
 
+        // Decreases ushot value by step, capped by min
         private static ushort UShortSafeDec(ushort value, ushort step, ushort min)
         {
             int newValue = value - step;
             if (newValue > min)
+            {
                 return (ushort)newValue;
-            else return min;
+            }
+            else
+            {
+                return min;
+            }
         }
 
+        // This is the background streaming task
         private Task StreamDataAsync()
         {
             return Task.Run(() =>
@@ -566,8 +609,13 @@ namespace PediatricSoft
                 int _BzFeedbackRAW = 0;
                 int _TriggerRAW = 0;
 
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Streaming starting");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Streaming starting");
+                }
 
+                // Main loop. We run until the shutdown is complete (or we failed).
+                // See all possible states in PediatricSoftConstants
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
                 {
                     // First we write out all of the queued commands
@@ -587,7 +635,10 @@ namespace PediatricSoft
 
                     // Query if we have bytes in the Rx buffer
                     if (ftStatus == FTDI.FT_STATUS.FT_OK)
+                    {
                         ftStatus = _FTDI.GetRxBytesAvailable(ref bytesToRead);
+                    }
+
                     if (ftStatus != FTDI.FT_STATUS.FT_OK)
                     {
                         lock (stateLock)
@@ -600,14 +651,19 @@ namespace PediatricSoft
 
                     // We read up to a maximum of the streaming buffer
                     if (bytesToRead > PediatricSoftConstants.StreamingBufferSize)
+                    {
                         bytesToRead = PediatricSoftConstants.StreamingBufferSize;
+                    }
 
                     // Read bytes from the COM port.
                     // This thing blocks!
                     // It will return when either it has read the requested number of bytes or after the ReadTimeout time.
                     // It will update the bytesRead value with the actual number of bytes read.
                     if (ftStatus == FTDI.FT_STATUS.FT_OK && bytesToRead > 0)
+                    {
                         ftStatus = _FTDI.Read(streamingBuffer, bytesToRead, ref bytesRead);
+                    }
+
                     if (ftStatus != FTDI.FT_STATUS.FT_OK)
                     {
                         lock (stateLock)
@@ -735,8 +791,9 @@ namespace PediatricSoft
                                     Array.Copy(dataPoints, 1, dataPoints, 0, PediatricSoftConstants.DataQueueLength - 1);
                                     dataPoints[PediatricSoftConstants.DataQueueLength - 1] = lastDataPoint;
 
+                                    // Do FFT
                                     dataCounter++;
-                                    if (dataCounter == PediatricSoftConstants.FFTLength)
+                                    if (dataCounter == PediatricSoftConstants.FFTLength) // This is 0% overlap. Divide by 2 to get 50% overlap
                                     {
                                         if (isPlotted)
                                         {
@@ -776,17 +833,22 @@ namespace PediatricSoft
                                         dataCounter = 0;
                                     }
 
+                                    // Add a point to the time series plot
                                     if (isPlotted)
                                     {
                                         plotCounter++;
-                                        if (plotCounter == PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength)
+                                        if (plotCounter == PediatricSoftConstants.DataQueueLength / PediatricSoftConstants.PlotQueueLength) // Don't add every point
                                         {
                                             ChartValues.Add(LastValue);
-                                            if (ChartValues.Count > PediatricSoftConstants.PlotQueueLength) ChartValues.RemoveAt(0);
+                                            if (ChartValues.Count > PediatricSoftConstants.PlotQueueLength)
+                                            {
+                                                ChartValues.RemoveAt(0);
+                                            }
                                             plotCounter = 0;
                                         }
                                     }
 
+                                    // Save data
                                     if (dataSaveEnable)
                                     {
                                         if (dataSaveRAW)
@@ -821,9 +883,14 @@ namespace PediatricSoft
                                         }
                                     }
 
-                                    if (!dataUpdated) dataUpdated = true;
+                                    // Update the flag
+                                    if (!dataUpdated)
+                                    {
+                                        dataUpdated = true;
+                                    }
                                 }
 
+                                // We have processed all the bytes in the data block. Reset counter to zero.
                                 dataIndex = 0;
                             }
 
@@ -834,6 +901,14 @@ namespace PediatricSoft
 
                     }
 
+                    // WARNING!
+                    // The following method is sub-optimal! We are blocking the streaming thread for some short time.
+                    // Now it is set to 10ms. This means that new data comes in roughly every 10ms.
+                    // To get closer to a real-time streaming you (someone) need to use the following method from the FTDI class:
+                    // public FT_STATUS SetEventNotification(uint eventmask, EventWaitHandle eventhandle);
+                    // This will allow to read the RX buffer as soon as the bytes come in.
+                    // This needs to be tested! (with many sensors connected)
+                    //
                     // Sleep a bit
                     Thread.Sleep(PediatricSoftConstants.StateHandlerSleepTime);
 
@@ -845,24 +920,35 @@ namespace PediatricSoft
 
                 }
 
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Streaming stoping");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Streaming stoping");
+                }
 
             });
         }
 
+        // This is the background state handler task
         private Task StateHandlerAsync()
         {
             return Task.Run(() =>
             {
                 PediatricSoftConstants.SensorState currentState;
 
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: State handler: started");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: State handler: started");
+                }
 
                 lock (stateLock)
                 {
                     currentState = State;
                 }
 
+                // The main loop. On every iteration we check the current state and execute a corresponding method.
+                // Some states (like Idle or Standby) are missing from the switch statement.
+                // This is because we await the user in these states. in this case we simply sleep a bit
+                // Ideally, this should be a proper state machine.
                 while (currentState < PediatricSoftConstants.SensorState.ShutDownComplete)
                 {
                     switch (currentState)
@@ -992,11 +1078,15 @@ namespace PediatricSoft
                     }
                 }
 
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: State handler: exiting");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: State handler: exiting");
+                }
 
             });
         }
 
+        // This method establishes the comms with the FTDI chip.
         private void PediatricSensorConstructorMethod(string serial)
         {
             FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
@@ -1089,6 +1179,7 @@ namespace PediatricSoft
                 return;
             }
 
+            // Got a response. Assume that the board is alive (a really wild assumption..)
             if (numBytes > 0)
             {
                 if (PediatricSensorData.DebugMode)
@@ -1105,15 +1196,22 @@ namespace PediatricSoft
 
         }
 
+        // This method saves the configuration to an xml file if the config was changed
         private void SaveConfig()
         {
             if (pediatricSensorConfig.Equals(pediatricSensorConfigOnLoad))
             {
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Configuration not changed - not saving");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Configuration not changed - not saving");
+                }
             }
             else
             {
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Saving configuration");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Saving configuration");
+                }
 
                 TextWriter writer = null;
                 try
@@ -1125,15 +1223,21 @@ namespace PediatricSoft
                 finally
                 {
                     if (writer != null)
+                    {
                         writer.Close();
+                    }
                 }
 
             }
         }
 
+        // This method loads the configuration from an xml file
         private void LoadConfig()
         {
-            if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Loading configuration");
+            if (PediatricSensorData.DebugMode)
+            {
+                DebugLog.Enqueue($"Sensor {SN}: Loading configuration");
+            }
 
             TextReader reader = null;
             try
@@ -1144,18 +1248,34 @@ namespace PediatricSoft
             }
             catch (Exception)
             {
-                if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Failed to load configuration - using defaults");
+                if (PediatricSensorData.DebugMode)
+                {
+                    DebugLog.Enqueue($"Sensor {SN}: Failed to load configuration - using defaults");
+                }
+
+                // We failed to load the config. Use the defaults.
                 pediatricSensorConfig = new PediatricSensorConfig();
             }
             finally
             {
                 if (reader != null)
+                {
                     reader.Close();
+                }
             }
 
+            // store a copy of the config in a separate variable
+            // this is to check it again on config save
             pediatricSensorConfigOnLoad = pediatricSensorConfig.GetValueCopy();
         }
 
+        //
+        // The following are the methods that are called by the state handler
+        // All of them have the "correct state" parameter as an input
+        // If we detect a different state during execution - it means something went wrong and we fail
+        //
+
+        //
         private void SendCommandsSetup(PediatricSoftConstants.SensorState correctState)
         {
             PediatricSoftConstants.SensorState currentState = correctState;
@@ -1327,8 +1447,7 @@ namespace PediatricSoft
             // Record the ADC value
             lock (dataLock)
             {
-                coldSensorADCValue = dataPoints.Select(x => x.ADC)
-                                               .Average();
+                coldSensorADCValue = dataPoints.Select(x => x.ADC).Average();
             }
 
             // Here we check if the laser is working as expected
@@ -2301,6 +2420,7 @@ namespace PediatricSoft
 
         }
 
+        // Clean up
         public void Dispose()
         {
             if (PediatricSensorData.DebugMode) DebugLog.Enqueue($"Sensor {SN}: Dispose() was called");
@@ -2347,6 +2467,8 @@ namespace PediatricSoft
             IsDisposed = true;
         }
 
+        // This method initialized FFT related stuff
+        // It is also called when clearing FFT plot
         public void InitializeDataFFTSingleSided()
         {
             dataFFTWindow = MathNet.Numerics.Window.HannPeriodic(PediatricSoftConstants.FFTLength);
@@ -2365,11 +2487,13 @@ namespace PediatricSoft
                 }
             }
 
+            // to protect against edge cases
             if (dataFFTSingleSidedLength == 0)
             {
                 dataFFTSingleSidedLength = PediatricSoftConstants.FFTLength / 2;
             }
 
+            // clear the FFT data
             lock (dataLock)
             {
                 dataFFTSingleSided = new XYPoint[dataFFTSingleSidedLength];
@@ -2381,12 +2505,18 @@ namespace PediatricSoft
             }
         }
 
+        // Destructor
         ~PediatricSensor()
         {
-            if (!IsDisposed) Dispose();
+            if (!IsDisposed)
+            {
+                Dispose();
+            }
         }
 
         // Event Handlers
+
+        // We update the UI on a timer
         private void OnUIUpdateTimerEvent(Object source, ElapsedEventArgs e)
         {
             RaisePropertyChanged("LastValueRAW");

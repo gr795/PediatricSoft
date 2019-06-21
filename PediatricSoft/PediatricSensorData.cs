@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace PediatricSoft
 {
+    // PediatricSensorData class contains a representation of the system and deals with 'global' properties of the system
+
     public sealed class PediatricSensorData : BindableBase, IDisposable
     {
         // Fields
